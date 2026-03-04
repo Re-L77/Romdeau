@@ -1,0 +1,349 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model activos {
+  id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  codigo_etiqueta     String                @unique
+  categoria_id        String                @db.Uuid
+  custodio_actual_id  String?               @db.Uuid
+  oficina_id          String?               @db.Uuid
+  estante_id          String?               @db.Uuid
+  especificaciones    Json?                 @default("{}")
+  estado_operativo_id Int                   @default(1) @db.SmallInt
+  foto_principal_url  String?
+  created_at          DateTime?             @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime?             @default(now()) @db.Timestamptz(6)
+  categorias          categorias            @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios            usuarios?             @relation(fields: [custodio_actual_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estados_activo      estados_activo        @relation(fields: [estado_operativo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estantes            estantes?             @relation(fields: [estante_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  oficinas            oficinas?             @relation(fields: [oficina_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  alertas_sistema     alertas_sistema[]
+  bajas_activos       bajas_activos?
+  datos_financieros   datos_financieros?
+  logs_auditoria      logs_auditoria[]
+  logs_depreciacion   logs_depreciacion[]
+  mantenimientos      mantenimientos[]
+  movimientos_activos movimientos_activos[]
+
+  @@index([custodio_actual_id], map: "idx_activos_custodio")
+  @@index([estante_id], map: "idx_activos_estante")
+  @@index([codigo_etiqueta], map: "idx_activos_etiqueta")
+  @@index([oficina_id], map: "idx_activos_oficina")
+  @@index([especificaciones], map: "idx_activos_specs", type: Gin)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model alertas_sistema {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activo_id          String?   @db.Uuid
+  tipo_alerta        String    @db.VarChar(50)
+  mensaje            String
+  fecha_disparo      DateTime  @db.Date
+  leida              Boolean?  @default(false)
+  usuario_destino_id String?   @db.Uuid
+  created_at         DateTime? @default(now()) @db.Timestamptz(6)
+  activos            activos?  @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios           usuarios? @relation(fields: [usuario_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([fecha_disparo, leida], map: "idx_alertas_fecha")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model almacenes {
+  id       String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre   String     @db.VarChar(100)
+  sede_id  String     @db.Uuid
+  sedes    sedes      @relation(fields: [sede_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pasillos pasillos[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model bajas_activos {
+  activo_id              String    @id @db.Uuid
+  usuario_autoriza_id    String    @db.Uuid
+  motivo_baja            String    @db.VarChar(50)
+  fecha_baja             DateTime  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  monto_recuperado       Decimal?  @default(0.00) @db.Decimal(12, 2)
+  documento_respaldo_url String?
+  comentarios            String?
+  created_at             DateTime? @default(now()) @db.Timestamptz(6)
+  activos                activos   @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios               usuarios  @relation(fields: [usuario_autoriza_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model calles {
+  id          Int           @id @default(autoincrement())
+  nombre      String        @db.VarChar(150)
+  colonia_id  Int
+  colonias    colonias      @relation(fields: [colonia_id], references: [id], onUpdate: NoAction)
+  direcciones direcciones[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model categorias {
+  id                      String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre                  String
+  tipo_rastreo            String    @default("FIJO") @db.VarChar(20)
+  vida_util_anios         Int
+  porcentaje_depreciacion Decimal?  @default(dbgenerated("(100.0 / (vida_util_anios)::numeric)")) @db.Decimal(5, 2)
+  activos                 activos[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model colonias {
+  id            Int        @id @default(autoincrement())
+  nombre        String     @db.VarChar(100)
+  codigo_postal String?    @db.VarChar(10)
+  municipio_id  Int
+  calles        calles[]
+  municipios    municipios @relation(fields: [municipio_id], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model datos_financieros {
+  activo_id          String       @id @db.Uuid
+  proveedor_id       String?      @db.Uuid
+  costo_adquisicion  Decimal      @db.Decimal(12, 2)
+  valor_libro_actual Decimal      @db.Decimal(12, 2)
+  fecha_compra       DateTime     @db.Date
+  fin_garantia       DateTime?    @db.Date
+  activos            activos      @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  proveedores        proveedores? @relation(fields: [proveedor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model direcciones {
+  id              String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  numero_exterior String  @db.VarChar(20)
+  numero_interior String? @db.VarChar(20)
+  calle_id        Int
+  calles          calles  @relation(fields: [calle_id], references: [id], onUpdate: NoAction)
+  sedes           sedes[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model edificios {
+  id      String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre  String  @db.VarChar(100)
+  sede_id String  @db.Uuid
+  sedes   sedes   @relation(fields: [sede_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pisos   pisos[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model estados_activo {
+  id          Int       @id @db.SmallInt
+  nombre      String    @unique @db.VarChar(50)
+  descripcion String
+  activos     activos[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model estados_auditoria {
+  id             Int              @id @db.SmallInt
+  nombre         String           @unique @db.VarChar(50)
+  descripcion    String
+  logs_auditoria logs_auditoria[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model estados_rep {
+  id         Int          @id @default(autoincrement())
+  nombre     String       @db.VarChar(100)
+  pais_id    Int          @db.SmallInt
+  paises     paises       @relation(fields: [pais_id], references: [id], onUpdate: NoAction)
+  municipios municipios[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model estantes {
+  id                                                                    String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre                                                                String                @db.VarChar(50)
+  pasillo_id                                                            String                @db.Uuid
+  activos                                                               activos[]
+  pasillos                                                              pasillos              @relation(fields: [pasillo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  movimientos_activos_movimientos_activos_estante_anterior_idToestantes movimientos_activos[] @relation("movimientos_activos_estante_anterior_idToestantes")
+  movimientos_activos_movimientos_activos_estante_nuevo_idToestantes    movimientos_activos[] @relation("movimientos_activos_estante_nuevo_idToestantes")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model logs_auditoria {
+  id                  String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activo_id           String                    @db.Uuid
+  auditor_id          String                    @db.Uuid
+  fecha_hora          DateTime?                 @default(now()) @db.Timestamptz(6)
+  coordenadas_gps     Unsupported("geography")?
+  estado_reportado_id Int                       @db.SmallInt
+  comentarios         String?
+  activos             activos                   @relation(fields: [activo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios            usuarios                  @relation(fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estados_auditoria   estados_auditoria         @relation(fields: [estado_reportado_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model logs_depreciacion {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activo_id        String   @db.Uuid
+  fecha_calculo    DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+  valor_anterior   Decimal  @db.Decimal(12, 2)
+  monto_depreciado Decimal  @db.Decimal(12, 2)
+  valor_nuevo      Decimal  @db.Decimal(12, 2)
+  metodo_usado     String?  @default("LINEA_RECTA") @db.VarChar(50)
+  activos          activos  @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([activo_id, fecha_calculo])
+  @@index([activo_id], map: "idx_logs_deprec_activo")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model mantenimientos {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activo_id         String    @db.Uuid
+  solicitante_id    String    @db.Uuid
+  tecnico_asignado  String?   @db.VarChar(150)
+  descripcion_falla String
+  costo_reparacion  Decimal?  @default(0.00) @db.Decimal(12, 2)
+  estado_ticket     String?   @default("ABIERTO") @db.VarChar(20)
+  fecha_solicitud   DateTime? @default(now()) @db.Timestamptz(6)
+  fecha_resolucion  DateTime? @db.Timestamptz(6)
+  activos           activos   @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios          usuarios  @relation(fields: [solicitante_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([estado_ticket], map: "idx_mantenimientos_estado")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model movimientos_activos {
+  id                                                          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activo_id                                                   String    @db.Uuid
+  custodio_anterior_id                                        String?   @db.Uuid
+  oficina_anterior_id                                         String?   @db.Uuid
+  estante_anterior_id                                         String?   @db.Uuid
+  custodio_nuevo_id                                           String?   @db.Uuid
+  oficina_nueva_id                                            String?   @db.Uuid
+  estante_nuevo_id                                            String?   @db.Uuid
+  fecha_movimiento                                            DateTime? @default(now()) @db.Timestamptz(6)
+  activos                                                     activos   @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios_movimientos_activos_custodio_anterior_idTousuarios usuarios? @relation("movimientos_activos_custodio_anterior_idTousuarios", fields: [custodio_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios_movimientos_activos_custodio_nuevo_idTousuarios    usuarios? @relation("movimientos_activos_custodio_nuevo_idTousuarios", fields: [custodio_nuevo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estantes_movimientos_activos_estante_anterior_idToestantes  estantes? @relation("movimientos_activos_estante_anterior_idToestantes", fields: [estante_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estantes_movimientos_activos_estante_nuevo_idToestantes     estantes? @relation("movimientos_activos_estante_nuevo_idToestantes", fields: [estante_nuevo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  oficinas_movimientos_activos_oficina_anterior_idTooficinas  oficinas? @relation("movimientos_activos_oficina_anterior_idTooficinas", fields: [oficina_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  oficinas_movimientos_activos_oficina_nueva_idTooficinas     oficinas? @relation("movimientos_activos_oficina_nueva_idTooficinas", fields: [oficina_nueva_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([activo_id], map: "idx_movimientos_activo")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model municipios {
+  id          Int         @id @default(autoincrement())
+  nombre      String      @db.VarChar(100)
+  estado_id   Int
+  colonias    colonias[]
+  estados_rep estados_rep @relation(fields: [estado_id], references: [id], onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model oficinas {
+  id                                                                    String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre                                                                String                @db.VarChar(100)
+  piso_id                                                               String                @db.Uuid
+  activos                                                               activos[]
+  movimientos_activos_movimientos_activos_oficina_anterior_idTooficinas movimientos_activos[] @relation("movimientos_activos_oficina_anterior_idTooficinas")
+  movimientos_activos_movimientos_activos_oficina_nueva_idTooficinas    movimientos_activos[] @relation("movimientos_activos_oficina_nueva_idTooficinas")
+  pisos                                                                 pisos                 @relation(fields: [piso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model paises {
+  id          Int           @id @default(autoincrement()) @db.SmallInt
+  nombre      String        @unique @db.VarChar(100)
+  estados_rep estados_rep[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model pasillos {
+  id         String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre     String     @db.VarChar(50)
+  almacen_id String     @db.Uuid
+  estantes   estantes[]
+  almacenes  almacenes  @relation(fields: [almacen_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model pisos {
+  id          String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre      String     @db.VarChar(50)
+  edificio_id String     @db.Uuid
+  oficinas    oficinas[]
+  edificios   edificios  @relation(fields: [edificio_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model proveedores {
+  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  razon_social      String
+  rfc_tax_id        String?
+  contacto_soporte  String?
+  direccion_fiscal  String?
+  sitio_web         String?             @db.VarChar(255)
+  datos_financieros datos_financieros[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model roles_usuario {
+  id          Int        @id @db.SmallInt
+  nombre      String     @unique @db.VarChar(50)
+  descripcion String
+  usuarios    usuarios[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model sedes {
+  id           String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre       String       @db.VarChar(100)
+  direccion_id String?      @db.Uuid
+  almacenes    almacenes[]
+  edificios    edificios[]
+  direcciones  direcciones? @relation(fields: [direccion_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model usuarios {
+  id                                                                     String                @id @default(dbgenerated("auth.uid()")) @db.Uuid
+  nombre_completo                                                        String
+  email                                                                  String                @unique
+  rol_id                                                                 Int                   @default(3) @db.SmallInt
+  activo                                                                 Boolean?              @default(true)
+  created_at                                                             DateTime?             @default(now()) @db.Timestamptz(6)
+  activos                                                                activos[]
+  alertas_sistema                                                        alertas_sistema[]
+  bajas_activos                                                          bajas_activos[]
+  logs_auditoria                                                         logs_auditoria[]
+  mantenimientos                                                         mantenimientos[]
+  movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[] @relation("movimientos_activos_custodio_anterior_idTousuarios")
+  movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[] @relation("movimientos_activos_custodio_nuevo_idTousuarios")
+  roles_usuario                                                          roles_usuario         @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
