@@ -9,7 +9,7 @@ datasource db {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model activos {
   id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  codigo_etiqueta     String                @unique
+  codigo_etiqueta     String?               @unique
   categoria_id        String                @db.Uuid
   custodio_actual_id  String?               @db.Uuid
   oficina_id          String?               @db.Uuid
@@ -52,8 +52,6 @@ model alertas_sistema {
   created_at         DateTime? @default(now()) @db.Timestamptz(6)
   activos            activos?  @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   usuarios           usuarios? @relation(fields: [usuario_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@index([fecha_disparo, leida], map: "idx_alertas_fecha")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -204,7 +202,6 @@ model logs_depreciacion {
   activos          activos  @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([activo_id, fecha_calculo])
-  @@index([activo_id], map: "idx_logs_deprec_activo")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -221,8 +218,6 @@ model mantenimientos {
   fecha_resolucion  DateTime? @db.Timestamptz(6)
   activos           activos   @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   usuarios          usuarios  @relation(fields: [solicitante_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@index([estado_ticket], map: "idx_mantenimientos_estado")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -333,7 +328,10 @@ model spatial_ref_sys {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model usuarios {
   id                                                                     String                @id @default(dbgenerated("auth.uid()")) @db.Uuid
-  nombre_completo                                                        String
+  nombres                                                                String
+  apellido_paterno                                                       String
+  apellido_materno                                                       String?
+  nombre_completo                                                        String?               @default(dbgenerated("TRIM(BOTH FROM (((nombres || ' '::text) || apellido_paterno) || COALESCE((' '::text || apellido_materno), ''::text)))"))
   email                                                                  String                @unique
   rol_id                                                                 Int                   @default(3) @db.SmallInt
   activo                                                                 Boolean?              @default(true)
