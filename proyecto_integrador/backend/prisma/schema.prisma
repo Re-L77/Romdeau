@@ -125,10 +125,12 @@ model edificios {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model estados_activo {
-  id          Int       @id @db.SmallInt
-  nombre      String    @unique @db.VarChar(50)
-  descripcion String
-  activos     activos[]
+  id                                                                         Int                   @id @db.SmallInt
+  nombre                                                                     String                @unique @db.VarChar(50)
+  descripcion                                                                String
+  activos                                                                    activos[]
+  movimientos_activos_movimientos_activos_estado_anterior_idToestados_activo movimientos_activos[] @relation("movimientos_activos_estado_anterior_idToestados_activo")
+  movimientos_activos_movimientos_activos_estado_nuevo_idToestados_activo    movimientos_activos[] @relation("movimientos_activos_estado_nuevo_idToestados_activo")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -189,22 +191,26 @@ model logs_depreciacion {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model movimientos_activos {
-  id                                                          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  activo_id                                                   String    @db.Uuid
-  custodio_anterior_id                                        String?   @db.Uuid
-  oficina_anterior_id                                         String?   @db.Uuid
-  estante_anterior_id                                         String?   @db.Uuid
-  custodio_nuevo_id                                           String?   @db.Uuid
-  oficina_nueva_id                                            String?   @db.Uuid
-  estante_nuevo_id                                            String?   @db.Uuid
-  fecha_movimiento                                            DateTime? @default(now()) @db.Timestamptz(6)
-  activos                                                     activos   @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  usuarios_movimientos_activos_custodio_anterior_idTousuarios usuarios? @relation("movimientos_activos_custodio_anterior_idTousuarios", fields: [custodio_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuarios_movimientos_activos_custodio_nuevo_idTousuarios    usuarios? @relation("movimientos_activos_custodio_nuevo_idTousuarios", fields: [custodio_nuevo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  estantes_movimientos_activos_estante_anterior_idToestantes  estantes? @relation("movimientos_activos_estante_anterior_idToestantes", fields: [estante_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  estantes_movimientos_activos_estante_nuevo_idToestantes     estantes? @relation("movimientos_activos_estante_nuevo_idToestantes", fields: [estante_nuevo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  oficinas_movimientos_activos_oficina_anterior_idTooficinas  oficinas? @relation("movimientos_activos_oficina_anterior_idTooficinas", fields: [oficina_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  oficinas_movimientos_activos_oficina_nueva_idTooficinas     oficinas? @relation("movimientos_activos_oficina_nueva_idTooficinas", fields: [oficina_nueva_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                                                                    String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activo_id                                                             String          @db.Uuid
+  custodio_anterior_id                                                  String?         @db.Uuid
+  oficina_anterior_id                                                   String?         @db.Uuid
+  estante_anterior_id                                                   String?         @db.Uuid
+  custodio_nuevo_id                                                     String?         @db.Uuid
+  oficina_nueva_id                                                      String?         @db.Uuid
+  estante_nuevo_id                                                      String?         @db.Uuid
+  fecha_movimiento                                                      DateTime?       @default(now()) @db.Timestamptz(6)
+  estado_anterior_id                                                    Int?            @db.SmallInt
+  estado_nuevo_id                                                       Int?            @db.SmallInt
+  activos                                                               activos         @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios_movimientos_activos_custodio_anterior_idTousuarios           usuarios?       @relation("movimientos_activos_custodio_anterior_idTousuarios", fields: [custodio_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios_movimientos_activos_custodio_nuevo_idTousuarios              usuarios?       @relation("movimientos_activos_custodio_nuevo_idTousuarios", fields: [custodio_nuevo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estados_activo_movimientos_activos_estado_anterior_idToestados_activo estados_activo? @relation("movimientos_activos_estado_anterior_idToestados_activo", fields: [estado_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estados_activo_movimientos_activos_estado_nuevo_idToestados_activo    estados_activo? @relation("movimientos_activos_estado_nuevo_idToestados_activo", fields: [estado_nuevo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estantes_movimientos_activos_estante_anterior_idToestantes            estantes?       @relation("movimientos_activos_estante_anterior_idToestantes", fields: [estante_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estantes_movimientos_activos_estante_nuevo_idToestantes               estantes?       @relation("movimientos_activos_estante_nuevo_idToestantes", fields: [estante_nuevo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  oficinas_movimientos_activos_oficina_anterior_idTooficinas            oficinas?       @relation("movimientos_activos_oficina_anterior_idTooficinas", fields: [oficina_anterior_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  oficinas_movimientos_activos_oficina_nueva_idTooficinas               oficinas?       @relation("movimientos_activos_oficina_nueva_idTooficinas", fields: [oficina_nueva_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([activo_id], map: "idx_movimientos_activo")
 }
