@@ -24,12 +24,10 @@ model activos {
   estados_activo      estados_activo        @relation(fields: [estado_operativo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   estantes            estantes?             @relation(fields: [estante_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   oficinas            oficinas?             @relation(fields: [oficina_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  alertas_sistema     alertas_sistema[]
   bajas_activos       bajas_activos?
   datos_financieros   datos_financieros?
   logs_auditoria      logs_auditoria[]
   logs_depreciacion   logs_depreciacion[]
-  mantenimientos      mantenimientos[]
   movimientos_activos movimientos_activos[]
 
   @@index([custodio_actual_id], map: "idx_activos_custodio")
@@ -37,21 +35,6 @@ model activos {
   @@index([codigo_etiqueta], map: "idx_activos_etiqueta")
   @@index([oficina_id], map: "idx_activos_oficina")
   @@index([especificaciones], map: "idx_activos_specs", type: Gin)
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model alertas_sistema {
-  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  activo_id          String?   @db.Uuid
-  tipo_alerta        String    @db.VarChar(50)
-  mensaje            String
-  fecha_disparo      DateTime  @db.Date
-  leida              Boolean?  @default(false)
-  usuario_destino_id String?   @db.Uuid
-  created_at         DateTime? @default(now()) @db.Timestamptz(6)
-  activos            activos?  @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  usuarios           usuarios? @relation(fields: [usuario_destino_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -204,22 +187,6 @@ model logs_depreciacion {
   @@unique([activo_id, fecha_calculo])
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model mantenimientos {
-  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  activo_id         String    @db.Uuid
-  solicitante_id    String    @db.Uuid
-  tecnico_asignado  String?   @db.VarChar(150)
-  descripcion_falla String
-  costo_reparacion  Decimal?  @default(0.00) @db.Decimal(12, 2)
-  estado_ticket     String?   @default("ABIERTO") @db.VarChar(20)
-  fecha_solicitud   DateTime? @default(now()) @db.Timestamptz(6)
-  fecha_resolucion  DateTime? @db.Timestamptz(6)
-  activos           activos   @relation(fields: [activo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  usuarios          usuarios  @relation(fields: [solicitante_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model movimientos_activos {
   id                                                          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
@@ -337,10 +304,8 @@ model usuarios {
   activo                                                                 Boolean?              @default(true)
   created_at                                                             DateTime?             @default(now()) @db.Timestamptz(6)
   activos                                                                activos[]
-  alertas_sistema                                                        alertas_sistema[]
   bajas_activos                                                          bajas_activos[]
   logs_auditoria                                                         logs_auditoria[]
-  mantenimientos                                                         mantenimientos[]
   movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[] @relation("movimientos_activos_custodio_anterior_idTousuarios")
   movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[] @relation("movimientos_activos_custodio_nuevo_idTousuarios")
   roles_usuario                                                          roles_usuario         @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
