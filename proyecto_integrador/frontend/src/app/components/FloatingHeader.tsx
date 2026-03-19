@@ -1,57 +1,71 @@
-import { motion, AnimatePresence } from 'motion/react';
-import { Search, Bell, X, AlertCircle, CheckCircle, Clock, Sun, Moon } from 'lucide-react';
-import { useState } from 'react';
-import { currentUser } from '../data/userData';
-import { useTheme } from '../contexts/ThemeContext';
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Search,
+  Bell,
+  X,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Sun,
+  Moon,
+  LogOut,
+} from "lucide-react";
+import { useState } from "react";
+import { currentUser } from "../data/userData";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface FloatingHeaderProps {
   onSettingsClick: () => void;
+  onLogout: () => void;
 }
 
 const notifications = [
   {
     id: 1,
-    type: 'warning',
-    title: 'Garantía por Vencer',
-    message: 'MacBook Pro M3 - La garantía vence en 25 días',
-    time: 'Hace 2 horas',
+    type: "warning",
+    title: "Garantía por Vencer",
+    message: "MacBook Pro M3 - La garantía vence en 25 días",
+    time: "Hace 2 horas",
     read: false,
   },
   {
     id: 2,
-    type: 'success',
-    title: 'Auditoría Completada',
-    message: 'Auditoría del Piso 3 completada exitosamente',
-    time: 'Hace 5 horas',
+    type: "success",
+    title: "Auditoría Completada",
+    message: "Auditoría del Piso 3 completada exitosamente",
+    time: "Hace 5 horas",
     read: false,
   },
   {
     id: 3,
-    type: 'info',
-    title: 'Nueva Asignación',
-    message: 'Se asignó iPhone 15 Pro a Ana Gutiérrez',
-    time: 'Hace 1 día',
+    type: "info",
+    title: "Nueva Asignación",
+    message: "Se asignó iPhone 15 Pro a Ana Gutiérrez",
+    time: "Hace 1 día",
     read: true,
   },
   {
     id: 4,
-    type: 'warning',
-    title: 'Activo Dañado Reportado',
-    message: 'Impresora HP LaserJet Pro marcada como dañada',
-    time: 'Hace 2 días',
+    type: "warning",
+    title: "Activo Dañado Reportado",
+    message: "Impresora HP LaserJet Pro marcada como dañada",
+    time: "Hace 2 días",
     read: true,
   },
 ];
 
-export function FloatingHeader({ onSettingsClick }: FloatingHeaderProps) {
+export function FloatingHeader({
+  onSettingsClick,
+  onLogout,
+}: FloatingHeaderProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'warning':
+      case "warning":
         return <AlertCircle className="w-5 h-5 text-amber-600" />;
-      case 'success':
+      case "success":
         return <CheckCircle className="w-5 h-5 text-emerald-600" />;
       default:
         return <Clock className="w-5 h-5 text-blue-600" />;
@@ -60,12 +74,12 @@ export function FloatingHeader({ onSettingsClick }: FloatingHeaderProps) {
 
   const getNotificationBg = (type: string) => {
     switch (type) {
-      case 'warning':
-        return 'bg-amber-50';
-      case 'success':
-        return 'bg-emerald-50';
+      case "warning":
+        return "bg-amber-50";
+      case "success":
+        return "bg-emerald-50";
       default:
-        return 'bg-blue-50';
+        return "bg-blue-50";
     }
   };
 
@@ -124,8 +138,12 @@ export function FloatingHeader({ onSettingsClick }: FloatingHeaderProps) {
               >
                 <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-lg dark:text-white">Notificaciones</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{unreadCount} sin leer</p>
+                    <h3 className="font-bold text-lg dark:text-white">
+                      Notificaciones
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {unreadCount} sin leer
+                    </p>
                   </div>
                   <motion.button
                     whileHover={{ scale: 1.1, rotate: 90 }}
@@ -145,22 +163,32 @@ export function FloatingHeader({ onSettingsClick }: FloatingHeaderProps) {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
                       className={`p-5 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer ${
-                        !notification.read ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''
+                        !notification.read
+                          ? "bg-blue-50/30 dark:bg-blue-900/10"
+                          : ""
                       }`}
                     >
                       <div className="flex gap-4">
-                        <div className={`w-10 h-10 rounded-2xl ${getNotificationBg(notification.type)} flex items-center justify-center flex-shrink-0`}>
+                        <div
+                          className={`w-10 h-10 rounded-2xl ${getNotificationBg(notification.type)} flex items-center justify-center flex-shrink-0`}
+                        >
                           {getNotificationIcon(notification.type)}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-1">
-                            <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{notification.title}</h4>
+                            <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                              {notification.title}
+                            </h4>
                             {!notification.read && (
                               <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-1.5"></span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{notification.message}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500">{notification.time}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">
+                            {notification.time}
+                          </p>
                         </div>
                       </div>
                     </motion.div>
@@ -193,7 +221,21 @@ export function FloatingHeader({ onSettingsClick }: FloatingHeaderProps) {
         onClick={toggleTheme}
         className="w-14 h-14 bg-white dark:bg-[#1a1a1a] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center hover:shadow-lg transition-shadow"
       >
-        {theme === 'dark' ? <Sun className="w-5 h-5 text-gray-300" /> : <Moon className="w-5 h-5 text-gray-700" />}
+        {theme === "dark" ? (
+          <Sun className="w-5 h-5 text-gray-300" />
+        ) : (
+          <Moon className="w-5 h-5 text-gray-700" />
+        )}
+      </motion.button>
+
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onLogout}
+        className="h-14 px-5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:shadow-lg transition-shadow"
+      >
+        <LogOut className="w-5 h-5" />
+        <span className="text-sm font-semibold">Cerrar sesión</span>
       </motion.button>
     </motion.header>
   );
