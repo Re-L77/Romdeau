@@ -16,6 +16,7 @@ import { AccountSettings } from "./components/AccountSettings";
 import { UserDetail } from "./components/UserDetail";
 import { ProveedorDetail } from "./components/ProveedorDetail";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
 
 type ViewType =
   | "login"
@@ -32,8 +33,9 @@ type ViewType =
   | "proveedorDetail"
   | "settings";
 
-export default function App() {
-  const [currentView, setCurrentView] = useState<ViewType>("login");
+function AppContent() {
+  const { isAuthenticated, logout } = useAuth();
+  const [currentView, setCurrentView] = useState<ViewType>("dashboard");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
   const [auditType, setAuditType] = useState<"scheduled" | "completed">(
@@ -50,14 +52,12 @@ export default function App() {
     setCurrentView("dashboard");
   };
 
-  const handleLogout = () => {
-    setCurrentView("login");
-    setSelectedAssetId(null);
-    setSelectedAuditId(null);
-    setSelectedUserId(null);
-    setSelectedProveedorId(null);
-    setShowCreateEditModal(false);
-    setEditingAssetId(null);
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
   };
 
   const handleNavigate = (view: string) => {
@@ -142,7 +142,7 @@ export default function App() {
   };
 
   // View 1: Login Screen
-  if (currentView === "login") {
+  if (!isAuthenticated) {
     return (
       <ThemeProvider>
         <LoginScreen onLogin={handleLogin} />
@@ -254,5 +254,13 @@ export default function App() {
         )}
       </div>
     </ThemeProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

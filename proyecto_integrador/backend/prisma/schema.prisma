@@ -316,3 +316,15 @@ model usuarios {
   movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[] @relation("movimientos_activos_custodio_nuevo_idTousuarios")
   roles_usuario                                                          roles_usuario         @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model notificaciones {
+  id         String   @id
+  usuario_id String
+  tipo       String
+  titulo     String
+  mensaje    String
+  leida      Boolean  @default(false)
+  accion_url String?
+  creado_en  DateTime @default(now())
+}

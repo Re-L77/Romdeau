@@ -1,14 +1,27 @@
-import { motion } from 'motion/react';
-import { Lock, Mail } from 'lucide-react';
+import { motion } from "motion/react";
+import { Lock, Mail, AlertCircle, Loader } from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface LoginScreenProps {
   onLogin: () => void;
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [email, setEmail] = useState("124051537@upq.edu.mx");
+  const [password, setPassword] = useState("");
+  const { login, isLoading, error, clearError } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin();
+    clearError();
+
+    try {
+      await login(email, password);
+      onLogin();
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
   };
 
   return (
@@ -29,8 +42,21 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             >
               Romdeau
             </motion.h1>
-            <p className="text-gray-600 dark:text-gray-400">Enterprise Asset Management</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Enterprise Asset Management
+            </p>
           </div>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3"
+            >
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+            </motion.div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -42,8 +68,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 <input
                   type="email"
                   placeholder="admin@romdeau.com"
-                  className="w-full pl-14 pr-6 py-4 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-gray-900 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  defaultValue="admin@romdeau.com"
+                  className="w-full pl-14 pr-6 py-4 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-gray-900 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  required
                 />
               </div>
             </div>
@@ -57,19 +86,24 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 <input
                   type="password"
                   placeholder="••••••••"
-                  className="w-full pl-14 pr-6 py-4 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-gray-900 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  defaultValue="password"
+                  className="w-full pl-14 pr-6 py-4 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-gray-900 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  required
                 />
               </div>
             </div>
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: isLoading ? 1 : 1.02 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
               type="submit"
-              className="w-full mt-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors shadow-lg"
+              disabled={isLoading}
+              className="w-full mt-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Sign In
+              {isLoading && <Loader className="w-5 h-5 animate-spin" />}
+              {isLoading ? "Signing in..." : "Sign In"}
             </motion.button>
           </form>
 
