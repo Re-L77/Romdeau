@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { Lock, Mail, AlertCircle, Loader } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { getErrorMessage } from "../../utils/errors";
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -10,7 +11,7 @@ interface LoginScreenProps {
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [email, setEmail] = useState("124051537@upq.edu.mx");
   const [password, setPassword] = useState("");
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, isLoading, error, errorType, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +24,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       console.error("Login failed:", err);
     }
   };
+
+  const displayError = error || (errorType ? getErrorMessage(errorType) : null);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black dark:from-black dark:via-gray-950 dark:to-gray-900 flex items-center justify-center p-6">
@@ -47,14 +50,16 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             </p>
           </div>
 
-          {error && (
+          {displayError && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3"
             >
               <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                {displayError}
+              </p>
             </motion.div>
           )}
 

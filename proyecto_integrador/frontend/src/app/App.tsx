@@ -34,7 +34,7 @@ type ViewType =
   | "settings";
 
 function AppContent() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isValidating, logout } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
@@ -59,6 +59,20 @@ function AppContent() {
       console.error("Logout error:", err);
     }
   };
+
+  // Mostrar loading mientras se valida la sesión
+  if (isValidating) {
+    return (
+      <ThemeProvider>
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black dark:from-black dark:via-gray-950 dark:to-gray-900 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white">Cargando sesión...</p>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
 
   const handleNavigate = (view: string) => {
     setCurrentView(view as ViewType);
