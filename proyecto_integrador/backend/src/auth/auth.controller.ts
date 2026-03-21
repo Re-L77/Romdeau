@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Public } from './public/public.decorator';
 
 interface LoginBody {
   email: string;
@@ -27,6 +28,7 @@ interface ChangePasswordBody {
 }
 
 @Controller('api/auth')
+@Public()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

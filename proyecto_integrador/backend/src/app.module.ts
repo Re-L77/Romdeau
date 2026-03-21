@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ActivosModule } from './activos/activos.module';
+import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
 
 function validateEnv(config: Record<string, unknown>) {
   const requiredVars = [
@@ -48,6 +50,12 @@ function validateEnv(config: Record<string, unknown>) {
     ActivosModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: SupabaseAuthGuard,
+    },
+  ],
 })
 export class AppModule {}
