@@ -5,12 +5,16 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   private supabase: ReturnType<typeof createClient>;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
     const supabaseKey = this.configService.get<string>('SUPABASE_ANON_KEY');
 
@@ -27,6 +31,24 @@ export class AuthService {
     });
   }
 
+  private async ensureUserIsActive(authUserId: string) {
+    const usuario = await this.prisma.usuarios.findUnique({
+      where: { id: authUserId },
+      select: {
+        id: true,
+        activo: true,
+      },
+    });
+
+    if (!usuario) {
+      throw new UnauthorizedException('Usuario no autorizado en el sistema.');
+    }
+
+    if (!usuario.activo) {
+      throw new UnauthorizedException('Usuario inactivo. Acceso denegado.');
+    }
+  }
+
   async login(email: string, password: string) {
     const { data, error } = await this.supabase.auth.signInWithPassword({
       email,
@@ -38,6 +60,8 @@ export class AuthService {
         `Credenciales inválidas: ${error.message}`,
       );
     }
+
+    await this.ensureUserIsActive(data.user.id);
 
     return {
       access_token: data.session.access_token,
@@ -104,6 +128,8 @@ export class AuthService {
 
     const { data, error } = await this.supabase.auth.getUser(token);
     if (error) throw new UnauthorizedException('Token inválido o expirado');
+
+    await this.ensureUserIsActive(data.user.id);
 
     return { isValid: true, user: data.user };
   }

@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ActivosModule } from './activos/activos.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
 import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
 
 function validateEnv(config: Record<string, unknown>) {
@@ -48,6 +49,7 @@ function validateEnv(config: Record<string, unknown>) {
     AuthModule,
     PrismaModule,
     ActivosModule,
+    UsuariosModule,
   ],
   controllers: [AppController],
   providers: [
