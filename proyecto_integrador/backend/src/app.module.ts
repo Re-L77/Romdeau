@@ -3,8 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { PrismaService } from './prisma/prisma.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { ActivosModule } from './activos/activos.module';
 
 function validateEnv(config: Record<string, unknown>) {
   const requiredVars = [
@@ -45,8 +45,9 @@ function validateEnv(config: Record<string, unknown>) {
     }),
     AuthModule,
     PrismaModule,
+    ActivosModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService],
 })
 export class AppModule {}
