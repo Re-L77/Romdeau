@@ -1,0 +1,29 @@
+info:
+  name: Logout
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: '{{baseUrl}}/api/auth/logout'
+  auth:
+    type: bearer
+    token: '{{token}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status === 200) {
+          bru.setEnvVar('token', '');
+          bru.setEnvVar('refresh_token', '');
+          console.log('Logout exitoso. Variables token y refresh_token limpias');
+        } else {
+          console.log('Error en logout:', res.status, res.body);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

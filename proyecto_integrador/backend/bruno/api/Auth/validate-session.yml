@@ -1,0 +1,17 @@
+info:
+  name: Validate Session
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: '{{baseUrl}}/api/auth/validate-session'
+  auth:
+    type: bearer
+    token: '{{token}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
