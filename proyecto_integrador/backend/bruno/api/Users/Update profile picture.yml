@@ -1,0 +1,23 @@
+info:
+  name: Update profile picture
+  type: http
+  seq: 3
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/usuarios/{{userId}}/foto-perfil"
+  body:
+    type: json
+    data: |-
+      {
+      "foto_perfil_url": "https://zfhsryawtclfflxlpjxy.supabase.costorage/v1/object/public/pfp/Nyamu.jpeg"
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

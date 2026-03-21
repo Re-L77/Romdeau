@@ -1,9 +1,48 @@
-import { Controller, Get, Param, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
+
+interface CreateUsuarioBody {
+  id: string;
+  nombres: string;
+  apellido_paterno: string;
+  apellido_materno?: string | null;
+  email: string;
+  rol_id?: number;
+  activo?: boolean;
+  foto_perfil_url?: string | null;
+}
+
+interface UpdateUsuarioBody {
+  nombres?: string;
+  apellido_paterno?: string;
+  apellido_materno?: string | null;
+  email?: string;
+  rol_id?: number;
+  activo?: boolean;
+  foto_perfil_url?: string | null;
+}
+
+interface UpdateFotoPerfilBody {
+  foto_perfil_url: string;
+}
 
 @Controller('api/usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
+
+  @Post()
+  create(@Body() body: CreateUsuarioBody) {
+    return this.usuariosService.create(body);
+  }
 
   @Get()
   findAll() {
@@ -13,5 +52,26 @@ export class UsuariosController {
   @Get(':id')
   findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.usuariosService.findOne(id);
+  }
+
+  @Patch(':id/foto-perfil')
+  updateFotoPerfil(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: UpdateFotoPerfilBody,
+  ) {
+    return this.usuariosService.updateFotoPerfil(id, body.foto_perfil_url);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: UpdateUsuarioBody,
+  ) {
+    return this.usuariosService.update(id, body);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.usuariosService.remove(id);
   }
 }
