@@ -18,72 +18,140 @@ function CropModal({
   onCancel: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [scale, setScale] = useState(1);
-  const [dragging, setDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
+  const imgRef    = useRef<HTMLImageElement | null>(null);
   const SIZE = 280;
 
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => {
-      imgRef.current = img;
-      const s = Math.max(SIZE / img.width, SIZE / img.height);
-      setScale(s);
-      setOffset({ x: (SIZE - img.width * s) / 2, y: (SIZE - img.height * s) / 2 });
-    };
-    img.src = src;
-  }, [src]);
+  // Keep offset & scale in a ref for perf-sensitive drag, and state for re-renders only when needed
+  const offsetRef  = useRef({ x: 0, y: 0 });
+  const scaleRef   = useRef(1);
+  const minScale   = useRef(1); // minimum to fill the circle
 
+  const [scale, setScaleState]   = useState(1);
+  const [, forceUpdate]          = useState(0);
+  const dragging                 = useRef(false);
+  const dragStart                = useRef({ mx: 0, my: 0, ox: 0, oy: 0 });
+
+  // ── draw ──────────────────────────────────────────────────────────────────
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    const img = imgRef.current;
+    const img    = imgRef.current;
     if (!canvas || !img) return;
     const ctx = canvas.getContext("2d")!;
+    const { x, y } = offsetRef.current;
+    const s = scaleRef.current;
+
     ctx.clearRect(0, 0, SIZE, SIZE);
-    // Draw the image
-    ctx.drawImage(img, offset.x, offset.y, img.width * scale, img.height * scale);
-    // Draw dark overlay with a hole punched through for the circle (evenodd rule)
+    ctx.drawImage(img, x, y, img.width * s, img.height * s);
+
+    // Dark overlay with circular hole (even-odd)
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.55)";
     ctx.beginPath();
-    ctx.rect(0, 0, SIZE, SIZE);                              // outer rect
-    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2, true); // circle hole (CCW)
+    ctx.rect(0, 0, SIZE, SIZE);
+    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2, true);
     ctx.fill("evenodd");
-    // Draw circle border
+    // Circle border
     ctx.strokeStyle = "rgba(255,255,255,0.8)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
-  }, [offset, scale]);
+  }, []);
 
-  useEffect(() => { draw(); }, [draw]);
+  // ── load image ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      imgRef.current = img;
+      const s = Math.max(SIZE / img.width, SIZE / img.height);
+      minScale.current  = s;
+      scaleRef.current  = s;
+      offsetRef.current = { x: (SIZE - img.width * s) / 2, y: (SIZE - img.height * s) / 2 };
+      setScaleState(s);
+      draw();
+    };
+    img.src = src;
+  }, [src, draw]);
 
+  // re-draw whenever scale state triggers a re-render
+  useEffect(() => { draw(); }, [scale, draw]);
+
+  // ── clamp offset so image always covers the canvas ─────────────────────────
+  const clampOffset = (ox: number, oy: number, s: number) => {
+    const img = imgRef.current;
+    if (!img) return { x: ox, y: oy };
+    const w = img.width * s;
+    const h = img.height * s;
+    return {
+      x: Math.min(0, Math.max(SIZE - w, ox)),
+      y: Math.min(0, Math.max(SIZE - h, oy)),
+    };
+  };
+
+  // ── zoom: keep center of canvas fixed ─────────────────────────────────────
+  const handleZoomChange = (newScale: number) => {
+    const img = imgRef.current;
+    if (!img) return;
+    const prevScale = scaleRef.current;
+    const cx = SIZE / 2;
+    const cy = SIZE / 2;
+    // Point of canvas center in image-space
+    const prevOx = offsetRef.current.x;
+    const prevOy = offsetRef.current.y;
+    // New offset that keeps the center pixel the same
+    const newOx = cx - (cx - prevOx) * (newScale / prevScale);
+    const newOy = cy - (cy - prevOy) * (newScale / prevScale);
+    scaleRef.current  = newScale;
+    offsetRef.current = clampOffset(newOx, newOy, newScale);
+    setScaleState(newScale);
+  };
+
+  // ── drag (mouse) ──────────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent) => {
-    setDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
+    dragging.current = true;
+    dragStart.current = { mx: e.clientX, my: e.clientY, ox: offsetRef.current.x, oy: offsetRef.current.y };
   };
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!dragging) return;
-    setOffset({
-      x: dragStart.current.ox + e.clientX - dragStart.current.x,
-      y: dragStart.current.oy + e.clientY - dragStart.current.y,
-    });
+    if (!dragging.current) return;
+    const raw = {
+      x: dragStart.current.ox + e.clientX - dragStart.current.mx,
+      y: dragStart.current.oy + e.clientY - dragStart.current.my,
+    };
+    offsetRef.current = clampOffset(raw.x, raw.y, scaleRef.current);
+    draw();
   };
-  const handleMouseUp = () => setDragging(false);
+  const handleMouseUp = () => { dragging.current = false; forceUpdate(n => n + 1); };
 
+  // ── drag (touch) ──────────────────────────────────────────────────────────
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    dragging.current = true;
+    dragStart.current = { mx: t.clientX, my: t.clientY, ox: offsetRef.current.x, oy: offsetRef.current.y };
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (!dragging.current) return;
+    const t = e.touches[0];
+    const raw = {
+      x: dragStart.current.ox + t.clientX - dragStart.current.mx,
+      y: dragStart.current.oy + t.clientY - dragStart.current.my,
+    };
+    offsetRef.current = clampOffset(raw.x, raw.y, scaleRef.current);
+    draw();
+  };
+  const handleTouchEnd = () => { dragging.current = false; };
+
+  // ── confirm ───────────────────────────────────────────────────────────────
   const handleConfirm = () => {
-    const canvas = canvasRef.current;
     const img = imgRef.current;
-    if (!canvas || !img) return;
+    if (!img) return;
     const out = document.createElement("canvas");
-    out.width = SIZE;
+    out.width  = SIZE;
     out.height = SIZE;
     const ctx = out.getContext("2d")!;
-    ctx.drawImage(img, offset.x, offset.y, img.width * scale, img.height * scale);
+    const { x, y } = offsetRef.current;
+    ctx.drawImage(img, x, y, img.width * scaleRef.current, img.height * scaleRef.current);
     out.toBlob((blob) => { if (blob) onConfirm(blob); }, "image/jpeg", 0.92);
   };
 
@@ -101,18 +169,21 @@ function CropModal({
             <X className="w-5 h-5 dark:text-white" />
           </button>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Arrastra la imagen para encuadrarla</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Arrastra o pellizca para encuadrar</p>
         <div className="flex justify-center mb-6">
           <div className="rounded-full overflow-hidden" style={{ width: SIZE, height: SIZE }}>
             <canvas
               ref={canvasRef}
               width={SIZE}
               height={SIZE}
-              className="cursor-grab active:cursor-grabbing select-none"
+              className="cursor-grab active:cursor-grabbing select-none touch-none"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             />
           </div>
         </div>
@@ -120,11 +191,11 @@ function CropModal({
           <label className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Zoom</label>
           <input
             type="range"
-            min={0.5}
-            max={4}
-            step={0.05}
+            min={minScale.current}
+            max={minScale.current * 4}
+            step={0.01}
             value={scale}
-            onChange={(e) => setScale(Number(e.target.value))}
+            onChange={(e) => handleZoomChange(Number(e.target.value))}
             className="flex-1 accent-black dark:accent-white"
           />
         </div>
