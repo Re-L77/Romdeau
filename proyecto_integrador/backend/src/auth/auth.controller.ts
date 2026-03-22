@@ -91,10 +91,15 @@ export class AuthController {
 
   @Put('change-password')
   async changePassword(
-    @Body() body: ChangePasswordBody,
+    @Body() body: Partial<ChangePasswordBody>,
     @Headers('authorization') authHeader: string,
   ) {
-    const { currentPassword, newPassword } = body;
+    const { currentPassword, newPassword } = body ?? {};
+    if (!currentPassword || !newPassword) {
+      throw new BadRequestException(
+        'Debes enviar currentPassword y newPassword',
+      );
+    }
     const token = this.extractBearerToken(authHeader);
     return this.authService.changePassword(currentPassword, newPassword, token);
   }

@@ -15,7 +15,10 @@ export function Dashboard() {
         <div className="max-w-[1400px] mx-auto space-y-8">
           <div className="mb-8">
             <h1 className="text-2xl md:text-3xl font-bold mb-2 dark:text-white">
-              Bienvenido, {user?.nombre_completo || "Usuario"}
+              Bienvenido,{" "}
+              {user?.nombre_completo ||
+                [user?.nombres, user?.apellido_paterno].filter(Boolean).join(" ") ||
+                "Usuario"}
             </h1>
           </div>
           <FinancialMetricCards />

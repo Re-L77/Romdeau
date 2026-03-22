@@ -144,6 +144,17 @@ function CropModal({
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// Password requirements regex & helper
+// ────────────────────────────────────────────────────────────────────────────
+const pwdRequirements = [
+  { label: "Mínimo 8 caracteres",            test: (p: string) => p.length >= 8 },
+  { label: "Al menos 1 mayúscula (A-Z)",      test: (p: string) => /[A-Z]/.test(p) },
+  { label: "Al menos 1 minúscula (a-z)",      test: (p: string) => /[a-z]/.test(p) },
+  { label: "Al menos 1 número (0-9)",         test: (p: string) => /\d/.test(p) },
+  { label: "Al menos 1 carácter especial (!@#…)", test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};'":|,.<>\/?`~]/.test(p) },
+];
+
+// ────────────────────────────────────────────────────────────────────────────
 // Change Password Modal
 // ────────────────────────────────────────────────────────────────────────────
 function ChangePasswordModal({ onClose }: { onClose: () => void }) {
@@ -154,11 +165,17 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState(false);
+
+  const reqResults = pwdRequirements.map((r) => r.test(newPassword));
+  const allReqsMet = reqResults.every(Boolean);
 
   const handleSubmit = async () => {
-    if (!currentPassword) { toast.error("Ingresa tu contraseña actual"); return; }
-    if (newPassword.length < 8) { toast.error("La nueva contraseña debe tener al menos 8 caracteres"); return; }
+    setTouched(true);
+    if (!currentPassword.trim()) { toast.error("Ingresa tu contraseña actual"); return; }
+    if (!allReqsMet) { toast.error("La contraseña no cumple los requisitos de seguridad"); return; }
     if (newPassword !== confirm) { toast.error("Las contraseñas no coinciden"); return; }
+    if (newPassword === currentPassword) { toast.error("La nueva contraseña debe ser diferente a la actual"); return; }
     setLoading(true);
     try {
       const accessToken = localStorage.getItem("accessToken");
@@ -205,41 +222,93 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-4">
+          {/* Contraseña actual */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contraseña Actual</label>
             <div className="relative">
-              <input type={showCurrent ? "text" : "password"} value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)} className={inputClass}
-                placeholder="Tu contraseña actual" />
+              <input
+                type={showCurrent ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className={inputClass}
+                placeholder="Ej. MiPass@2024"
+              />
               <button type="button" onClick={() => setShowCurrent(!showCurrent)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 {showCurrent ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
+
+          {/* Nueva contraseña */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva Contraseña</label>
             <div className="relative">
-              <input type={showNew ? "text" : "password"} value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)} className={inputClass}
-                placeholder="Mínimo 8 caracteres" />
+              <input
+                type={showNew ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => { setNewPassword(e.target.value); setTouched(true); }}
+                className={inputClass}
+                placeholder="Ej. NuevaContr@1"
+              />
               <button type="button" onClick={() => setShowNew(!showNew)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+
+            {/* Indicador de requisitos */}
+            {touched && (
+              <motion.ul
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="mt-3 space-y-1 overflow-hidden"
+              >
+                {pwdRequirements.map((req, i) => (
+                  <li key={i} className={`flex items-center gap-2 text-xs transition-colors ${
+                    reqResults[i]
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-gray-400 dark:text-gray-500"
+                  }`}>
+                    <span className={`w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold ${
+                      reqResults[i]
+                        ? "bg-emerald-500 text-white"
+                        : "bg-gray-200 dark:bg-gray-700 text-gray-400"
+                    }`}>
+                      {reqResults[i] ? "✓" : "✗"}
+                    </span>
+                    {req.label}
+                  </li>
+                ))}
+              </motion.ul>
+            )}
           </div>
+
+          {/* Confirmar contraseña */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirmar Contraseña</label>
             <div className="relative">
-              <input type={showConfirm ? "text" : "password"} value={confirm}
-                onChange={(e) => setConfirm(e.target.value)} className={inputClass}
-                placeholder="Repite la contraseña" />
+              <input
+                type={showConfirm ? "text" : "password"}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className={`${inputClass} ${
+                  confirm && confirm !== newPassword
+                    ? "border-red-400 dark:border-red-500"
+                    : confirm && confirm === newPassword
+                    ? "border-emerald-400 dark:border-emerald-500"
+                    : ""
+                }`}
+                placeholder="Repite la contraseña"
+              />
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {confirm && confirm !== newPassword && (
+              <p className="text-xs text-red-500 mt-1 ml-2">Las contraseñas no coinciden</p>
+            )}
           </div>
         </div>
 
@@ -248,10 +317,82 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
             className="flex-1 py-3 rounded-full border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             Cancelar
           </motion.button>
-          <motion.button whileTap={{ scale: 0.97 }} onClick={handleSubmit} disabled={loading}
-            className="flex-1 py-3 rounded-full bg-black dark:bg-white text-white dark:text-black font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleSubmit}
+            disabled={loading}
+            className="flex-1 py-3 rounded-full bg-black dark:bg-white text-white dark:text-black font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {loading ? "Guardando..." : "Actualizar"}
+          </motion.button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Confirm Save Modal
+// ────────────────────────────────────────────────────────────────────────────
+interface ConfirmSavePayload {
+  nombres: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  hasPhoto: boolean;
+}
+function ConfirmSaveModal({
+  payload,
+  onConfirm,
+  onCancel,
+  loading,
+}: {
+  payload: ConfirmSavePayload;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading: boolean;
+}) {
+  const rows: { label: string; value: string }[] = [
+    { label: "Nombres",          value: payload.nombres },
+    { label: "Apellido Paterno", value: payload.apellido_paterno },
+    { label: "Apellido Materno", value: payload.apellido_materno || "—" },
+    ...(payload.hasPhoto ? [{ label: "Foto de perfil", value: "Se subirá una nueva foto" }] : []),
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white dark:bg-[#1a1a1a] rounded-3xl p-8 shadow-2xl max-w-sm w-full mx-4"
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-lg dark:text-white">Confirmar cambios</h3>
+          <button onClick={onCancel} disabled={loading}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50">
+            <X className="w-5 h-5 dark:text-white" />
+          </button>
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+          ¿Confirmas que quieres guardar los siguientes cambios en tu perfil?
+        </p>
+        <ul className="space-y-3 mb-6">
+          {rows.map((r) => (
+            <li key={r.label} className="flex items-start gap-3">
+              <span className="text-xs text-gray-500 dark:text-gray-400 w-36 shrink-0 pt-0.5">{r.label}</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-white break-all">{r.value}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex gap-3">
+          <motion.button whileTap={{ scale: 0.97 }} onClick={onCancel} disabled={loading}
+            className="flex-1 py-3 rounded-full border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50">
+            Cancelar
+          </motion.button>
+          <motion.button whileTap={{ scale: 0.97 }} onClick={onConfirm} disabled={loading}
+            className="flex-1 py-3 rounded-full bg-black dark:bg-white text-white dark:text-black font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {loading ? "Guardando..." : "Confirmar"}
           </motion.button>
         </div>
       </motion.div>
@@ -276,6 +417,8 @@ export function AccountSettings() {
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(user?.foto_perfil_url || "");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  // Modal de confirmación antes de guardar
+  const [confirmPayload, setConfirmPayload] = useState<ConfirmSavePayload | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -306,10 +449,49 @@ export function AccountSettings() {
     setCropSrc(null);
   };
 
-  const handleSave = async () => {
+  // ── Paso 1: Validar y mostrar el modal de confirmación ──
+  const handleRequestSave = () => {
     if (!user?.id) return;
-    if (!settings.nombres.trim()) { toast.error("Nombres es requerido"); return; }
-    if (!settings.apellido_paterno.trim()) { toast.error("Apellido Paterno es requerido"); return; }
+
+    // null-safe .trim()
+    const nombresClean       = (settings.nombres         ?? "").trim();
+    const apPaternoClean     = (settings.apellido_paterno ?? "").trim();
+    const apMaternoClean     = (settings.apellido_materno ?? "").trim();
+
+    if (!nombresClean)                { toast.error("El campo Nombres es requerido");                     return; }
+    if (nombresClean.length < 2)      { toast.error("Nombres debe tener al menos 2 caracteres");           return; }
+    if (nombresClean.length > 100)    { toast.error("Nombres no puede superar 100 caracteres");            return; }
+
+    if (!apPaternoClean)              { toast.error("El Apellido Paterno es requerido");                   return; }
+    if (apPaternoClean.length < 2)    { toast.error("Apellido Paterno debe tener al menos 2 caracteres"); return; }
+    if (apPaternoClean.length > 100)  { toast.error("Apellido Paterno no puede superar 100 caracteres");  return; }
+
+    if (apMaternoClean && apMaternoClean.length > 100) { toast.error("Apellido Materno no puede superar 100 caracteres"); return; }
+
+    // Mostrar modal de confirmación con los valores limpios
+    setConfirmPayload({
+      nombres:          nombresClean,
+      apellido_paterno: apPaternoClean,
+      apellido_materno: apMaternoClean,
+      hasPhoto:         !!selectedPhotoFile,
+    });
+  };
+
+  // ── Paso 2: El usuario confirma → ejecutar el guardado real ──
+  const handleConfirmSave = async () => {
+    if (!user?.id || !confirmPayload) return;
+
+    const { nombres, apellido_paterno, apellido_materno } = confirmPayload;
+
+    const cleanedSettings = {
+      nombres,
+      apellido_paterno,
+      apellido_materno: apellido_materno || null,
+    };
+
+    const nombre_completo = [nombres, apellido_paterno, apellido_materno]
+      .filter(Boolean)
+      .join(" ");
 
     setIsSaving(true);
     try {
@@ -334,9 +516,15 @@ export function AccountSettings() {
         setSelectedPhotoFile(null);
       }
 
-      await apiClient.patch(`/api/usuarios/${user.id}`, settings);
-      updateUser({ ...settings });
+      await apiClient.patch(`/api/usuarios/${user.id}`, cleanedSettings);
+      updateUser({ ...cleanedSettings, nombre_completo });
+      setSettings({
+        nombres,
+        apellido_paterno,
+        apellido_materno,
+      });
 
+      setConfirmPayload(null);
       toast.success("Configuración guardada exitosamente");
     } catch (error: any) {
       console.error(error);
@@ -421,12 +609,14 @@ export function AccountSettings() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nombres <span className="text-red-500">*</span></label>
                     <input type="text" maxLength={100} value={settings.nombres}
                       onChange={(e) => setSettings({ ...settings, nombres: e.target.value })}
+                      placeholder="Ej. Juan Carlos"
                       className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Apellido Paterno <span className="text-red-500">*</span></label>
                     <input type="text" maxLength={100} value={settings.apellido_paterno}
                       onChange={(e) => setSettings({ ...settings, apellido_paterno: e.target.value })}
+                      placeholder="Ej. García"
                       className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all" />
                   </div>
                 </div>
@@ -436,6 +626,7 @@ export function AccountSettings() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Apellido Materno</label>
                     <input type="text" maxLength={100} value={settings.apellido_materno}
                       onChange={(e) => setSettings({ ...settings, apellido_materno: e.target.value })}
+                      placeholder="Ej. López"
                       className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all" />
                   </div>
                   <div>
@@ -494,7 +685,7 @@ export function AccountSettings() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleSave}
+              onClick={handleRequestSave}
               disabled={isSaving}
               className={`w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg ${
                 isSaving ? "opacity-70 cursor-not-allowed" : "hover:bg-gray-900 dark:hover:bg-gray-100"
@@ -506,6 +697,18 @@ export function AccountSettings() {
           </div>
         </div>
       </main>
+
+      {/* Modal de confirmación de guardado */}
+      <AnimatePresence>
+        {confirmPayload && (
+          <ConfirmSaveModal
+            payload={confirmPayload}
+            onConfirm={handleConfirmSave}
+            onCancel={() => setConfirmPayload(null)}
+            loading={isSaving}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

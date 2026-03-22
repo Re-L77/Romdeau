@@ -134,8 +134,37 @@ export class AuthService {
     return { isValid: true, user: data.user };
   }
 
+  /**
+   * Regex para contraseña segura:
+   * - Mínimo 8 caracteres
+   * - Al menos 1 mayúscula
+   * - Al menos 1 minúscula
+   * - Al menos 1 número
+   * - Al menos 1 carácter especial (!@#$%^&*...)
+   */
+  private readonly PASSWORD_REGEX =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]).{8,}$/;
+
+  private validateNewPassword(password: string): void {
+    if (!password || !password.trim()) {
+      throw new BadRequestException('La nueva contraseña no puede estar vacía');
+    }
+    if (!this.PASSWORD_REGEX.test(password)) {
+      throw new BadRequestException(
+        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial',
+      );
+    }
+  }
+
   async changePassword(currentPassword: string, newPassword: string, token: string) {
     if (!token) throw new UnauthorizedException('Token no proporcionado');
+
+    // Validar campos no vacíos
+    if (!currentPassword || !currentPassword.trim()) {
+      throw new BadRequestException('La contraseña actual no puede estar vacía');
+    }
+    this.validateNewPassword(newPassword);
+
     const { user: tokenUser } = await this.verifyToken(token);
 
     // Verify current password by re-authenticating with Supabase

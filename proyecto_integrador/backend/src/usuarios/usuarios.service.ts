@@ -244,6 +244,8 @@ export class UsuariosService {
       const val = body.nombres.trim();
       if (!val)
         throw new BadRequestException('El campo nombres no puede estar vacío');
+      if (val.length < 2)
+        throw new BadRequestException('Nombres debe tener al menos 2 caracteres');
       if (val.length > 100)
         throw new BadRequestException(
           'Nombres no puede superar 100 caracteres',
@@ -255,6 +257,10 @@ export class UsuariosService {
       if (!val)
         throw new BadRequestException(
           'El apellido paterno no puede estar vacío',
+        );
+      if (val.length < 2)
+        throw new BadRequestException(
+          'Apellido paterno debe tener al menos 2 caracteres',
         );
       if (val.length > 100)
         throw new BadRequestException(
