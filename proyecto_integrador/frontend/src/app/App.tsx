@@ -2,7 +2,7 @@ import { useState } from "react";
 import { LoginScreen } from "./components/LoginScreen";
 import { FloatingSidebar } from "./components/FloatingSidebar";
 import { FloatingHeader } from "./components/FloatingHeader";
-import { DashboardFinanciero } from "./components/DashboardFinanciero";
+import { Dashboard } from "./components/Dashboard";
 import { ModuloInventario } from "./components/ModuloInventario";
 import { ModuloAuditorias } from "./components/ModuloAuditorias";
 import { RegistroAuditorias } from "./components/RegistroAuditorias";
@@ -187,8 +187,8 @@ function AppContent() {
           onLogout={handleLogout}
         />
 
-        {/* View 2: Dashboard Financiero */}
-        {currentView === "dashboard" && <DashboardFinanciero />}
+        {/* View 2: Dashboard */}
+        {currentView === "dashboard" && <Dashboard />}
 
         {/* View 3: Módulo de Inventario */}
         {currentView === "inventario" && (

@@ -7,6 +7,7 @@ import {
   ReactNode,
 } from "react";
 import {
+  apiClient,
   authApi,
   LoginResponse,
   ApiError,
@@ -18,6 +19,9 @@ import { ErrorType } from "../utils/errors";
 export interface User {
   id: string;
   email: string;
+  nombres?: string;
+  apellido_paterno?: string;
+  foto_perfil_url?: string;
   [key: string]: any;
 }
 
@@ -143,6 +147,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Verificar que el token sea válido llamando al API
       await authApi.verifyToken(savedAccessToken);
+
+      try {
+        // Refrescar datos de la bd
+        const restoredUser = JSON.parse(savedUser);
+        if (restoredUser?.id) {
+          const userDetails = await apiClient.get(`/api/usuarios/${restoredUser.id}`);
+          if (userDetails) {
+            const updatedUser = { ...restoredUser, ...userDetails };
+            setUser(updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo refrescar el perfil de usuario", err);
+      }
+
       setError(null);
       setErrorType(null);
     } catch (err) {
@@ -173,14 +193,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response: LoginResponse = await authApi.login(email, password);
 
-      setAccessToken(response.access_token);
-      setRefreshToken(response.refresh_token);
-      setUser(response.user);
-
-      // Guardar en localStorage
+      let userInfo = response.user;
+      
       localStorage.setItem("accessToken", response.access_token);
       localStorage.setItem("refreshToken", response.refresh_token);
-      localStorage.setItem("user", JSON.stringify(response.user));
+
+      try {
+        const userDetails = await apiClient.get(`/api/usuarios/${response.user.id}`);
+        if (userDetails) {
+          userInfo = { ...userInfo, ...userDetails };
+        }
+      } catch (err) {
+        console.warn("No se pudo obtener información extendida del usuario", err);
+      }
+
+      setAccessToken(response.access_token);
+      setRefreshToken(response.refresh_token);
+      setUser(userInfo);
+
+      // Guardar en localStorage
+      localStorage.setItem("user", JSON.stringify(userInfo));
 
       // Programar refresh automático
       scheduleTokenRefresh(response.access_token);

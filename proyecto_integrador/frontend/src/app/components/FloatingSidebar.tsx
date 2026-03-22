@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { LayoutDashboard, Package, ClipboardCheck, Building2, Users, Settings, Menu, X, FileText, Bell } from 'lucide-react';
+import { LayoutDashboard, Package, ClipboardCheck, Building2, Users, Settings, Menu, X, FileText, Bell, Boxes } from 'lucide-react';
 import { useState } from 'react';
 
 interface FloatingSidebarProps {
@@ -60,9 +60,14 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
           ${mobileMenuOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'}
           lg:translate-x-0 transition-transform duration-300`}
       >
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-1 dark:text-white">Romdeau</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Asset Management</p>
+        <div className="mb-8 flex items-center gap-3">
+          <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center text-white dark:text-black flex-shrink-0">
+            <Boxes className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold mb-0.5 dark:text-white leading-none">Romdeau</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Asset Management</p>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-2">

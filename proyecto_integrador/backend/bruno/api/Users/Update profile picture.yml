@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-      "foto_perfil_url": "https://zfhsryawtclfflxlpjxy.supabase.costorage/v1/object/public/pfp/Nyamu.jpeg"
+      "foto_perfil_url": "https://zfhsryawtclfflxlpjxy.supabase.co/storage/v1/object/public/pfp/Nyamu.jpeg"
       }
   auth:
     type: bearer

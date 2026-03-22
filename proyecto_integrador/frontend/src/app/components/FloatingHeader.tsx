@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Search,
   Bell,
   X,
   AlertCircle,
@@ -13,6 +12,7 @@ import {
 import { useState } from "react";
 import { currentUser } from "../data/userData";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface FloatingHeaderProps {
   onSettingsClick: () => void;
@@ -84,6 +84,7 @@ export function FloatingHeader({
   };
 
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
 
   return (
     <motion.header
@@ -92,14 +93,7 @@ export function FloatingHeader({
       transition={{ duration: 0.5, delay: 0.1 }}
       className="fixed top-6 left-6 lg:left-80 right-6 z-50 flex items-center gap-4"
     >
-      <div className="flex-1 relative max-lg:ml-16">
-        <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-        <input
-          type="text"
-          placeholder="Search assets, serials, QR..."
-          className="w-full bg-white dark:bg-[#1a1a1a] dark:text-white rounded-full pl-14 pr-6 py-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-gray-100 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-gray-500"
-        />
-      </div>
+      <div className="flex-1" />
 
       <div className="relative max-sm:hidden">
         <motion.button
@@ -210,9 +204,13 @@ export function FloatingHeader({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={onSettingsClick}
-        className={`w-14 h-14 rounded-full bg-gradient-to-br ${currentUser.avatarColor} shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center text-white font-semibold cursor-pointer`}
+        className={`w-14 h-14 rounded-full ${!user?.foto_perfil_url ? 'bg-gradient-to-br ' + currentUser.avatarColor : 'bg-white dark:bg-[#1a1a1a]'} shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center text-white font-semibold cursor-pointer overflow-hidden`}
       >
-        {currentUser.initials}
+        {user?.foto_perfil_url ? (
+          <img src={user.foto_perfil_url} alt="Profile" className="w-full h-full object-cover" />
+        ) : (
+          user?.nombres ? user.nombres.charAt(0).toUpperCase() : currentUser.initials
+        )}
       </motion.div>
 
       <motion.button
