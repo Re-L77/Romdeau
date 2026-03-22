@@ -3,6 +3,7 @@ import { Lock, Mail, AlertCircle, Loader } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getErrorMessage } from "../../../utils/errors";
+import iconSrc from "../../../../assets/icon.png";
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -37,6 +38,14 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       >
         <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_20px_60px_rgb(0,0,0,0.3)] dark:shadow-[0_20px_60px_rgb(0,0,0,0.8)] p-12">
           <div className="text-center mb-10">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="flex items-center justify-center mx-auto mb-6"
+            >
+              <img src={iconSrc} alt="Romdeau Icon" className="w-20 h-20 object-contain dark:invert" />
+            </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}

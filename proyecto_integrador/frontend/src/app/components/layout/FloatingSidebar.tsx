@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
-import { LayoutDashboard, Package, ClipboardCheck, Building2, Users, Settings, Menu, X, FileText, Bell, Boxes } from 'lucide-react';
+import { LayoutDashboard, Package, ClipboardCheck, Building2, Users, Settings, Menu, X, FileText, Bell } from 'lucide-react';
 import { useState } from 'react';
+import iconSrc from '../../../../assets/icon.png';
 
 interface FloatingSidebarProps {
   activeView: string;
@@ -61,8 +62,8 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
           lg:translate-x-0 transition-transform duration-300`}
       >
         <div className="mb-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center text-white dark:text-black flex-shrink-0">
-            <Boxes className="w-6 h-6" />
+          <div className="flex items-center justify-center flex-shrink-0">
+            <img src={iconSrc} alt="Romdeau Icon" className="w-14 h-14 object-contain dark:invert" />
           </div>
           <div>
             <h1 className="text-2xl font-bold mb-0.5 dark:text-white leading-none">Romdeau</h1>
