@@ -24,6 +24,7 @@ interface ResetPasswordBody {
 }
 
 interface ChangePasswordBody {
+  currentPassword: string;
   newPassword: string;
 }
 
@@ -93,9 +94,9 @@ export class AuthController {
     @Body() body: ChangePasswordBody,
     @Headers('authorization') authHeader: string,
   ) {
-    const { newPassword } = body;
+    const { currentPassword, newPassword } = body;
     const token = this.extractBearerToken(authHeader);
-    return this.authService.changePassword(newPassword, token);
+    return this.authService.changePassword(currentPassword, newPassword, token);
   }
 
   @Get('validate-session')

@@ -17,6 +17,7 @@ import { UserDetail } from "./components/users/UserDetail";
 import { ProveedorDetail } from "./components/providers/ProveedorDetail";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { Toaster } from "./components/ui/sonner";
 
 type ViewType =
   | "login"
@@ -168,6 +169,7 @@ function AppContent() {
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] relative transition-colors duration-300">
+        <Toaster richColors position="top-right" />
         <FloatingSidebar
           activeView={
             currentView === "assetDetail"

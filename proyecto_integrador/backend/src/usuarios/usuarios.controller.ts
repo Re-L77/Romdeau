@@ -7,7 +7,10 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UsuariosService } from './usuarios.service';
 
 interface CreateUsuarioBody {
@@ -60,6 +63,15 @@ export class UsuariosController {
     @Body() body: UpdateFotoPerfilBody,
   ) {
     return this.usuariosService.updateFotoPerfil(id, body.foto_perfil_url);
+  }
+
+  @Post(':id/foto-perfil/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadFotoPerfil(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.usuariosService.uploadFotoPerfilToStorage(id, file);
   }
 
   @Patch(':id')

@@ -156,6 +156,17 @@ export const apiClient = {
     return handleResponse(response);
   },
 
+  patch: async <T = any>(path: string, data?: any): Promise<T> => {
+    const response = await fetchWithInterceptor(`${API_BASE_URL}${path}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return handleResponse(response);
+  },
+
   delete: async <T = any>(path: string): Promise<T> => {
     const response = await fetchWithInterceptor(`${API_BASE_URL}${path}`, {
       method: "DELETE",

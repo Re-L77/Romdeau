@@ -2,10 +2,19 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
+import { createClient } from '@supabase/supabase-js';
 import { PrismaService } from '../prisma/prisma.service';
+
+type UploadFile = {
+  mimetype: string;
+  originalname: string;
+  buffer: Buffer;
+};
 
 type CreateUsuarioInput = {
   id: string;
@@ -22,7 +31,6 @@ type UpdateUsuarioInput = {
   nombres?: string;
   apellido_paterno?: string;
   apellido_materno?: string | null;
-  email?: string;
   rol_id?: number;
   activo?: boolean;
   foto_perfil_url?: string | null;
@@ -62,7 +70,21 @@ const usuarioSelect = {
 
 @Injectable()
 export class UsuariosService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly supabase: ReturnType<typeof createClient>;
+  private readonly supabaseUrl: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {
+    this.supabaseUrl = this.config.get<string>('SUPABASE_URL')!;
+    const serviceKey =
+      this.config.get<string>('SUPABASE_SERVICE_KEY') ??
+      this.config.get<string>('SUPABASE_ANON_KEY')!;
+    this.supabase = createClient(this.supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+  }
 
   private formatUsuario({ roles_usuario, ...usuario }: UsuarioConRol) {
     return {
@@ -158,6 +180,41 @@ export class UsuariosService {
     return this.formatUsuario(usuario);
   }
 
+  async uploadFotoPerfilToStorage(id: string, file: UploadFile) {
+    if (!file) {
+      throw new BadRequestException('Debes enviar un archivo');
+    }
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Solo se permiten imágenes JPG, PNG, WEBP o GIF',
+      );
+    }
+
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = `usuarios/${id}/${Date.now()}-${safeName}`;
+
+    const { error } = await this.supabase.storage
+      .from('pfp')
+      .upload(filePath, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+      });
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `No se pudo subir la imagen: ${error.message}`,
+      );
+    }
+
+    const { data: publicUrlData } = this.supabase.storage
+      .from('pfp')
+      .getPublicUrl(filePath);
+
+    return this.updateFotoPerfil(id, publicUrlData.publicUrl);
+  }
+
   async updateFotoPerfil(id: string, fotoPerfilUrl: string) {
     if (!fotoPerfilUrl?.trim()) {
       throw new BadRequestException('Debes enviar foto_perfil_url');
@@ -183,12 +240,23 @@ export class UsuariosService {
   async update(id: string, body: UpdateUsuarioInput) {
     const data: Prisma.usuariosUpdateInput = {};
 
-    if (body.nombres !== undefined) data.nombres = body.nombres.trim();
-    if (body.apellido_paterno !== undefined)
-      data.apellido_paterno = body.apellido_paterno.trim();
-    if (body.apellido_materno !== undefined)
-      data.apellido_materno = body.apellido_materno?.trim() ?? null;
-    if (body.email !== undefined) data.email = body.email.trim().toLowerCase();
+    if (body.nombres !== undefined) {
+      const val = body.nombres.trim();
+      if (!val) throw new BadRequestException('El campo nombres no puede estar vacío');
+      if (val.length > 100) throw new BadRequestException('Nombres no puede superar 100 caracteres');
+      data.nombres = val;
+    }
+    if (body.apellido_paterno !== undefined) {
+      const val = body.apellido_paterno.trim();
+      if (!val) throw new BadRequestException('El apellido paterno no puede estar vacío');
+      if (val.length > 100) throw new BadRequestException('Apellido paterno no puede superar 100 caracteres');
+      data.apellido_paterno = val;
+    }
+    if (body.apellido_materno !== undefined) {
+      const val = body.apellido_materno?.trim() ?? null;
+      if (val && val.length > 100) throw new BadRequestException('Apellido materno no puede superar 100 caracteres');
+      data.apellido_materno = val;
+    }
     if (body.activo !== undefined) data.activo = body.activo;
     if (body.foto_perfil_url !== undefined)
       data.foto_perfil_url = body.foto_perfil_url?.trim() ?? null;

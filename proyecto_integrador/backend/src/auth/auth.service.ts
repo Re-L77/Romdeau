@@ -134,9 +134,22 @@ export class AuthService {
     return { isValid: true, user: data.user };
   }
 
-  async changePassword(newPassword: string, token: string) {
+  async changePassword(currentPassword: string, newPassword: string, token: string) {
     if (!token) throw new UnauthorizedException('Token no proporcionado');
-    await this.verifyToken(token);
+    const { user: tokenUser } = await this.verifyToken(token);
+
+    // Verify current password by re-authenticating with Supabase
+    const email = tokenUser.email;
+    if (!email) throw new UnauthorizedException('No se pudo obtener el email del usuario');
+
+    const { error: signInError } = await this.supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      throw new BadRequestException('La contraseña actual es incorrecta');
+    }
 
     const { error } = await this.supabase.auth.updateUser({
       password: newPassword,
