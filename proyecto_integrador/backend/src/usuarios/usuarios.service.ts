@@ -242,19 +242,32 @@ export class UsuariosService {
 
     if (body.nombres !== undefined) {
       const val = body.nombres.trim();
-      if (!val) throw new BadRequestException('El campo nombres no puede estar vacío');
-      if (val.length > 100) throw new BadRequestException('Nombres no puede superar 100 caracteres');
+      if (!val)
+        throw new BadRequestException('El campo nombres no puede estar vacío');
+      if (val.length > 100)
+        throw new BadRequestException(
+          'Nombres no puede superar 100 caracteres',
+        );
       data.nombres = val;
     }
     if (body.apellido_paterno !== undefined) {
       const val = body.apellido_paterno.trim();
-      if (!val) throw new BadRequestException('El apellido paterno no puede estar vacío');
-      if (val.length > 100) throw new BadRequestException('Apellido paterno no puede superar 100 caracteres');
+      if (!val)
+        throw new BadRequestException(
+          'El apellido paterno no puede estar vacío',
+        );
+      if (val.length > 100)
+        throw new BadRequestException(
+          'Apellido paterno no puede superar 100 caracteres',
+        );
       data.apellido_paterno = val;
     }
     if (body.apellido_materno !== undefined) {
       const val = body.apellido_materno?.trim() ?? null;
-      if (val && val.length > 100) throw new BadRequestException('Apellido materno no puede superar 100 caracteres');
+      if (val && val.length > 100)
+        throw new BadRequestException(
+          'Apellido materno no puede superar 100 caracteres',
+        );
       data.apellido_materno = val;
     }
     if (body.activo !== undefined) data.activo = body.activo;
