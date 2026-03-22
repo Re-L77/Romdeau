@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Calendar, User, CheckCircle2, AlertTriangle, XCircle, Navigation, Filter, Search, Download } from 'lucide-react';
 import { useState } from 'react';
-import { ExportarReporte, ExportFormData } from './ExportarReporte';
+import { ExportarReporte, ExportFormData } from '../reports/ExportarReporte';
 
 const auditLogs = [
   {

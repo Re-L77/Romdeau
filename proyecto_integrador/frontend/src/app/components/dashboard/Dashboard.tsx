@@ -1,9 +1,9 @@
 import { FinancialWidgets } from "./FinancialWidgets";
-import { AuditTimeline } from "./AuditTimeline";
+import { AuditTimeline } from "../audits/AuditTimeline";
 import { ControlCenter } from "./ControlCenter";
 import { FinancialMetricCards } from "./FinancialMetricCards";
-import { RecentAudits } from "./RecentAudits";
-import { useAuth } from "../../contexts/AuthContext";
+import { RecentAudits } from "../audits/RecentAudits";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export function Dashboard() {
   const { user } = useAuth();

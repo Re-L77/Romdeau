@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { User, Mail, Lock, Bell, Globe, Shield, Smartphone, Save } from 'lucide-react';
 import { useState } from 'react';
-import { currentUser } from '../data/userData';
+import { currentUser } from '../../data/userData';
 
 export function AccountSettings() {
   const [settings, setSettings] = useState({

@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { AlertTriangle, Bell, Wrench, TrendingDown, CheckCircle, Clock, XCircle, FileText } from 'lucide-react';
-import { mockDB } from '../data/mockData';
-import { TipoAlerta, EstadoTicket } from '../data/types';
+import { mockDB } from '../../data/mockData';
+import { TipoAlerta, EstadoTicket } from '../../data/types';
 
 // Enriquecer alertas con relaciones
 const alertasEnriquecidas = mockDB.alertasSistema.map(alerta => {

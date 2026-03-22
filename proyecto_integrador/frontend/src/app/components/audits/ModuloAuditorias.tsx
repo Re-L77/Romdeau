@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { Calendar, MapPin, User, CheckCircle2, AlertTriangle, Plus, Navigation, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { CrearAuditoria, AuditFormData } from './CrearAuditoria';
-import { mockDB } from '../data/mockData';
+import { mockDB } from '../../data/mockData';
 
 interface ModuloAuditoriasProps {
   onScheduledAuditClick: (auditId: string) => void;

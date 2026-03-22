@@ -10,9 +10,9 @@ import {
   LogOut,
 } from "lucide-react";
 import { useState } from "react";
-import { currentUser } from "../data/userData";
-import { useTheme } from "../contexts/ThemeContext";
-import { useAuth } from "../../contexts/AuthContext";
+import { currentUser } from "../../data/userData";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../../contexts/AuthContext";
 
 interface FloatingHeaderProps {
   onSettingsClick: () => void;

@@ -1,8 +1,8 @@
 import { motion } from "motion/react";
 import { Lock, Mail, AlertCircle, Loader } from "lucide-react";
 import { useState } from "react";
-import { useAuth } from "../../contexts/AuthContext";
-import { getErrorMessage } from "../../utils/errors";
+import { useAuth } from "../../../contexts/AuthContext";
+import { getErrorMessage } from "../../../utils/errors";
 
 interface LoginScreenProps {
   onLogin: () => void;

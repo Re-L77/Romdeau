@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, MapPin, User, Clock, Package, CheckCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { mockDB } from '../data/mockData';
+import { mockDB } from '../../data/mockData';
 
 interface CrearAuditoriaProps {
   onClose: () => void;

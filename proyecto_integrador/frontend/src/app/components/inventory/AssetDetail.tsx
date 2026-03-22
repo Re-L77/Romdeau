@@ -1,9 +1,9 @@
 import { motion } from 'motion/react';
 import { MapPin, User, Edit3, Printer, Calendar, Package, ArrowLeft, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { ConfirmationModal } from './ConfirmationModal';
-import { mockDB } from '../data/mockData';
-import { EstadoActivo, EstadoAuditoria } from '../data/types';
+import { ConfirmationModal } from '../shared/ConfirmationModal';
+import { mockDB } from '../../data/mockData';
+import { EstadoActivo, EstadoAuditoria } from '../../data/types';
 
 const assetSpecs = [
   { key: 'Processor', value: 'Apple M3 Max', editable: false },

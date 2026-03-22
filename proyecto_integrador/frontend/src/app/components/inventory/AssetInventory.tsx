@@ -1,9 +1,9 @@
 import { motion } from 'motion/react';
 import { QrCode, MapPin, User, ChevronDown, Navigation, Clock, Plus, Trash2, Laptop, Server, Package2, Smartphone, Monitor, Filter, Building2, Edit, ArrowRightLeft, FileText, UserCog, Settings } from 'lucide-react';
 import { useState } from 'react';
-import { ConfirmationModal } from './ConfirmationModal';
-import { mockDB } from '../data/mockData';
-import { EstadoActivo } from '../data/types';
+import { ConfirmationModal } from '../shared/ConfirmationModal';
+import { mockDB } from '../../data/mockData';
+import { EstadoActivo } from '../../data/types';
 
 // Construir activos enriquecidos con relaciones
 const activosEnriquecidos = mockDB.activos.map(activo => {
