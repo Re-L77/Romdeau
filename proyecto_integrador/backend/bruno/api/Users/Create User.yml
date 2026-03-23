@@ -10,10 +10,11 @@ http:
     type: json
     data: |-
       {
-       "email": "juan.empleado@romdeau.com",
-        "nombres": "Juan Pablo",
-        "apellido_paterno": "Gómez",
-        "rol_id": 3 
+        "email": "proxy@romdeau.com",
+        "nombres": "XD ",
+        "apellido_paterno": "pe",
+        "apellido_materno": "ne",
+        "rol_id": 2
       }
   auth:
     type: bearer

@@ -206,14 +206,44 @@ export class UsuariosService {
   async findOne(id: string) {
     const usuario = await this.prisma.usuarios.findUnique({
       where: { id },
-      select: usuarioSelect,
+      select: {
+        ...usuarioSelect,
+        _count: {
+          select: {
+            activos: true,
+            logs_auditoria: true,
+          }
+        },
+        logs_auditoria: {
+          take: 5,
+          orderBy: { fecha_hora: 'desc' },
+          select: {
+            id: true,
+            fecha_hora: true,
+            activo_id: true,
+            activos: { select: { codigo_etiqueta: true } },
+            estados_auditoria: { select: { nombre: true } }
+          }
+        }
+      }
     });
 
     if (!usuario) {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    return this.formatUsuario(usuario);
+    const { _count, logs_auditoria, ...rest } = usuario as any;
+
+    return {
+      ...this.formatUsuario(rest),
+      assets_assigned: _count?.activos || 0,
+      audits_completed: _count?.logs_auditoria || 0,
+      recent_activity: logs_auditoria?.map((log: any) => ({
+        action: `Auditó activo ${log.activos?.codigo_etiqueta || log.activo_id?.substring(0,8)}`,
+        date: log.fecha_hora,
+        type: 'complete'
+      })) || []
+    };
   }
 
   async uploadFotoPerfilToStorage(id: string, file: UploadFile) {
