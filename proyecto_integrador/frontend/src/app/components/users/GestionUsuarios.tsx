@@ -1,88 +1,11 @@
 import { motion } from 'motion/react';
 import { Mail, UserPlus, Shield } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CrearUsuario, UsuarioFormData } from './CrearUsuario';
+import { apiClient } from '../../../services/api';
+import { toast } from 'sonner';
 
-const mockUsuarios = [
-  {
-    id: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890',
-    nombre_completo: 'Carlos Mendoza',
-    email: 'carlos.mendoza@romdeau.com',
-    rol_id: 1,
-    rol: 'ADMIN',
-    rol_descripcion: 'Administrador del Sistema',
-    roleColor: 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white',
-    avatar: 'CM',
-    avatarColor: 'from-blue-400 to-blue-600',
-    activo: true,
-    created_at: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: 'u2b3c4d5-e6f7-8901-bcde-f12345678901',
-    nombre_completo: 'Ana Gutiérrez',
-    email: 'ana.gutierrez@romdeau.com',
-    rol_id: 2,
-    rol: 'AUDITOR',
-    rol_descripcion: 'Auditor de Campo',
-    roleColor: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/30',
-    avatar: 'AG',
-    avatarColor: 'from-purple-400 to-purple-600',
-    activo: true,
-    created_at: '2024-02-10T11:15:00Z',
-  },
-  {
-    id: 'u3c4d5e6-f7g8-9012-cdef-234567890123',
-    nombre_completo: 'Jorge Pérez',
-    email: 'jorge.perez@romdeau.com',
-    rol_id: 2,
-    rol: 'AUDITOR',
-    rol_descripcion: 'Auditor de Campo',
-    roleColor: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/30',
-    avatar: 'JP',
-    avatarColor: 'from-pink-400 to-pink-600',
-    activo: true,
-    created_at: '2024-02-15T16:45:00Z',
-  },
-  {
-    id: 'u4d5e6f7-g8h9-0123-defg-345678901234',
-    nombre_completo: 'María Rodríguez',
-    email: 'maria.rodriguez@romdeau.com',
-    rol_id: 2,
-    rol: 'AUDITOR',
-    rol_descripcion: 'Auditor de Campo',
-    roleColor: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/30',
-    avatar: 'MR',
-    avatarColor: 'from-emerald-400 to-emerald-600',
-    activo: true,
-    created_at: '2024-02-20T09:30:00Z',
-  },
-  {
-    id: 'u5e6f7g8-h9i0-1234-efgh-456789012345',
-    nombre_completo: 'Luis Hernández',
-    email: 'luis.hernandez@romdeau.com',
-    rol_id: 3,
-    rol: 'EMPLEADO',
-    rol_descripcion: 'Empleado General',
-    roleColor: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30',
-    avatar: 'LH',
-    avatarColor: 'from-orange-400 to-orange-600',
-    activo: true,
-    created_at: '2024-03-01T15:20:00Z',
-  },
-  {
-    id: 'u6f7g8h9-i0j1-2345-fghi-567890123456',
-    nombre_completo: 'Patricia Silva',
-    email: 'patricia.silva@romdeau.com',
-    rol_id: 3,
-    rol: 'EMPLEADO',
-    rol_descripcion: 'Empleado General',
-    roleColor: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30',
-    avatar: 'PS',
-    avatarColor: 'from-indigo-400 to-indigo-600',
-    activo: true,
-    created_at: '2024-03-05T10:45:00Z',
-  },
-];
+// No mocks, users fetched from DB.
 
 interface GestionUsuariosProps {
   onUserClick: (userId: string) => void;
@@ -98,10 +21,60 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
     });
   };
 
+  const getRoleDetails = (rol: string) => {
+    switch (rol) {
+      case 'ADMIN': return { descripcion: 'Administrador del Sistema', color: 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white' };
+      case 'AUDITOR': return { descripcion: 'Auditor de Campo', color: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/30' };
+      case 'EMPLEADO':
+      default: return { descripcion: 'Empleado General', color: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30' };
+    }
+  };
+
+  const getAvatarColor = (id: string) => {
+    const colors = [
+      'from-blue-400 to-blue-600',
+      'from-purple-400 to-purple-600',
+      'from-pink-400 to-pink-600',
+      'from-emerald-400 to-emerald-600',
+      'from-orange-400 to-orange-600',
+      'from-indigo-400 to-indigo-600'
+    ];
+    let hash = 0;
+    if (id) {
+      for (let i = 0; i < id.length; i++) hash += id.charCodeAt(i);
+    }
+    return colors[hash % colors.length];
+  };
+
+  const getAvatarInitials = (user: any) => {
+    const n = user.nombres ? user.nombres.charAt(0).toUpperCase() : '';
+    const a = user.apellido_paterno ? user.apellido_paterno.charAt(0).toUpperCase() : '';
+    return n + a || 'U';
+  };
+
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchUsuarios = async () => {
+    try {
+      const data = await apiClient.get('/api/usuarios');
+      setUsuarios(data);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      toast.error('Error al cargar la lista de usuarios');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsuarios();
+  }, []);
+
   const roleStats = {
-    admin: mockUsuarios.filter(u => u.rol_id === 1).length,
-    auditor: mockUsuarios.filter(u => u.rol_id === 2).length,
-    empleado: mockUsuarios.filter(u => u.rol_id === 3).length,
+    admin: usuarios.filter(u => u.rol === 'ADMIN').length,
+    auditor: usuarios.filter(u => u.rol === 'AUDITOR').length,
+    empleado: usuarios.filter(u => u.rol === 'EMPLEADO').length,
   };
 
   const [isCreatingUser, setIsCreatingUser] = useState(false);
@@ -114,46 +87,59 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
     setIsCreatingUser(false);
   };
 
-  const handleSaveUser = (userData: UsuarioFormData) => {
-    console.log('Nuevo usuario creado:', userData);
-    
-    // Generar siglas para el avatar
-    const palabras = userData.nombre_completo.split(' ');
-    const avatar = palabras.length >= 2 
-      ? palabras[0][0] + palabras[1][0] 
-      : userData.nombre_completo.substring(0, 2);
-    
-    // Mapear rol a descripción y color
-    const roleMap = {
-      'ADMIN': {
-        descripcion: 'Administrador del Sistema',
-        color: 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white',
-        avatarColor: 'from-purple-400 to-purple-600'
-      },
-      'AUDITOR': {
-        descripcion: 'Auditor de Campo',
-        color: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/30',
-        avatarColor: 'from-blue-400 to-blue-600'
-      },
-      'GESTOR_ACTIVOS': {
-        descripcion: 'Gestor de Activos',
-        color: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700/30',
-        avatarColor: 'from-emerald-400 to-emerald-600'
-      },
-      'CONSULTOR': {
-        descripcion: 'Consultor',
-        color: 'bg-gray-100 dark:bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700/30',
-        avatarColor: 'from-gray-400 to-gray-600'
+  const handleSaveUser = async (userData: UsuarioFormData) => {
+    let loadingToast: string | number = '';
+    try {
+      loadingToast = toast.loading('Creando usuario en Supabase...');
+      
+      const rolMap: Record<string, number> = {
+        'ADMIN': 1,
+        'AUDITOR': 2,
+        'EMPLEADO': 3,
+      };
+
+      const payload = {
+        nombres: userData.nombres,
+        apellido_paterno: userData.apellido_paterno,
+        apellido_materno: userData.apellido_materno || null,
+        email: userData.email,
+        password: userData.password_temporal || undefined,
+        rol_id: rolMap[userData.rol] || 3,
+        activo: userData.activo
+      };
+
+      const newUser: any = await apiClient.post('/api/usuarios', payload);
+      
+      if (userData.foto_perfil && newUser?.id) {
+        toast.loading('Subiendo fotografía de perfil...', { id: loadingToast });
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', userData.foto_perfil);
+        
+        const token = localStorage.getItem("accessToken");
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        
+        const fotoRes = await fetch(`${apiUrl}/api/usuarios/${newUser.id}/foto-perfil/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formDataUpload
+        });
+
+        if (!fotoRes.ok) {
+          console.warn('Error al subir fotografía, pero el usuario fue creado');
+        }
       }
-    };
-    
-    const rolInfo = roleMap[userData.rol];
-    
-    const password = userData.password_temporal || '(generada automáticamente)';
-    
-    alert(`✅ Usuario creado exitosamente\n\n👤 Nombre: ${userData.nombre_completo}\n📧 Email: ${userData.email}\n📞 Teléfono: ${userData.telefono}\n🏢 Departamento: ${userData.departamento}\n💼 Puesto: ${userData.puesto}\n🛡️ Rol: ${rolInfo.descripcion}\n📍 Campus: ${userData.campus || 'No asignado'}\n🏗️ Edificio: ${userData.edificio || 'No asignado'}\n🔑 Contraseña temporal: ${password}\n📧 Email de bienvenida: ${userData.enviar_email_bienvenida ? 'Sí' : 'No'}\n✅ Permisos: ${userData.permisos.length} permisos asignados\n\nEl usuario ha sido agregado al sistema.`);
-    
-    setIsCreatingUser(false);
+      
+      toast.success(`Usuario ${userData.email} creado exitosamente`, { id: loadingToast });
+      setIsCreatingUser(false);
+      
+      // Volver a cargar la lista de usuarios invocando a la API
+      fetchUsuarios();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al crear el usuario. Verifica los datos.', { id: loadingToast });
+      console.error(error);
+    }
   };
 
   return (
@@ -163,7 +149,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
           <div>
             <h1 className="text-3xl font-bold mb-2 dark:text-white">Gestión de Usuarios</h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Control de acceso basado en roles (RBAC) - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{mockUsuarios.filter(u => u.activo).length} usuarios activos</span>
+              Control de acceso basado en roles (RBAC) - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{usuarios.filter(u => u.activo).length} usuarios activos</span>
             </p>
           </div>
           <motion.button
@@ -178,62 +164,77 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
         </div>
 
         <div className="space-y-3">
-          {mockUsuarios.map((user, index) => (
-            <motion.div
-              key={user.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
-              onClick={() => onUserClick(user.id)}
-              className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all cursor-pointer hover:scale-[1.01]"
-            >
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                <div
-                  className={`w-16 h-16 rounded-full bg-gradient-to-br ${user.avatarColor} flex items-center justify-center text-white text-lg font-semibold shadow-lg flex-shrink-0`}
-                >
-                  {user.avatar}
-                </div>
-
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <h3 className="font-bold text-lg mb-1 dark:text-white">{user.nombre_completo}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Mail className="w-4 h-4" />
-                      <span>{user.email}</span>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : usuarios.map((user, index) => {
+            const roleInfo = getRoleDetails(user.rol);
+            
+            return (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                onClick={() => onUserClick(user.id)}
+                className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all cursor-pointer hover:scale-[1.01]"
+              >
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                  {user.foto_perfil_url ? (
+                    <img 
+                      src={user.foto_perfil_url} 
+                      alt={user.nombre_completo} 
+                      className="w-16 h-16 rounded-full object-cover shadow-lg flex-shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className={`w-16 h-16 rounded-full bg-gradient-to-br ${getAvatarColor(user.id)} flex items-center justify-center text-white text-lg font-semibold shadow-lg flex-shrink-0`}
+                    >
+                      {getAvatarInitials(user)}
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      {user.activo ? (
-                        <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-medium border border-emerald-200 dark:border-emerald-700/30">
-                          Activo
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 rounded-full text-xs font-medium border border-red-200 dark:border-red-700/30">
-                          Inactivo
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  )}
 
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">Rol del Sistema (RBAC)</p>
-                    <div className="flex items-start gap-2">
-                      <Shield className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-1" />
-                      <div>
-                        <span
-                          className={`inline-block px-4 py-2 rounded-full text-sm font-bold border ${user.roleColor}`}
-                        >
-                          {user.rol}
-                        </span>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">{user.rol_descripcion}</p>
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <h3 className="font-bold text-lg mb-1 dark:text-white">{user.nombre_completo}</h3>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Mail className="w-4 h-4" />
+                        <span>{user.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        {user.activo ? (
+                          <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-medium border border-emerald-200 dark:border-emerald-700/30">
+                            Activo
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 rounded-full text-xs font-medium border border-red-200 dark:border-red-700/30">
+                            Inactivo
+                          </span>
+                        )}
                       </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">Fecha de Registro</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{formatDate(user.created_at)}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">UUID: {user.id.substring(0, 8)}...</p>
-                  </div>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">Rol del Sistema (RBAC)</p>
+                      <div className="flex items-start gap-2">
+                        <Shield className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-1" />
+                        <div>
+                          <span
+                            className={`inline-block px-4 py-2 rounded-full text-sm font-bold border ${roleInfo.color}`}
+                          >
+                            {user.rol}
+                          </span>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">{roleInfo.descripcion}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">Fecha de Registro</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{formatDate(user.created_at)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">UUID: {user.id.substring(0, 8)}...</p>
+                    </div>
                 </div>
 
                 <motion.button
@@ -246,7 +247,8 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
                 </motion.button>
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Stats Summary */}

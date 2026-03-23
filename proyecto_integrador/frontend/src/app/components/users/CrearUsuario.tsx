@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, User, Mail, Phone, Building2, Shield, CheckCircle, AlertCircle, Camera, Upload, Key, MapPin } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { X, User, Mail, Shield, CheckCircle, AlertCircle, Camera } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface CrearUsuarioProps {
   onClose: () => void;
@@ -8,26 +8,21 @@ interface CrearUsuarioProps {
 }
 
 export interface UsuarioFormData {
-  nombre_completo: string;
+  nombres: string;
+  apellido_paterno: string;
+  apellido_materno: string;
   email: string;
-  telefono: string;
-  departamento: string;
-  puesto: string;
-  rol: 'ADMIN' | 'AUDITOR' | 'GESTOR_ACTIVOS' | 'CONSULTOR';
-  campus?: string;
-  edificio?: string;
-  permisos: string[];
-  enviar_email_bienvenida: boolean;
+  rol: 'ADMIN' | 'AUDITOR' | 'EMPLEADO';
+  activo: boolean;
   generar_password_temporal: boolean;
   password_temporal?: string;
-  notas?: string;
+  foto_perfil?: File | null;
 }
 
 const rolesOptions = [
   { 
     value: 'ADMIN', 
     label: 'Administrador del Sistema',
-    icon: '👑',
     color: 'from-purple-400 to-purple-600',
     description: 'Acceso total al sistema',
     permisos: [
@@ -44,7 +39,6 @@ const rolesOptions = [
   { 
     value: 'AUDITOR', 
     label: 'Auditor de Campo',
-    icon: '📋',
     color: 'from-blue-400 to-blue-600',
     description: 'Ejecuta auditorías QR',
     permisos: [
@@ -57,67 +51,245 @@ const rolesOptions = [
     ]
   },
   { 
-    value: 'GESTOR_ACTIVOS', 
-    label: 'Gestor de Activos',
-    icon: '📦',
-    color: 'from-emerald-400 to-emerald-600',
-    description: 'Administra inventario',
+    value: 'EMPLEADO', 
+    label: 'Empleado General',
+    color: 'from-blue-400 to-blue-600',
+    description: 'Usuario regular',
     permisos: [
-      'Crear y editar activos',
-      'Gestionar ubicaciones',
-      'Asignar activos a ubicaciones',
-      'Ver garantías',
-      'Exportar reportes de inventario',
-      'Gestionar proveedores'
-    ]
-  },
-  { 
-    value: 'CONSULTOR', 
-    label: 'Consultor',
-    icon: '👁️',
-    color: 'from-gray-400 to-gray-600',
-    description: 'Solo lectura',
-    permisos: [
-      'Ver activos',
-      'Ver auditorías',
-      'Ver reportes',
-      'Exportar datos (solo lectura)'
+      'Ver activos asignados a su persona'
     ]
   }
 ];
 
-const departamentosOptions = [
-  'Tecnología',
-  'Recursos Humanos',
-  'Contabilidad',
-  'Operaciones',
-  'Administración',
-  'Auditoría Interna',
-  'Compras',
-  'Finanzas',
-  'Legal',
-  'Otro'
-];
+// ────────────────────────────────────────────────────────────────────────────
+// Image Crop Modal (canvas-based, no deps)
+// ────────────────────────────────────────────────────────────────────────────
+function CropModal({
+  src,
+  onConfirm,
+  onCancel,
+}: {
+  src: string;
+  onConfirm: (blob: Blob) => void;
+  onCancel: () => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef    = useRef<HTMLImageElement | null>(null);
+  const SIZE = 280;
+
+  // Keep offset & scale in a ref for perf-sensitive drag, and state for re-renders only when needed
+  const offsetRef  = useRef({ x: 0, y: 0 });
+  const scaleRef   = useRef(1);
+  const minScale   = useRef(1); // minimum to fill the circle
+
+  const [scale, setScaleState]   = useState(1);
+  const [, forceUpdate]          = useState(0);
+  const dragging                 = useRef(false);
+  const dragStart                = useRef({ mx: 0, my: 0, ox: 0, oy: 0 });
+
+  // ── draw ──────────────────────────────────────────────────────────────────
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    const img    = imgRef.current;
+    if (!canvas || !img) return;
+    const ctx = canvas.getContext("2d")!;
+    const { x, y } = offsetRef.current;
+    const s = scaleRef.current;
+
+    ctx.clearRect(0, 0, SIZE, SIZE);
+    ctx.drawImage(img, x, y, img.width * s, img.height * s);
+
+    // Dark overlay with circular hole (even-odd)
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.beginPath();
+    ctx.rect(0, 0, SIZE, SIZE);
+    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2, true);
+    ctx.fill("evenodd");
+    // Circle border
+    ctx.strokeStyle = "rgba(255,255,255,0.8)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }, []);
+
+  // ── load image ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      imgRef.current = img;
+      const s = Math.max(SIZE / img.width, SIZE / img.height);
+      minScale.current  = s;
+      scaleRef.current  = s;
+      offsetRef.current = { x: (SIZE - img.width * s) / 2, y: (SIZE - img.height * s) / 2 };
+      setScaleState(s);
+      draw();
+    };
+    img.src = src;
+  }, [src, draw]);
+
+  // re-draw whenever scale state triggers a re-render
+  useEffect(() => { draw(); }, [scale, draw]);
+
+  // ── clamp offset so image always covers the canvas ─────────────────────────
+  const clampOffset = (ox: number, oy: number, s: number) => {
+    const img = imgRef.current;
+    if (!img) return { x: ox, y: oy };
+    const w = img.width * s;
+    const h = img.height * s;
+    return {
+      x: Math.min(0, Math.max(SIZE - w, ox)),
+      y: Math.min(0, Math.max(SIZE - h, oy)),
+    };
+  };
+
+  // ── zoom: keep center of canvas fixed ─────────────────────────────────────
+  const handleZoomChange = (newScale: number) => {
+    const img = imgRef.current;
+    if (!img) return;
+    const prevScale = scaleRef.current;
+    const cx = SIZE / 2;
+    const cy = SIZE / 2;
+    // Point of canvas center in image-space
+    const prevOx = offsetRef.current.x;
+    const prevOy = offsetRef.current.y;
+    // New offset that keeps the center pixel the same
+    const newOx = cx - (cx - prevOx) * (newScale / prevScale);
+    const newOy = cy - (cy - prevOy) * (newScale / prevScale);
+    scaleRef.current  = newScale;
+    offsetRef.current = clampOffset(newOx, newOy, newScale);
+    setScaleState(newScale);
+  };
+
+  // ── drag (mouse) ──────────────────────────────────────────────────────────
+  const handleMouseDown = (e: React.MouseEvent) => {
+    dragging.current = true;
+    dragStart.current = { mx: e.clientX, my: e.clientY, ox: offsetRef.current.x, oy: offsetRef.current.y };
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragging.current) return;
+    const raw = {
+      x: dragStart.current.ox + e.clientX - dragStart.current.mx,
+      y: dragStart.current.oy + e.clientY - dragStart.current.my,
+    };
+    offsetRef.current = clampOffset(raw.x, raw.y, scaleRef.current);
+    draw();
+  };
+  const handleMouseUp = () => { dragging.current = false; forceUpdate(n => n + 1); };
+
+  // ── drag (touch) ──────────────────────────────────────────────────────────
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    dragging.current = true;
+    dragStart.current = { mx: t.clientX, my: t.clientY, ox: offsetRef.current.x, oy: offsetRef.current.y };
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (!dragging.current) return;
+    const t = e.touches[0];
+    const raw = {
+      x: dragStart.current.ox + t.clientX - dragStart.current.mx,
+      y: dragStart.current.oy + t.clientY - dragStart.current.my,
+    };
+    offsetRef.current = clampOffset(raw.x, raw.y, scaleRef.current);
+    draw();
+  };
+  const handleTouchEnd = () => { dragging.current = false; };
+
+  // ── confirm ───────────────────────────────────────────────────────────────
+  const handleConfirm = () => {
+    const img = imgRef.current;
+    if (!img) return;
+    const out = document.createElement("canvas");
+    out.width  = SIZE;
+    out.height = SIZE;
+    const ctx = out.getContext("2d")!;
+    const { x, y } = offsetRef.current;
+    ctx.drawImage(img, x, y, img.width * scaleRef.current, img.height * scaleRef.current);
+    out.toBlob((blob) => { if (blob) onConfirm(blob); }, "image/jpeg", 0.92);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white dark:bg-[#1a1a1a] rounded-3xl p-8 shadow-2xl max-w-sm w-full mx-4"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-lg dark:text-white">Ajustar Foto</h3>
+          <button onClick={onCancel} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <X className="w-5 h-5 dark:text-white" />
+          </button>
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Arrastra o pellizca para encuadrar</p>
+        <div className="flex justify-center mb-6">
+          <div className="rounded-full overflow-hidden" style={{ width: SIZE, height: SIZE }}>
+            <canvas
+              ref={canvasRef}
+              width={SIZE}
+              height={SIZE}
+              className="cursor-grab active:cursor-grabbing select-none touch-none"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 mb-5">
+          <label className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Zoom</label>
+          <input
+            type="range"
+            min={minScale.current}
+            max={minScale.current * 4}
+            step={0.01}
+            value={scale}
+            onChange={(e) => handleZoomChange(Number(e.target.value))}
+            className="flex-1 accent-black dark:accent-white"
+          />
+        </div>
+        <div className="flex gap-3">
+          <motion.button whileTap={{ scale: 0.97 }} onClick={onCancel}
+            className="flex-1 py-3 rounded-full border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            Cancelar
+          </motion.button>
+          <motion.button whileTap={{ scale: 0.97 }} onClick={handleConfirm}
+            className="flex-1 py-3 rounded-full bg-black dark:bg-white text-white dark:text-black font-semibold hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors">
+            Aplicar
+          </motion.button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
   const [formData, setFormData] = useState<UsuarioFormData>({
-    nombre_completo: '',
+    nombres: '',
+    apellido_paterno: '',
+    apellido_materno: '',
     email: '',
-    telefono: '',
-    departamento: '',
-    puesto: '',
-    rol: 'CONSULTOR',
-    campus: '',
-    edificio: '',
-    permisos: rolesOptions[3].permisos, // Permisos de CONSULTOR por defecto
-    enviar_email_bienvenida: true,
+    rol: 'EMPLEADO',
+    activo: true,
     generar_password_temporal: true,
     password_temporal: '',
+    foto_perfil: null,
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(1);
-  const [showPermissions, setShowPermissions] = useState(false);
+  const step2EntryTime = useRef(0);
 
   // Cerrar modal con tecla Escape
   useEffect(() => {
@@ -136,11 +308,6 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
     return emailPattern.test(email);
   };
 
-  const validatePhone = (phone: string) => {
-    const phonePattern = /^\+?52?\s?\d{10}$/;
-    return phonePattern.test(phone.replace(/\s|-/g, ''));
-  };
-
   const generatePassword = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
     let password = '';
@@ -150,31 +317,47 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
     return password;
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCropImageSrc(URL.createObjectURL(file));
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleCropConfirm = (blob: Blob) => {
+    const newFile = new File([blob], 'perfil.jpg', { type: 'image/jpeg' });
+    updateField('foto_perfil', newFile);
+    setPreviewUrl(URL.createObjectURL(blob));
+    setCropImageSrc(null);
+    if (errors.foto_perfil) {
+      setErrors({ ...errors, foto_perfil: '' });
+    }
+  };
+
+  const handleCropCancel = () => {
+    setCropImageSrc(null);
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.nombre_completo.trim()) {
-      newErrors.nombre_completo = 'El nombre completo es obligatorio';
+    if (!formData.nombres.trim() || formData.nombres.trim().length <= 1) {
+      newErrors.nombres = 'El nombre es obligatorio y debe tener más de 1 carácter';
+    }
+
+    if (!formData.apellido_paterno.trim() || formData.apellido_paterno.trim().length <= 1) {
+      newErrors.apellido_paterno = 'El apellido paterno es obligatorio y debe tener más de 1 carácter';
     }
 
     if (!formData.email.trim()) {
       newErrors.email = 'El email es obligatorio';
     } else if (!validateEmail(formData.email)) {
       newErrors.email = 'Email inválido';
-    }
-
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = 'El teléfono es obligatorio';
-    } else if (!validatePhone(formData.telefono)) {
-      newErrors.telefono = 'Teléfono inválido (formato: +52 5512345678 o 5512345678)';
-    }
-
-    if (!formData.departamento) {
-      newErrors.departamento = 'Selecciona un departamento';
-    }
-
-    if (!formData.puesto.trim()) {
-      newErrors.puesto = 'El puesto es obligatorio';
     }
 
     setErrors(newErrors);
@@ -198,11 +381,16 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
 
   const handleNext = () => {
     if (currentStep === 1 && validateStep1()) {
+      step2EntryTime.current = Date.now();
       setCurrentStep(2);
     }
   };
 
-  const handleBack = () => {
+  const handleBack = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setCurrentStep(currentStep - 1);
     setErrors({});
   };
@@ -210,6 +398,19 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevenir el bug de bleed-through donde un doble-clic accidental en "Siguiente" le pega a "Crear Usuario"
+    if (Date.now() - step2EntryTime.current < 500) {
+      return;
+    }
+
+    if (currentStep === 1) {
+      if (validateStep1()) {
+        step2EntryTime.current = Date.now();
+        setCurrentStep(2);
+      }
+      return;
+    }
+
     if (validateStep2()) {
       // Si se debe generar contraseña temporal, generarla ahora
       const finalData = { ...formData };
@@ -227,36 +428,32 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
     }
   };
 
-  const handleRolChange = (rol: 'ADMIN' | 'AUDITOR' | 'GESTOR_ACTIVOS' | 'CONSULTOR') => {
-    const selectedRole = rolesOptions.find(r => r.value === rol);
+  const handleRolChange = (rol: 'ADMIN' | 'AUDITOR' | 'EMPLEADO') => {
     updateField('rol', rol);
-    updateField('permisos', selectedRole?.permisos || []);
   };
 
   const steps = [
     { number: 1, title: 'Datos Personales', icon: User },
-    { number: 2, title: 'Rol y Permisos', icon: Shield },
+    { number: 2, title: 'Rol y Estado', icon: Shield },
   ];
-
-  const selectedRoleData = rolesOptions.find(r => r.value === formData.rol);
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
-        />
-
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
         {/* Modal */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          initial={{ scale: 0.95, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.95, y: 20 }}
+          onMouseDown={(e) => e.stopPropagation()}
           className="relative bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
         >
           {/* Header */}
@@ -337,46 +534,99 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
                   {/* Avatar Placeholder */}
                   <div className="flex justify-center mb-4">
                     <div className="relative">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white">
-                        <User className="w-8 h-8" />
+                      <div 
+                        onClick={handleAvatarClick}
+                        className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white cursor-pointer overflow-hidden border-2 border-white dark:border-gray-800 shadow-md hover:opacity-90 transition-opacity"
+                      >
+                        {previewUrl ? (
+                          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-8 h-8" />
+                        )}
                       </div>
                       <button
                         type="button"
+                        onClick={handleAvatarClick}
                         className="absolute bottom-0 right-0 w-6 h-6 bg-black dark:bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
                       >
                         <Camera className="w-3 h-3 text-white dark:text-black" />
                       </button>
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleFileChange} 
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* Nombre Completo */}
+                    {/* Nombres */}
                     <div className="md:col-span-2">
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                         <User className="w-3 h-3 inline mr-1" />
-                        Nombre Completo *
+                        Nombre(s) *
                       </label>
                       <input
                         type="text"
-                        value={formData.nombre_completo}
-                        onChange={(e) => updateField('nombre_completo', e.target.value)}
-                        placeholder="Ej: Carlos Mendoza García"
+                        value={formData.nombres}
+                        onChange={(e) => updateField('nombres', e.target.value)}
+                        placeholder="Ej: Carlos Eduardo"
                         className={`w-full px-3 py-2 text-sm rounded-xl border ${
-                          errors.nombre_completo 
+                          errors.nombres 
                             ? 'border-red-500 focus:ring-red-500' 
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
                         } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
-                      {errors.nombre_completo && (
+                      {errors.nombres && (
                         <p className="text-red-500 text-[10px] mt-0.5 flex items-center gap-1">
                           <AlertCircle className="w-2.5 h-2.5" />
-                          {errors.nombre_completo}
+                          {errors.nombres}
                         </p>
                       )}
                     </div>
 
-                    {/* Email */}
+                    {/* Apellido Paterno */}
                     <div>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Apellido Paterno *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.apellido_paterno}
+                        onChange={(e) => updateField('apellido_paterno', e.target.value)}
+                        placeholder="Ej: Mendoza"
+                        className={`w-full px-3 py-2 text-sm rounded-xl border ${
+                          errors.apellido_paterno 
+                            ? 'border-red-500 focus:ring-red-500' 
+                            : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
+                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                      />
+                      {errors.apellido_paterno && (
+                        <p className="text-red-500 text-[10px] mt-0.5 flex items-center gap-1">
+                          <AlertCircle className="w-2.5 h-2.5" />
+                          {errors.apellido_paterno}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Apellido Materno */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Apellido Materno (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.apellido_materno}
+                        onChange={(e) => updateField('apellido_materno', e.target.value)}
+                        placeholder="Ej: García"
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div className="md:col-span-2">
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                         <Mail className="w-3 h-3 inline mr-1" />
                         Email Corporativo *
@@ -398,112 +648,6 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
                           {errors.email}
                         </p>
                       )}
-                    </div>
-
-                    {/* Teléfono */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        <Phone className="w-3 h-3 inline mr-1" />
-                        Teléfono *
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.telefono}
-                        onChange={(e) => updateField('telefono', e.target.value)}
-                        placeholder="+52 55 1234 5678"
-                        className={`w-full px-3 py-2 text-sm rounded-xl border ${
-                          errors.telefono 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
-                      />
-                      {errors.telefono && (
-                        <p className="text-red-500 text-[10px] mt-0.5 flex items-center gap-1">
-                          <AlertCircle className="w-2.5 h-2.5" />
-                          {errors.telefono}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Departamento */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        <Building2 className="w-3 h-3 inline mr-1" />
-                        Departamento *
-                      </label>
-                      <select
-                        value={formData.departamento}
-                        onChange={(e) => updateField('departamento', e.target.value)}
-                        className={`w-full px-3 py-2 text-sm rounded-xl border ${
-                          errors.departamento 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
-                      >
-                        <option value="">Selecciona un departamento</option>
-                        {departamentosOptions.map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
-                        ))}
-                      </select>
-                      {errors.departamento && (
-                        <p className="text-red-500 text-[10px] mt-0.5 flex items-center gap-1">
-                          <AlertCircle className="w-2.5 h-2.5" />
-                          {errors.departamento}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Puesto */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Puesto / Cargo *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.puesto}
-                        onChange={(e) => updateField('puesto', e.target.value)}
-                        placeholder="Ej: Gerente de TI"
-                        className={`w-full px-3 py-2 text-sm rounded-xl border ${
-                          errors.puesto 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
-                      />
-                      {errors.puesto && (
-                        <p className="text-red-500 text-[10px] mt-0.5 flex items-center gap-1">
-                          <AlertCircle className="w-2.5 h-2.5" />
-                          {errors.puesto}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Campus (Opcional) */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        <MapPin className="w-3 h-3 inline mr-1" />
-                        Campus (Opcional)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.campus}
-                        onChange={(e) => updateField('campus', e.target.value)}
-                        placeholder="Ej: Campus Central"
-                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
-                      />
-                    </div>
-
-                    {/* Edificio (Opcional) */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Edificio (Opcional)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.edificio}
-                        onChange={(e) => updateField('edificio', e.target.value)}
-                        placeholder="Ej: Edificio Administrativo A"
-                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
-                      />
                     </div>
                   </div>
                 </motion.div>
@@ -537,9 +681,6 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
                             }`}
                           >
                             <div className="flex items-center gap-2">
-                              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${option.color} flex items-center justify-center text-lg`}>
-                                {option.icon}
-                              </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold truncate">{option.label}</p>
                                 <p className={`text-[10px] truncate ${
@@ -566,145 +707,32 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
                     )}
                   </div>
 
-                  {/* Permisos del Rol */}
-                  {selectedRoleData && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                      <button
-                        type="button"
-                        onClick={() => setShowPermissions(!showPermissions)}
-                        className="flex items-center justify-between w-full mb-3"
-                      >
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                          Permisos incluidos ({formData.permisos.length})
-                        </h4>
-                        <motion.div
-                          animate={{ rotate: showPermissions ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                        </motion.div>
-                      </button>
-                      {showPermissions && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          className="space-y-2"
-                        >
-                          {formData.permisos.map((permiso, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                              <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                              <span>{permiso}</span>
-                            </div>
-                          ))}
-                        </motion.div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Configuración de Contraseña */}
-                  <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200 dark:border-blue-700/30">
-                    <h4 className="font-semibold text-blue-900 dark:text-blue-400 mb-3 flex items-center gap-2">
-                      <Key className="w-4 h-4" />
-                      Configuración de Contraseña
-                    </h4>
-                    
-                    {/* Generar contraseña automática */}
-                    <label className="flex items-center justify-between p-3 rounded-xl border-2 border-blue-200 dark:border-blue-700/30 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                          formData.generar_password_temporal 
-                            ? 'bg-black dark:bg-white border-black dark:border-white' 
-                            : 'border-gray-300 dark:border-gray-600'
-                        }`}>
-                          {formData.generar_password_temporal && (
-                            <CheckCircle className="w-4 h-4 text-white dark:text-black" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">Generar contraseña temporal automática</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">El usuario deberá cambiarla en su primer inicio de sesión</p>
-                        </div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={formData.generar_password_temporal}
-                        onChange={(e) => {
-                          updateField('generar_password_temporal', e.target.checked);
-                          if (e.target.checked) {
-                            updateField('password_temporal', '');
-                          }
-                        }}
-                        className="sr-only"
-                      />
-                    </label>
-
-                    {/* Contraseña manual */}
-                    {!formData.generar_password_temporal && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Contraseña Temporal *
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.password_temporal}
-                          onChange={(e) => updateField('password_temporal', e.target.value)}
-                          placeholder="Mínimo 8 caracteres"
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            errors.password_temporal 
-                              ? 'border-red-500 focus:ring-red-500' 
-                              : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
-                        />
-                        {errors.password_temporal && (
-                          <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />
-                            {errors.password_temporal}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Enviar email de bienvenida */}
+                  {/* Configuración de Estado */}
                   <label className="flex items-center justify-between p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
                       <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                        formData.enviar_email_bienvenida 
-                          ? 'bg-black dark:bg-white border-black dark:border-white' 
+                        formData.activo 
+                          ? 'bg-emerald-500 border-emerald-500' 
                           : 'border-gray-300 dark:border-gray-600'
                       }`}>
-                        {formData.enviar_email_bienvenida && (
-                          <CheckCircle className="w-4 h-4 text-white dark:text-black" />
+                        {formData.activo && (
+                          <CheckCircle className="w-4 h-4 text-white" />
                         )}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">Enviar email de bienvenida</p>
+                        <p className="font-medium text-gray-900 dark:text-white">Cuenta Activa</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Incluye credenciales de acceso y enlace de activación
+                          El usuario podrá iniciar sesión inmediatamente
                         </p>
                       </div>
                     </div>
                     <input
                       type="checkbox"
-                      checked={formData.enviar_email_bienvenida}
-                      onChange={(e) => updateField('enviar_email_bienvenida', e.target.checked)}
+                      checked={formData.activo}
+                      onChange={(e) => updateField('activo', e.target.checked)}
                       className="sr-only"
                     />
                   </label>
-
-                  {/* Notas adicionales */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Notas Adicionales
-                    </label>
-                    <textarea
-                      value={formData.notas}
-                      onChange={(e) => updateField('notas', e.target.value)}
-                      placeholder="Información adicional sobre el usuario, accesos especiales, etc..."
-                      rows={3}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
-                    />
-                  </div>
                 </motion.div>
               )}
             </div>
@@ -752,7 +780,18 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
             </div>
           </form>
         </motion.div>
-      </div>
+      </motion.div>
+      
+      {/* Selector de Recorte/Zoom */}
+      <AnimatePresence>
+        {cropImageSrc && (
+          <CropModal
+            src={cropImageSrc}
+            onConfirm={handleCropConfirm}
+            onCancel={handleCropCancel}
+          />
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   );
 }
