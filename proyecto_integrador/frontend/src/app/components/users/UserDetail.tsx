@@ -332,7 +332,53 @@ export function UserDetail({ userId, onBack }: UserDetailProps) {
               </div>
             </motion.div>
 
+            {/* Assigned Assets */}
+            {user.activos && user.activos.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 }}
+                className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8"
+              >
+                <h2 className="text-xl font-bold mb-4 dark:text-white">Activos Asignados</h2>
+                <div className="space-y-3">
+                  {user.activos.map((activo: any, index: number) => (
+                    <motion.div
+                      key={activo.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + index * 0.05 }}
+                      className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          {activo.foto_principal_url ? (
+                            <img src={activo.foto_principal_url} alt={activo.nombre} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-lg">📦</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {activo.nombre || activo.codigo_etiqueta || 'Sin nombre'}
+                          </p>
+                          <p className="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">{activo.codigo_etiqueta}</p>
+                          {activo.categorias?.nombre && (
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{activo.categorias.nombre}</p>
+                          )}
+                        </div>
+                        <span className="flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full border bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600">
+                          {activo.estados_activo?.nombre || 'N/A'}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {/* Actions */}
+
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}

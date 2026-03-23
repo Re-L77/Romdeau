@@ -237,6 +237,18 @@ export class UsuariosService {
             logs_auditoria: true,
           }
         },
+        activos: {
+          take: 10,
+          orderBy: { created_at: 'desc' },
+          select: {
+            id: true,
+            nombre: true,
+            codigo_etiqueta: true,
+            foto_principal_url: true,
+            categorias: { select: { nombre: true } },
+            estados_activo: { select: { nombre: true } },
+          }
+        },
         logs_auditoria: {
           take: 5,
           orderBy: { fecha_hora: 'desc' },
@@ -255,12 +267,13 @@ export class UsuariosService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    const { _count, logs_auditoria, ...rest } = usuario as any;
+    const { _count, logs_auditoria, activos, ...rest } = usuario as any;
 
     return {
       ...this.formatUsuario(rest),
       assets_assigned: _count?.activos || 0,
       audits_completed: _count?.logs_auditoria || 0,
+      activos: activos || [],
       recent_activity: logs_auditoria?.map((log: any) => ({
         action: `Auditó activo ${log.activos?.codigo_etiqueta || log.activo_id?.substring(0,8)}`,
         date: log.fecha_hora,

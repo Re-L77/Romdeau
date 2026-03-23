@@ -10,6 +10,7 @@ datasource db {
 model activos {
   id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   codigo_etiqueta     String?               @unique
+  nombre              String?               @db.VarChar(255)
   categoria_id        String                @db.Uuid
   custodio_actual_id  String?               @db.Uuid
   oficina_id          String?               @db.Uuid
