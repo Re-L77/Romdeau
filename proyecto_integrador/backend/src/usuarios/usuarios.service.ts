@@ -17,11 +17,11 @@ type UploadFile = {
 };
 
 type CreateUsuarioInput = {
-  id: string;
   nombres: string;
   apellido_paterno: string;
   apellido_materno?: string | null;
   email: string;
+  password?: string;
   rol_id?: number;
   activo?: boolean;
   foto_perfil_url?: string | null;
@@ -119,10 +119,6 @@ export class UsuariosService {
   }
 
   async create(body: CreateUsuarioInput) {
-    if (!body?.id?.trim()) {
-      throw new BadRequestException('Debes enviar id');
-    }
-
     if (!body?.nombres?.trim()) {
       throw new BadRequestException('Debes enviar nombres');
     }
@@ -134,21 +130,61 @@ export class UsuariosService {
     if (!body?.email?.trim()) {
       throw new BadRequestException('Debes enviar email');
     }
+    
+    const password = body.password || 'Romdeau2026!';
+
+    const { data: authData, error: authError } = await this.supabase.auth.admin.createUser({
+      email: body.email.trim().toLowerCase(),
+      password,
+      email_confirm: true,
+      user_metadata: {
+        nombres: body.nombres.trim(),
+        apellido_paterno: body.apellido_paterno.trim(),
+        apellido_materno: body.apellido_materno?.trim() ?? null,
+        rol_id: body.rol_id,
+      },
+    });
+
+    if (authError) {
+      // Intenta mapear errores comunes de Supabase
+      if (authError.message.includes('already registered')) {
+        throw new ConflictException('Ese correo ya está registrado en el sistema.');
+      }
+      throw new BadRequestException(`No se pudo crear el usuario en Auth: ${authError.message}`);
+    }
+
+    const { user } = authData;
+    
+    // El trigger postgres (handle_new_user) creará la entrada en `public.usuarios` automáticamente.
+    // Damos un pequeño retraso de red para asegurar que el trigger termine de commitear
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
     try {
-      const usuario = await this.prisma.usuarios.create({
-        data: {
-          id: body.id.trim(),
-          nombres: body.nombres.trim(),
-          apellido_paterno: body.apellido_paterno.trim(),
-          apellido_materno: body.apellido_materno?.trim() ?? null,
-          email: body.email.trim().toLowerCase(),
-          rol_id: body.rol_id,
-          activo: body.activo,
-          foto_perfil_url: body.foto_perfil_url?.trim() ?? null,
-        },
+      // Revisar si necesitamos añadir cosas no contempladas en el trigger (activo, foto_perfil)
+      const updateData: Prisma.usuariosUpdateInput = {};
+      if (body.activo !== undefined) updateData.activo = body.activo;
+      if (body.foto_perfil_url) updateData.foto_perfil_url = body.foto_perfil_url.trim();
+
+      if (Object.keys(updateData).length > 0) {
+        const usuarioUpdated = await this.prisma.usuarios.update({
+          where: { id: user.id },
+          data: updateData,
+          select: usuarioSelect,
+        });
+        return this.formatUsuario(usuarioUpdated);
+      }
+
+      // Si no hubieron más updates de info, solamente lo regresamos
+      const usuario = await this.prisma.usuarios.findUnique({
+        where: { id: user.id },
         select: usuarioSelect,
       });
+
+      if (!usuario) {
+        throw new InternalServerErrorException(
+          'El usuario fue creado en Supabase pero no se encontró en la tabla (¿falló el trigger Postgres?)',
+        );
+      }
 
       return this.formatUsuario(usuario);
     } catch (error) {

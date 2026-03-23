@@ -1,5 +1,5 @@
 info:
-  name: Login
+  name: LoginAdmin
   type: http
   seq: 1
 

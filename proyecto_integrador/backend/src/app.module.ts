@@ -8,6 +8,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ActivosModule } from './activos/activos.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
+import { RolesGuard } from './auth/roles/roles.guard';
 
 function validateEnv(config: Record<string, unknown>) {
   const requiredVars = [
@@ -57,6 +58,10 @@ function validateEnv(config: Record<string, unknown>) {
     {
       provide: APP_GUARD,
       useClass: SupabaseAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })

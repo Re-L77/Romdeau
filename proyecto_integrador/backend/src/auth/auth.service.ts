@@ -37,6 +37,7 @@ export class AuthService {
       select: {
         id: true,
         activo: true,
+        rol_id: true,
       },
     });
 
@@ -47,6 +48,8 @@ export class AuthService {
     if (!usuario.activo) {
       throw new UnauthorizedException('Usuario inactivo. Acceso denegado.');
     }
+
+    return usuario;
   }
 
   async login(email: string, password: string) {
@@ -61,12 +64,12 @@ export class AuthService {
       );
     }
 
-    await this.ensureUserIsActive(data.user.id);
+    const usuario = await this.ensureUserIsActive(data.user.id);
 
     return {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
-      user: data.user,
+      user: { ...data.user, rol_id: usuario.rol_id },
     };
   }
 
@@ -129,9 +132,9 @@ export class AuthService {
     const { data, error } = await this.supabase.auth.getUser(token);
     if (error) throw new UnauthorizedException('Token inválido o expirado');
 
-    await this.ensureUserIsActive(data.user.id);
+    const usuario = await this.ensureUserIsActive(data.user.id);
 
-    return { isValid: true, user: data.user };
+    return { isValid: true, user: { ...data.user, rol_id: usuario.rol_id } };
   }
 
   /**

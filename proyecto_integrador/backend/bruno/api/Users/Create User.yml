@@ -1,0 +1,26 @@
+info:
+  name: Create User
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:3000/api/usuarios
+  body:
+    type: json
+    data: |-
+      {
+       "email": "juan.empleado@romdeau.com",
+        "nombres": "Juan Pablo",
+        "apellido_paterno": "Gómez",
+        "rol_id": 3 
+      }
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -9,16 +9,20 @@ import {
   Post,
   UploadedFile,
   UseInterceptors,
+  Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsuariosService } from './usuarios.service';
+import { Roles } from '../auth/roles/roles.decorator';
+import { Role } from '../auth/roles/roles.enum';
 
 interface CreateUsuarioBody {
-  id: string;
   nombres: string;
   apellido_paterno: string;
   apellido_materno?: string | null;
   email: string;
+  password?: string;
   rol_id?: number;
   activo?: boolean;
   foto_perfil_url?: string | null;
@@ -43,11 +47,13 @@ export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
+  @Roles(Role.ADMIN)
   create(@Body() body: CreateUsuarioBody) {
     return this.usuariosService.create(body);
   }
 
   @Get()
+  @Roles(Role.ADMIN, Role.AUDITOR)
   findAll() {
     return this.usuariosService.findAll();
   }
@@ -78,11 +84,23 @@ export class UsuariosController {
   update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: UpdateUsuarioBody,
+    @Request() req: any,
   ) {
+    const user = req.user;
+    if (user?.rol_id === Role.EMPLEADO) {
+      // Un empleado solo puede editar su propio perfil
+      if (user.id !== id) {
+        throw new ForbiddenException('No tienes permiso para editar a otro usuario.');
+      }
+      // Un empleado no puede cambiar su rol ni estado activo
+      delete body.rol_id;
+      delete body.activo;
+    }
     return this.usuariosService.update(id, body);
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.AUDITOR)
   remove(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.usuariosService.remove(id);
   }

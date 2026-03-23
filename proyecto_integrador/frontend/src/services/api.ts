@@ -99,6 +99,17 @@ export const authApi = {
     return handleResponse(response);
   },
 
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
   refreshToken: async (
     refreshToken: string,
   ): Promise<{ access_token: string; refresh_token: string }> => {
