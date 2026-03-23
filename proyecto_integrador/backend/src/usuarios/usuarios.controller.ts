@@ -26,6 +26,8 @@ interface CreateUsuarioBody {
   rol_id?: number;
   activo?: boolean;
   foto_perfil_url?: string | null;
+  telefono?: string | null;
+  departamento_id?: number | null;
 }
 
 interface UpdateUsuarioBody {
@@ -36,6 +38,8 @@ interface UpdateUsuarioBody {
   rol_id?: number;
   activo?: boolean;
   foto_perfil_url?: string | null;
+  telefono?: string | null;
+  departamento_id?: number | null;
 }
 
 interface UpdateFotoPerfilBody {

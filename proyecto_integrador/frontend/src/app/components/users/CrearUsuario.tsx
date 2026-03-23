@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, User, Mail, Shield, CheckCircle, AlertCircle, Camera } from 'lucide-react';
+import { X, User, Mail, Shield, CheckCircle, AlertCircle, Camera, Building2, Phone } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { apiClient } from '../../../services/api';
 
 interface CrearUsuarioProps {
   onClose: () => void;
@@ -12,6 +13,8 @@ export interface UsuarioFormData {
   apellido_paterno: string;
   apellido_materno: string;
   email: string;
+  telefono?: string;
+  departamento_id?: number;
   rol: 'ADMIN' | 'AUDITOR' | 'EMPLEADO';
   activo: boolean;
   generar_password_temporal: boolean;
@@ -276,12 +279,22 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
     apellido_paterno: '',
     apellido_materno: '',
     email: '',
+    telefono: '',
+    departamento_id: undefined,
     rol: 'EMPLEADO',
     activo: true,
     generar_password_temporal: true,
     password_temporal: '',
     foto_perfil: null,
   });
+
+  const [departamentos, setDepartamentos] = useState<{ id: number; nombre: string }[]>([]);
+
+  useEffect(() => {
+    apiClient.get('/api/departamentos').then((data: any) => {
+      setDepartamentos(data);
+    }).catch(console.error);
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -358,6 +371,10 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
       newErrors.email = 'El email es obligatorio';
     } else if (!validateEmail(formData.email)) {
       newErrors.email = 'Email inválido';
+    }
+
+    if (!formData.departamento_id) {
+      newErrors.departamento_id = 'El departamento es obligatorio';
     }
 
     setErrors(newErrors);
@@ -646,6 +663,49 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
                         <p className="text-red-500 text-[10px] mt-0.5 flex items-center gap-1">
                           <AlertCircle className="w-2.5 h-2.5" />
                           {errors.email}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Teléfono (Opcional) */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <Phone className="w-3 h-3 inline mr-1" />
+                        Teléfono Móvil (Opcional)
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.telefono || ''}
+                        onChange={(e) => updateField('telefono', e.target.value)}
+                        placeholder="Ej: 5544332211"
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent"
+                      />
+                    </div>
+
+                    {/* Departamento (*) */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <Building2 className="w-3 h-3 inline mr-1" />
+                        Departamento *
+                      </label>
+                      <select
+                        value={formData.departamento_id || ''}
+                        onChange={(e) => updateField('departamento_id', Number(e.target.value))}
+                        className={`w-full px-3 py-2 text-sm rounded-xl border ${
+                          errors.departamento_id 
+                            ? 'border-red-500 focus:ring-red-500' 
+                            : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
+                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent appearance-none`}
+                      >
+                        <option value="" disabled>Selecciona un departamento</option>
+                        {departamentos.map(d => (
+                          <option key={d.id} value={d.id}>{d.nombre}</option>
+                        ))}
+                      </select>
+                      {errors.departamento_id && (
+                        <p className="text-red-500 text-[10px] mt-0.5 flex items-center gap-1">
+                          <AlertCircle className="w-2.5 h-2.5" />
+                          {errors.departamento_id}
                         </p>
                       )}
                     </div>

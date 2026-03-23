@@ -11,7 +11,7 @@ export function Dashboard() {
   return (
     <>
       <AuditTimeline />
-      <main className="px-6 lg:pl-80 xl:pr-[440px] pt-24 lg:pt-12 pb-12">
+      <main className="px-6 lg:pl-80 xl:pr-[440px] pt-6 lg:pt-8 pb-12">
         <div className="max-w-[1400px] mx-auto space-y-8">
           <div className="mb-8">
             <h1 className="text-2xl md:text-3xl font-bold mb-2 dark:text-white">

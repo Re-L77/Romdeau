@@ -71,7 +71,7 @@ export function AlertasMantenimiento() {
   };
 
   return (
-    <main className="pl-6 lg:pl-80 pt-24 pb-12 px-6 pr-6 lg:pr-12">
+    <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
       <div className="max-w-[1400px] mx-auto">
         <div className="space-y-6">
           {/* Header */}

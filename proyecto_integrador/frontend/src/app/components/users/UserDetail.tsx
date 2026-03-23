@@ -80,7 +80,7 @@ export function UserDetail({ userId, onBack }: UserDetailProps) {
 
   if (isLoading) {
     return (
-      <main className="pl-6 lg:pl-80 pt-24 pb-12 px-6 pr-6 lg:pr-12 flex justify-center items-center min-h-[60vh]">
+      <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12 flex justify-center items-center min-h-[60vh]">
         <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
       </main>
     );
@@ -88,7 +88,7 @@ export function UserDetail({ userId, onBack }: UserDetailProps) {
 
   if (error || !user) {
     return (
-      <main className="pl-6 lg:pl-80 pt-24 pb-12 px-6 pr-6 lg:pr-12">
+      <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
         <div className="max-w-[1400px] mx-auto">
           <motion.button
             whileHover={{ scale: 1.05, x: -4 }}
@@ -136,7 +136,7 @@ export function UserDetail({ userId, onBack }: UserDetailProps) {
   };
 
   return (
-    <main className="pl-6 lg:pl-80 pt-24 pb-12 px-6 pr-6 lg:pr-12">
+    <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
       <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -215,12 +215,12 @@ export function UserDetail({ userId, onBack }: UserDetailProps) {
 
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-500 mb-2">Departamento</p>
-                  <p className="text-gray-900 dark:text-white font-medium">General</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{user.departamento || 'General'}</p>
                 </div>
 
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-500 mb-2">Teléfono</p>
-                  <p className="text-gray-900 dark:text-white font-medium">No registrado</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{user.telefono || 'No registrado'}</p>
                 </div>
 
                 <div>

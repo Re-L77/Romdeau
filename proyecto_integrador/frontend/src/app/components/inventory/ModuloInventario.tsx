@@ -7,7 +7,7 @@ interface ModuloInventarioProps {
 
 export function ModuloInventario({ onAssetClick, onCreateAsset }: ModuloInventarioProps) {
   return (
-    <main className="px-6 lg:pl-80 pt-24 pb-12 pr-6 lg:pr-12">
+    <main className="px-6 lg:pl-80 pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12">
       <div className="max-w-[1400px] mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 dark:text-white">Módulo de Inventario</h1>

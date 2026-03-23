@@ -25,6 +25,8 @@ type CreateUsuarioInput = {
   rol_id?: number;
   activo?: boolean;
   foto_perfil_url?: string | null;
+  telefono?: string | null;
+  departamento_id?: number | null;
 };
 
 type UpdateUsuarioInput = {
@@ -34,6 +36,8 @@ type UpdateUsuarioInput = {
   rol_id?: number;
   activo?: boolean;
   foto_perfil_url?: string | null;
+  telefono?: string | null;
+  departamento_id?: number | null;
 };
 
 type UsuarioConRol = {
@@ -45,10 +49,14 @@ type UsuarioConRol = {
   email: string;
   activo: boolean | null;
   foto_perfil_url: string | null;
+  telefono: string | null;
   created_at: Date | null;
   roles_usuario: {
     nombre: string;
   };
+  departamentos: {
+    nombre: string;
+  } | null;
 };
 
 const usuarioSelect = {
@@ -60,8 +68,14 @@ const usuarioSelect = {
   email: true,
   activo: true,
   foto_perfil_url: true,
+  telefono: true,
   created_at: true,
   roles_usuario: {
+    select: {
+      nombre: true,
+    },
+  },
+  departamentos: {
     select: {
       nombre: true,
     },
@@ -86,10 +100,11 @@ export class UsuariosService {
     });
   }
 
-  private formatUsuario({ roles_usuario, ...usuario }: UsuarioConRol) {
+  private formatUsuario({ roles_usuario, departamentos, ...usuario }: UsuarioConRol) {
     return {
       ...usuario,
       rol: roles_usuario.nombre,
+      departamento: departamentos?.nombre || 'General'
     };
   }
 
@@ -164,6 +179,14 @@ export class UsuariosService {
       const updateData: Prisma.usuariosUpdateInput = {};
       if (body.activo !== undefined) updateData.activo = body.activo;
       if (body.foto_perfil_url) updateData.foto_perfil_url = body.foto_perfil_url.trim();
+      if (body.telefono !== undefined) updateData.telefono = body.telefono?.trim() ?? null;
+      if (body.departamento_id !== undefined) {
+        if (body.departamento_id === null) {
+          updateData.departamentos = { disconnect: true };
+        } else {
+          updateData.departamentos = { connect: { id: body.departamento_id } };
+        }
+      }
 
       if (Object.keys(updateData).length > 0) {
         const usuarioUpdated = await this.prisma.usuarios.update({
@@ -345,6 +368,15 @@ export class UsuariosService {
     if (body.activo !== undefined) data.activo = body.activo;
     if (body.foto_perfil_url !== undefined)
       data.foto_perfil_url = body.foto_perfil_url?.trim() ?? null;
+    if (body.telefono !== undefined)
+      data.telefono = body.telefono?.trim() ?? null;
+    if (body.departamento_id !== undefined) {
+      if (body.departamento_id === null) {
+        data.departamentos = { disconnect: true };
+      } else {
+        data.departamentos = { connect: { id: body.departamento_id } };
+      }
+    }
     if (body.rol_id !== undefined) {
       data.roles_usuario = {
         connect: {

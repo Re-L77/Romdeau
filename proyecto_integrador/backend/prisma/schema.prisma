@@ -309,10 +309,13 @@ model usuarios {
   rol_id                                                                 Int                   @default(3) @db.SmallInt
   activo                                                                 Boolean?              @default(true)
   foto_perfil_url                                                        String?               @db.VarChar(500)
+  telefono                                                               String?               @db.VarChar(20)
+  departamento_id                                                        Int?                  @db.SmallInt
   created_at                                                             DateTime?             @default(now()) @db.Timestamptz(6)
   activos                                                                activos[]
   bajas_activos                                                          bajas_activos[]
   logs_auditoria                                                         logs_auditoria[]
+  departamentos                                                          departamentos?        @relation(fields: [departamento_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[] @relation("movimientos_activos_custodio_anterior_idTousuarios")
   movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[] @relation("movimientos_activos_custodio_nuevo_idTousuarios")
   roles_usuario                                                          roles_usuario         @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -328,4 +331,12 @@ model notificaciones {
   leida      Boolean  @default(false)
   accion_url String?
   creado_en  DateTime @default(now())
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model departamentos {
+  id          Int        @id @default(autoincrement()) @db.SmallInt
+  nombre      String     @unique @db.VarChar(100)
+  descripcion String?
+  usuarios    usuarios[]
 }

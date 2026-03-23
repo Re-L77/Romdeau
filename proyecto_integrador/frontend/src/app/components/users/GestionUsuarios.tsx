@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Mail, UserPlus, Shield } from 'lucide-react';
+import { Mail, UserPlus, Shield, Filter, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { CrearUsuario, UsuarioFormData } from './CrearUsuario';
 import { apiClient } from '../../../services/api';
@@ -53,22 +53,27 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
   };
 
   const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [departamentos, setDepartamentos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUsuarios = async () => {
+  const fetchData = async () => {
     try {
-      const data = await apiClient.get('/api/usuarios');
-      setUsuarios(data);
+      const [usersData, deptData] = await Promise.all([
+        apiClient.get('/api/usuarios'),
+        apiClient.get('/api/departamentos')
+      ]);
+      setUsuarios(usersData);
+      setDepartamentos(deptData);
     } catch (err) {
-      console.error('Error fetching users:', err);
-      toast.error('Error al cargar la lista de usuarios');
+      console.error('Error fetching data:', err);
+      toast.error('Error al cargar la información');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsuarios();
+    fetchData();
   }, []);
 
   const roleStats = {
@@ -76,6 +81,20 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
     auditor: usuarios.filter(u => u.rol === 'AUDITOR').length,
     empleado: usuarios.filter(u => u.rol === 'EMPLEADO').length,
   };
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [deptFilter, setDeptFilter] = useState('all');
+
+  const filteredUsuarios = usuarios.filter(u => {
+    if (searchTerm && !u.nombre_completo.toLowerCase().includes(searchTerm.toLowerCase()) && !u.email.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (roleFilter !== 'all' && u.rol !== roleFilter) return false;
+    if (statusFilter === 'active' && !u.activo) return false;
+    if (statusFilter === 'inactive' && u.activo) return false;
+    if (deptFilter !== 'all' && u.departamento !== deptFilter) return false;
+    return true;
+  });
 
   const [isCreatingUser, setIsCreatingUser] = useState(false);
 
@@ -135,7 +154,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
       setIsCreatingUser(false);
       
       // Volver a cargar la lista de usuarios invocando a la API
-      fetchUsuarios();
+      fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Error al crear el usuario. Verifica los datos.', { id: loadingToast });
       console.error(error);
@@ -143,32 +162,86 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
   };
 
   return (
-    <main className="pl-6 lg:pl-80 pt-24 pb-12 px-6 pr-6 lg:pr-12">
+    <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
       <div className="max-w-[1400px] mx-auto">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 dark:text-white">Gestión de Usuarios</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Control de acceso basado en roles (RBAC) - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{usuarios.filter(u => u.activo).length} usuarios activos</span>
-            </p>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
-            onClick={handleOpenCreateUser}
-          >
-            <UserPlus className="w-4 h-4" />
-            Invitar Nuevo Usuario
-          </motion.button>
+        <div className="mb-8 mt-6">
+          <h1 className="text-3xl font-bold mb-2 dark:text-white">Gestión de Usuarios</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Control de acceso basado en roles (RBAC) - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{filteredUsuarios.filter(u => u.activo).length} de {usuarios.length} usuarios</span>
+          </p>
         </div>
+
+        {/* Filtros y Acción Principal */}
+        <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8 mb-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <h2 className="text-xl font-bold dark:text-white">Búsqueda y Filtros</h2>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+              onClick={handleOpenCreateUser}
+            >
+              <UserPlus className="w-4 h-4" />
+              Invitar Usuario
+            </motion.button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nombre o correo..."
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+              />
+            </div>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+            >
+              <option value="all">Todos los Roles</option>
+              <option value="ADMIN">Administradores</option>
+              <option value="AUDITOR">Auditores</option>
+              <option value="EMPLEADO">Empleados</option>
+            </select>
+            <select
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+              className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+            >
+              <option value="all">Todos los Deptos.</option>
+              {departamentos.map((dept: any) => (
+                <option key={dept.id} value={dept.nombre}>{dept.nombre}</option>
+              ))}
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+            >
+              <option value="all">Todos los Estados</option>
+              <option value="active">Solo Activos</option>
+              <option value="inactive">Solo Inactivos</option>
+            </select>
+          </div>
+        </motion.div>
 
         <div className="space-y-3">
           {isLoading ? (
             <div className="flex justify-center py-12">
               <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
-          ) : usuarios.map((user, index) => {
+          ) : filteredUsuarios.map((user, index) => {
             const roleInfo = getRoleDetails(user.rol);
             
             return (
