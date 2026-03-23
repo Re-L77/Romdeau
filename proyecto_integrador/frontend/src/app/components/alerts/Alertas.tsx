@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
-import { AlertTriangle, Bell, Wrench, TrendingDown, CheckCircle, Clock, XCircle, FileText } from 'lucide-react';
+import { AlertTriangle, Bell, TrendingDown, CheckCircle, Clock, Wrench } from 'lucide-react';
 import { mockDB } from '../../data/mockData';
-import { TipoAlerta, EstadoTicket } from '../../data/types';
+import { TipoAlerta } from '../../data/types';
 
 // Enriquecer alertas con relaciones
 const alertasEnriquecidas = mockDB.alertasSistema.map(alerta => {
@@ -15,23 +15,10 @@ const alertasEnriquecidas = mockDB.alertasSistema.map(alerta => {
   };
 });
 
-// Enriquecer mantenimientos con relaciones
-const mantenimientosEnriquecidos = mockDB.mantenimientos.map(mant => {
-  const activo = mockDB.activos.find(a => a.id === mant.activo_id);
-  const solicitante = mockDB.usuarios.find(u => u.id === mant.solicitante_id);
-  
-  return {
-    ...mant,
-    activo,
-    solicitante,
-  };
-});
 
-export function AlertasMantenimiento() {
+
+export function Alertas() {
   const alertasNoLeidas = alertasEnriquecidas.filter(a => !a.leida);
-  const mantenimientosPendientes = mantenimientosEnriquecidos.filter(
-    m => m.estado_ticket === EstadoTicket.ABIERTO || m.estado_ticket === EstadoTicket.EN_PROGRESO
-  );
 
   const getAlertIcon = (tipo: TipoAlerta) => {
     switch (tipo) {
@@ -46,20 +33,6 @@ export function AlertasMantenimiento() {
     }
   };
 
-  const getEstadoTicketColor = (estado: EstadoTicket) => {
-    switch (estado) {
-      case EstadoTicket.ABIERTO:
-        return 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-700/30';
-      case EstadoTicket.EN_PROGRESO:
-        return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30';
-      case EstadoTicket.RESUELTO:
-        return 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/30';
-      case EstadoTicket.CANCELADO:
-        return 'bg-gray-100 dark:bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700/30';
-      default:
-        return 'bg-gray-100 dark:bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700/30';
-    }
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -75,14 +48,14 @@ export function AlertasMantenimiento() {
       <div className="max-w-[1400px] mx-auto">
         <div className="space-y-6">
           {/* Header */}
-          <div>
-            <h2 className="text-2xl font-bold mb-1 dark:text-white">Alertas y Mantenimiento</h2>
+          <div className="mb-8 mt-6">
+            <h1 className="text-3xl font-bold mb-2 dark:text-white">Alertas del Sistema</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Monitoreo de garantías, mantenimiento preventivo y estado de activos
+              Monitoreo del estatus y ciclo de vida de los activos
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* Alertas del Sistema */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -154,93 +127,7 @@ export function AlertasMantenimiento() {
               </div>
             </motion.div>
 
-            {/* Órdenes de Mantenimiento */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center">
-                    <Wrench className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white">Mantenimiento</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">
-                      {mantenimientosPendientes.length} tickets pendientes
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="space-y-3">
-                {mantenimientosEnriquecidos.length === 0 ? (
-                  <div className="text-center py-8">
-                    <CheckCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-400 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-500">
-                      No hay órdenes de mantenimiento
-                    </p>
-                  </div>
-                ) : (
-                  mantenimientosEnriquecidos.map((mant, index) => (
-                    <motion.div
-                      key={mant.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-medium border ${getEstadoTicketColor(
-                                mant.estado_ticket
-                              )}`}
-                            >
-                              {mant.estado_ticket.replace(/_/g, ' ')}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-500">
-                              {formatDate(mant.fecha_solicitud)}
-                            </span>
-                          </div>
-                          {mant.activo && (
-                            <div className="mb-2">
-                              <span className="text-xs px-3 py-1 bg-white dark:bg-gray-900 rounded-full border border-gray-200 dark:border-gray-700 font-mono">
-                                {mant.activo.codigo_etiqueta}
-                              </span>
-                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                {mant.activo.nombre}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                        {mant.descripcion_falla}
-                      </p>
-
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                          <span className="text-xs text-gray-600 dark:text-gray-400">
-                            {mant.tecnico_asignado || 'Sin técnico asignado'}
-                          </span>
-                        </div>
-                        <div className="text-xs font-bold text-gray-900 dark:text-white">
-                          ${mant.costo_reparacion.toLocaleString('es-MX', {
-                            minimumFractionDigits: 2,
-                          })}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-            </motion.div>
           </div>
 
           {/* Estadísticas de Depreciación */}

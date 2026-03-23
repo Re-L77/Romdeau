@@ -6,7 +6,7 @@ import { Dashboard } from "./components/dashboard/Dashboard";
 import { ModuloInventario } from "./components/inventory/ModuloInventario";
 import { ModuloAuditorias } from "./components/audits/ModuloAuditorias";
 import { RegistroAuditorias } from "./components/audits/RegistroAuditorias";
-import { AlertasMantenimiento } from "./components/alerts/AlertasMantenimiento";
+import { Alertas } from "./components/alerts/Alertas";
 import { DirectorioProveedores } from "./components/providers/DirectorioProveedores";
 import { GestionUsuarios } from "./components/users/GestionUsuarios";
 import { AssetDetail } from "./components/inventory/AssetDetail";
@@ -213,8 +213,8 @@ function AppContent() {
           <RegistroAuditorias onAuditClick={handleAuditClick} />
         )}
 
-        {/* View 5.5: Alertas y Mantenimiento */}
-        {currentView === "alertas" && <AlertasMantenimiento />}
+        {/* View 5.5: Alertas */}
+        {currentView === "alertas" && <Alertas />}
 
         {/* View 6: Directorio de Proveedores */}
         {currentView === "proveedores" && (

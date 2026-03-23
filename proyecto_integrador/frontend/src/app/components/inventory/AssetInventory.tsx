@@ -173,31 +173,29 @@ export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryPr
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold mb-1 dark:text-white">Inventario de Activos Fijos</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Trazabilidad con PostGIS - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{filteredAssets.length} de {activosEnriquecidos.length} activos</span>
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold mb-1 dark:text-white">Inventario de Activos Fijos</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Trazabilidad con PostGIS - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{filteredAssets.length} de {activosEnriquecidos.length} activos</span>
+        </p>
+      </div>
+
+      {/* Filters Section */}
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h2 className="text-xl font-bold dark:text-white">Filtros Jerárquicos</h2>
+          </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setConfirmModal({ isOpen: true, action: 'create' })}
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+            className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Crear Activo
           </motion.button>
-        </div>
-      </div>
-
-      {/* Filters Section */}
-      <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <h3 className="font-semibold text-gray-900 dark:text-white">Filtros Jerárquicos</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Category Filter */}
@@ -254,7 +252,7 @@ export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryPr
             >
               <div className="p-6">
                 <div 
-                  className="flex items-center gap-6"
+                  className="flex items-center gap-4"
                   onClick={() => onAssetClick(asset.id)}
                 >
                   {/* Category Icon */}
@@ -342,7 +340,7 @@ export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryPr
                     {asset.especificaciones && Object.keys(asset.especificaciones).length > 0 ? (
                       <>
                         <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">Especificaciones Técnicas (JSONB Dinámico)</p>
-                        <div className="flex flex-wrap gap-2 mb-6">
+                        <div className="flex flex-wrap gap-2 mb-4">
                           {Object.entries(asset.especificaciones).map(([key, value]) => (
                             <motion.div
                               key={key}
@@ -360,7 +358,7 @@ export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryPr
                         </div>
                       </>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
                           <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Código QR</p>
                           <p className="text-sm text-gray-900 dark:text-white font-mono font-bold">{asset.codigo_etiqueta}</p>
@@ -380,7 +378,7 @@ export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryPr
 
                     {/* Datos Financieros */}
                     {asset.datos_financieros && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-700/30">
                           <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Valor de Adquisición</p>
                           <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">

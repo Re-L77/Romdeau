@@ -196,22 +196,11 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
   return (
     <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
       <div className="max-w-[1400px] mx-auto">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 mt-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 dark:text-white">Registro de Auditorías (logs_auditoria)</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Historial completo de auditorías realizadas - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{filteredLogs.length} de {auditLogs.length} registros</span>
-            </p>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
-            onClick={handleOpenExportModal}
-          >
-            <Download className="w-4 h-4" />
-            Exportar Reporte
-          </motion.button>
+        <div className="mb-8 mt-6">
+          <h1 className="text-3xl font-bold mb-2 dark:text-white">Registro de Auditorías (logs_auditoria)</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Historial completo de auditorías realizadas - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{filteredLogs.length} de {auditLogs.length} registros</span>
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -267,10 +256,21 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">Filtros y Búsqueda</h3>
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <h2 className="text-xl font-bold dark:text-white">Filtros y Búsqueda</h2>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+              onClick={handleOpenExportModal}
+            >
+              <Download className="w-4 h-4" />
+              Exportar Reporte
+            </motion.button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
@@ -341,7 +341,7 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
                 onClick={() => onAuditClick(log.id)}
                 className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all cursor-pointer"
               >
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Activo</p>

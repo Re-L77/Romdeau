@@ -16,7 +16,7 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
     { id: 'inventario', label: 'Inventario', icon: Package },
     { id: 'auditorias', label: 'Auditorías', icon: ClipboardCheck },
     { id: 'registro-auditorias', label: 'Logs Auditorías', icon: FileText },
-    { id: 'alertas', label: 'Alertas y Mant.', icon: Bell },
+    { id: 'alertas', label: 'Alertas', icon: Bell },
     { id: 'proveedores', label: 'Proveedores', icon: Building2 },
     { id: 'usuarios', label: 'Usuarios', icon: Users },
   ];

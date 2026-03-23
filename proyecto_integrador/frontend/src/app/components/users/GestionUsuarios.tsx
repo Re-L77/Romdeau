@@ -175,9 +175,9 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
         <motion.div
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}
-           className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8 mb-8"
+           className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-4"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               <h2 className="text-xl font-bold dark:text-white">Búsqueda y Filtros</h2>
@@ -185,7 +185,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+              className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
               onClick={handleOpenCreateUser}
             >
               <UserPlus className="w-4 h-4" />
@@ -193,7 +193,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
             </motion.button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
@@ -201,13 +201,13 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nombre o correo..."
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+                className="w-full pl-12 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors"
               />
             </div>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
             >
               <option value="all">Todos los Roles</option>
               <option value="ADMIN">Administradores</option>
@@ -217,7 +217,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
             <select
               value={deptFilter}
               onChange={(e) => setDeptFilter(e.target.value)}
-              className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
             >
               <option value="all">Todos los Deptos.</option>
               {departamentos.map((dept: any) => (
@@ -227,7 +227,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-5 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
             >
               <option value="all">Todos los Estados</option>
               <option value="active">Solo Activos</option>
@@ -253,7 +253,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
                 onClick={() => onUserClick(user.id)}
                 className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all cursor-pointer hover:scale-[1.01]"
               >
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                   {user.foto_perfil_url ? (
                     <img 
                       src={user.foto_perfil_url} 
@@ -326,8 +326,8 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
 
         {/* Stats Summary */}
         <div className="mt-12">
-          <h2 className="text-xl font-bold mb-6 dark:text-white">Estadísticas por Rol</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <h2 className="text-xl font-bold mb-4 dark:text-white">Estadísticas por Rol</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
               <div className="w-12 h-12 bg-black dark:bg-white rounded-2xl flex items-center justify-center mb-4">
                 <Shield className="w-6 h-6 text-white dark:text-black" />

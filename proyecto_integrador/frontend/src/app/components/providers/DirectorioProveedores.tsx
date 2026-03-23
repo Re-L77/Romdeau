@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Mail, Phone, Building2, Shield, Plus, FileText, PhoneCall } from 'lucide-react';
+import { Mail, Phone, Building2, Shield, Plus, FileText, PhoneCall, Filter, Search } from 'lucide-react';
 import { useState } from 'react';
 import { AgregarProveedor, ProveedorFormData } from './AgregarProveedor';
 
@@ -78,6 +78,12 @@ interface DirectorioProveedoresProps {
 
 export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedoresProps) {
   const [isAddingProvider, setIsAddingProvider] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredProviders = providers.filter(p => {
+    if (searchTerm && !p.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) && !p.categoria.toLowerCase().includes(searchTerm.toLowerCase()) && !p.rfc_tax_id.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    return true;
+  });
 
   const handleOpenAddProvider = () => {
     setIsAddingProvider(true);
@@ -129,23 +135,48 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
   return (
     <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
       <div className="max-w-[1400px] mx-auto">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 mt-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 dark:text-white">Directorio de Proveedores</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Gestión de garantías y contactos de emergencia - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{providers.length} proveedores registrados</span>
-            </p>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
-            onClick={handleOpenAddProvider}
-          >
-            <Plus className="w-4 h-4" />
-            Agregar Proveedor
-          </motion.button>
+        <div className="mb-8 mt-6">
+          <h1 className="text-3xl font-bold mb-2 dark:text-white">Directorio de Proveedores</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gestión de garantías y contactos de emergencia - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{filteredProviders.length} proveedores registrados</span>
+          </p>
         </div>
+
+        {/* Filtros y Acción Principal */}
+        <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <h2 className="text-xl font-bold dark:text-white">Búsqueda de Proveedores</h2>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+              onClick={handleOpenAddProvider}
+            >
+              <Plus className="w-4 h-4" />
+              Agregar Proveedor
+            </motion.button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por empresa, categoría o RFC..."
+                className="w-full pl-12 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+              />
+            </div>
+          </div>
+        </motion.div>
 
         {isAddingProvider && (
           <AgregarProveedor
@@ -154,8 +185,8 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
           />
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {providers.map((provider, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredProviders.map((provider, index) => (
             <motion.div
               key={provider.id}
               initial={{ opacity: 0, y: 20 }}
@@ -165,7 +196,7 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
               className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_12px_40px_rgb(0,0,0,0.6)] transition-all cursor-pointer"
               onClick={() => onProveedorClick(provider.id)}
             >
-              <div className="flex items-start gap-4 mb-6">
+              <div className="flex items-start gap-4 mb-4">
                 <div
                   className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${provider.color} flex items-center justify-center text-white text-xl font-bold shadow-lg`}
                 >
@@ -178,7 +209,7 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
               </div>
 
               {/* RFC/Tax ID Card */}
-              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
+              <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 mb-2">
                   <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <span className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase">RFC / Tax ID</span>
@@ -186,7 +217,7 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
                 <p className="text-sm font-mono font-bold text-gray-900 dark:text-white">{provider.rfc_tax_id}</p>
               </div>
 
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-4">
                 <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
                   <Mail className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                   <span className="truncate">{provider.contacto_soporte}</span>
@@ -217,8 +248,8 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
 
         {/* Stats Summary */}
         <div className="mt-12">
-          <h2 className="text-xl font-bold mb-6 dark:text-white">Estadísticas de Proveedores</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <h2 className="text-xl font-bold mb-4 dark:text-white">Estadísticas de Proveedores</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
               <div className="w-12 h-12 bg-black dark:bg-white rounded-2xl flex items-center justify-center mb-4">
                 <Building2 className="w-6 h-6 text-white dark:text-black" />
