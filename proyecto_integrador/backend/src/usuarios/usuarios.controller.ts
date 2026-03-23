@@ -103,6 +103,15 @@ export class UsuariosController {
     return this.usuariosService.update(id, body);
   }
 
+  @Patch(':id/password')
+  @Roles(Role.ADMIN)
+  changePassword(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: { password: string },
+  ) {
+    return this.usuariosService.changePassword(id, body.password);
+  }
+
   @Delete(':id')
   @Roles(Role.ADMIN, Role.AUDITOR)
   remove(@Param('id', new ParseUUIDPipe()) id: string) {

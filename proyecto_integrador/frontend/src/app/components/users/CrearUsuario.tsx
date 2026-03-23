@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, User, Mail, Shield, CheckCircle, AlertCircle, Camera, Building2, Phone } from 'lucide-react';
+import { X, User, Mail, Shield, CheckCircle, AlertCircle, Camera, Building2, Phone, Eye, EyeOff, Copy, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../../../services/api';
 
@@ -288,6 +288,17 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
     foto_perfil: null,
   });
 
+  const [showPw, setShowPw] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const pwdRequirements = [
+    { regex: /.{8,}/, label: 'Al menos 8 caracteres' },
+    { regex: /[A-Z]/, label: 'Una mayúscula' },
+    { regex: /[a-z]/, label: 'Una minúscula' },
+    { regex: /[0-9]/, label: 'Un número' },
+    { regex: /[^A-Za-z0-9]/, label: 'Un carácter especial' },
+  ];
+
   const [departamentos, setDepartamentos] = useState<{ id: number; nombre: string }[]>([]);
 
   useEffect(() => {
@@ -322,13 +333,33 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
   };
 
   const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
+    // Generate an automatic strong password that passes all regex
     let password = '';
-    for (let i = 0; i < 12; i++) {
+    const uppers = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lowers = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '0123456789';
+    const specials = '!@#$%&*';
+
+    password += uppers.charAt(Math.floor(Math.random() * uppers.length));
+    password += lowers.charAt(Math.floor(Math.random() * lowers.length));
+    password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    password += specials.charAt(Math.floor(Math.random() * specials.length));
+
+    const chars = uppers + lowers + numbers + specials;
+    for (let i = password.length; i < 12; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    // Shuffle the characters
+    password = password.split('').sort(() => 0.5 - Math.random()).join('');
     return password;
   };
+
+  useEffect(() => {
+    // Initialize the generated password immediately if toggle is on
+    if (formData.generar_password_temporal && !formData.password_temporal) {
+      updateField('password_temporal', generatePassword());
+    }
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -388,8 +419,19 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
       newErrors.rol = 'Selecciona un rol';
     }
 
-    if (!formData.generar_password_temporal && !formData.password_temporal) {
-      newErrors.password_temporal = 'Ingresa una contraseña o activa generación automática';
+    if (formData.generar_password_temporal && !formData.password_temporal) {
+      newErrors.password_temporal = 'La auto-generación falló, desmarca y escríbela';
+    }
+
+    if (!formData.generar_password_temporal) {
+      if (!formData.password_temporal) {
+        newErrors.password_temporal = 'La contraseña temporal es obligatoria';
+      } else {
+        const metRequirements = pwdRequirements.every((req) => req.regex.test(formData.password_temporal!));
+        if (!metRequirements) {
+          newErrors.password_temporal = 'La contraseña no cumple todos los requisitos mínimos';
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -429,19 +471,15 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
     }
 
     if (validateStep2()) {
-      // Si se debe generar contraseña temporal, generarla ahora
       const finalData = { ...formData };
-      if (formData.generar_password_temporal) {
-        finalData.password_temporal = generatePassword();
-      }
       onSave(finalData);
     }
   };
 
   const updateField = (field: keyof UsuarioFormData, value: any) => {
-    setFormData({ ...formData, [field]: value });
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors({ ...errors, [field]: '' });
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -764,6 +802,132 @@ export function CrearUsuario({ onClose, onSave }: CrearUsuarioProps) {
                         <AlertCircle className="w-2.5 h-2.5" />
                         {errors.rol}
                       </p>
+                    )}
+                  </div>
+
+                  {/* Configuración de Contraseña */}
+                  <div className="space-y-3">
+                    <label className="flex items-center justify-between p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                          formData.generar_password_temporal 
+                            ? 'bg-emerald-500 border-emerald-500' 
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}>
+                          {formData.generar_password_temporal && (
+                            <CheckCircle className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Generar contraseña automáticamente</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Crea una clave segura temporal para el usuario (se debe copiar)
+                          </p>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={formData.generar_password_temporal}
+                        onChange={(e) => {
+                          updateField('generar_password_temporal', e.target.checked);
+                          if (e.target.checked) {
+                            updateField('password_temporal', generatePassword());
+                          }
+                        }}
+                        className="sr-only"
+                      />
+                    </label>
+
+                    {!formData.generar_password_temporal && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="pt-1"
+                      >
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Crear Contraseña *
+                        </label>
+                        <div className="relative mb-2">
+                          <input
+                            type={showPw ? 'text' : 'password'}
+                            value={formData.password_temporal || ''}
+                            onChange={(e) => updateField('password_temporal', e.target.value)}
+                            placeholder="Escribe la contraseña temporal"
+                            className={`w-full px-3 py-2 pr-10 text-sm rounded-xl border ${
+                              errors.password_temporal 
+                                ? 'border-red-500 focus:ring-red-500' 
+                                : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
+                            } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setShowPw(!showPw)} 
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          >
+                            {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+
+                        {/* Checklist */}
+                        <div className="space-y-1 mb-2">
+                          {pwdRequirements.map((req, i) => {
+                             const isMet = req.regex.test(formData.password_temporal || '');
+                             return (
+                               <div key={i} className="flex items-center gap-2 text-xs transition-colors duration-200">
+                                 {isMet ? (
+                                   <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                 ) : (
+                                   <div className="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600" />
+                                 )}
+                                 <span className={isMet ? "text-gray-900 dark:text-gray-200" : "text-gray-400"}>
+                                   {req.label}
+                                 </span>
+                               </div>
+                             );
+                          })}
+                        </div>
+                        
+                        {errors.password_temporal && (
+                          <p className="text-red-500 text-[10px] mt-0.5 flex items-center gap-1">
+                            <AlertCircle className="w-2.5 h-2.5" />
+                            {errors.password_temporal}
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+
+                    {/* Mostramos el input readonly de la contraseña que será auto-generada */}
+                    {formData.generar_password_temporal && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="pt-1 select-none"
+                      >
+                         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                           Contraseña Generada Automáticamente
+                         </label>
+                         <div className="relative">
+                           <input
+                             type="text"
+                             readOnly
+                             value={formData.password_temporal || ''}
+                             className="w-full px-3 py-2 pr-12 text-sm rounded-xl border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-800 dark:text-emerald-400 font-mono outline-none"
+                           />
+                           <button
+                             type="button"
+                             onClick={() => {
+                               navigator.clipboard.writeText(formData.password_temporal || '');
+                               setCopied(true);
+                               setTimeout(() => setCopied(false), 2000);
+                             }}
+                             className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-800/50 rounded-lg transition-colors"
+                             title="Copiar contraseña"
+                           >
+                             {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                           </button>
+                         </div>
+                         <p className="text-[10px] text-gray-500 mt-1 pl-1">Por favor copie esta contraseña y compártala con el usuario antes de continuar.</p>
+                      </motion.div>
                     )}
                   </div>
 

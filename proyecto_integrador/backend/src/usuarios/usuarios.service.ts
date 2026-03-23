@@ -269,8 +269,15 @@ export class UsuariosService {
 
     const { _count, logs_auditoria, activos, ...rest } = usuario as any;
 
+    let last_sign_in_at: string | null = null;
+    const { data: authData, error: authError } = await this.supabase.auth.admin.getUserById(id);
+    if (!authError && authData?.user) {
+      last_sign_in_at = authData.user.last_sign_in_at || null;
+    }
+
     return {
       ...this.formatUsuario(rest),
+      last_sign_in_at,
       assets_assigned: _count?.activos || 0,
       audits_completed: _count?.logs_auditoria || 0,
       activos: activos || [],
@@ -419,6 +426,18 @@ export class UsuariosService {
     return this.formatUsuario(usuario);
   }
 
+  async changePassword(id: string, newPassword: string) {
+    if (!newPassword || newPassword.length < 8) {
+      throw new BadRequestException('La contraseña debe tener al menos 8 caracteres');
+    }
+    const { error } = await this.supabase.auth.admin.updateUserById(id, {
+      password: newPassword,
+    });
+    if (error) {
+      throw new BadRequestException(`No se pudo cambiar la contraseña: ${error.message}`);
+    }
+    return { message: 'Contraseña actualizada correctamente' };
+  }
   async remove(id: string) {
     let usuario: UsuarioConRol;
 
