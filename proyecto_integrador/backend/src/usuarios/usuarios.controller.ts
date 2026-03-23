@@ -46,6 +46,13 @@ interface UpdateFotoPerfilBody {
   foto_perfil_url: string;
 }
 
+interface AuthenticatedRequest {
+  user?: {
+    id: string;
+    rol_id: Role;
+  };
+}
+
 @Controller('api/usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
@@ -88,13 +95,15 @@ export class UsuariosController {
   update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: UpdateUsuarioBody,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     const user = req.user;
     if (user?.rol_id === Role.EMPLEADO) {
       // Un empleado solo puede editar su propio perfil
       if (user.id !== id) {
-        throw new ForbiddenException('No tienes permiso para editar a otro usuario.');
+        throw new ForbiddenException(
+          'No tienes permiso para editar a otro usuario.',
+        );
       }
       // Un empleado no puede cambiar su rol ni estado activo
       delete body.rol_id;

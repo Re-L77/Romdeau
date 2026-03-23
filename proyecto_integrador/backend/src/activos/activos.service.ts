@@ -10,6 +10,7 @@ export class ActivosService {
       orderBy: {
         created_at: 'desc',
       },
+      select: {},
     });
   }
 }
