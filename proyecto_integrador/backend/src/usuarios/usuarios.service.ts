@@ -100,11 +100,15 @@ export class UsuariosService {
     });
   }
 
-  private formatUsuario({ roles_usuario, departamentos, ...usuario }: UsuarioConRol) {
+  private formatUsuario({
+    roles_usuario,
+    departamentos,
+    ...usuario
+  }: UsuarioConRol) {
     return {
       ...usuario,
       rol: roles_usuario.nombre,
-      departamento: departamentos?.nombre || 'General'
+      departamento: departamentos?.nombre || 'General',
     };
   }
 
@@ -145,31 +149,36 @@ export class UsuariosService {
     if (!body?.email?.trim()) {
       throw new BadRequestException('Debes enviar email');
     }
-    
+
     const password = body.password || 'Romdeau2026!';
 
-    const { data: authData, error: authError } = await this.supabase.auth.admin.createUser({
-      email: body.email.trim().toLowerCase(),
-      password,
-      email_confirm: true,
-      user_metadata: {
-        nombres: body.nombres.trim(),
-        apellido_paterno: body.apellido_paterno.trim(),
-        apellido_materno: body.apellido_materno?.trim() ?? null,
-        rol_id: body.rol_id,
-      },
-    });
+    const { data: authData, error: authError } =
+      await this.supabase.auth.admin.createUser({
+        email: body.email.trim().toLowerCase(),
+        password,
+        email_confirm: true,
+        user_metadata: {
+          nombres: body.nombres.trim(),
+          apellido_paterno: body.apellido_paterno.trim(),
+          apellido_materno: body.apellido_materno?.trim() ?? null,
+          rol_id: body.rol_id,
+        },
+      });
 
     if (authError) {
       // Intenta mapear errores comunes de Supabase
       if (authError.message.includes('already registered')) {
-        throw new ConflictException('Ese correo ya está registrado en el sistema.');
+        throw new ConflictException(
+          'Ese correo ya está registrado en el sistema.',
+        );
       }
-      throw new BadRequestException(`No se pudo crear el usuario en Auth: ${authError.message}`);
+      throw new BadRequestException(
+        `No se pudo crear el usuario en Auth: ${authError.message}`,
+      );
     }
 
     const { user } = authData;
-    
+
     // El trigger postgres (handle_new_user) creará la entrada en `public.usuarios` automáticamente.
     // Damos un pequeño retraso de red para asegurar que el trigger termine de commitear
     await new Promise((resolve) => setTimeout(resolve, 800));
@@ -178,8 +187,10 @@ export class UsuariosService {
       // Revisar si necesitamos añadir cosas no contempladas en el trigger (activo, foto_perfil)
       const updateData: Prisma.usuariosUpdateInput = {};
       if (body.activo !== undefined) updateData.activo = body.activo;
-      if (body.foto_perfil_url) updateData.foto_perfil_url = body.foto_perfil_url.trim();
-      if (body.telefono !== undefined) updateData.telefono = body.telefono?.trim() ?? null;
+      if (body.foto_perfil_url)
+        updateData.foto_perfil_url = body.foto_perfil_url.trim();
+      if (body.telefono !== undefined)
+        updateData.telefono = body.telefono?.trim() ?? null;
       if (body.departamento_id !== undefined) {
         if (body.departamento_id === null) {
           updateData.departamentos = { disconnect: true };
@@ -235,7 +246,7 @@ export class UsuariosService {
           select: {
             activos: true,
             logs_auditoria: true,
-          }
+          },
         },
         activos: {
           take: 10,
@@ -247,7 +258,7 @@ export class UsuariosService {
             foto_principal_url: true,
             categorias: { select: { nombre: true } },
             estados_activo: { select: { nombre: true } },
-          }
+          },
         },
         logs_auditoria: {
           take: 5,
@@ -257,10 +268,10 @@ export class UsuariosService {
             fecha_hora: true,
             activo_id: true,
             activos: { select: { codigo_etiqueta: true } },
-            estados_auditoria: { select: { nombre: true } }
-          }
-        }
-      }
+            estados_auditoria: { select: { nombre: true } },
+          },
+        },
+      },
     });
 
     if (!usuario) {
@@ -270,7 +281,8 @@ export class UsuariosService {
     const { _count, logs_auditoria, activos, ...rest } = usuario as any;
 
     let last_sign_in_at: string | null = null;
-    const { data: authData, error: authError } = await this.supabase.auth.admin.getUserById(id);
+    const { data: authData, error: authError } =
+      await this.supabase.auth.admin.getUserById(id);
     if (!authError && authData?.user) {
       last_sign_in_at = authData.user.last_sign_in_at || null;
     }
@@ -281,11 +293,12 @@ export class UsuariosService {
       assets_assigned: _count?.activos || 0,
       audits_completed: _count?.logs_auditoria || 0,
       activos: activos || [],
-      recent_activity: logs_auditoria?.map((log: any) => ({
-        action: `Auditó activo ${log.activos?.codigo_etiqueta || log.activo_id?.substring(0,8)}`,
-        date: log.fecha_hora,
-        type: 'complete'
-      })) || []
+      recent_activity:
+        logs_auditoria?.map((log: any) => ({
+          action: `Auditó activo ${log.activos?.codigo_etiqueta || log.activo_id?.substring(0, 8)}`,
+          date: log.fecha_hora,
+          type: 'complete',
+        })) || [],
     };
   }
 
@@ -354,7 +367,9 @@ export class UsuariosService {
       if (!val)
         throw new BadRequestException('El campo nombres no puede estar vacío');
       if (val.length < 2)
-        throw new BadRequestException('Nombres debe tener al menos 2 caracteres');
+        throw new BadRequestException(
+          'Nombres debe tener al menos 2 caracteres',
+        );
       if (val.length > 100)
         throw new BadRequestException(
           'Nombres no puede superar 100 caracteres',
@@ -428,13 +443,17 @@ export class UsuariosService {
 
   async changePassword(id: string, newPassword: string) {
     if (!newPassword || newPassword.length < 8) {
-      throw new BadRequestException('La contraseña debe tener al menos 8 caracteres');
+      throw new BadRequestException(
+        'La contraseña debe tener al menos 8 caracteres',
+      );
     }
     const { error } = await this.supabase.auth.admin.updateUserById(id, {
       password: newPassword,
     });
     if (error) {
-      throw new BadRequestException(`No se pudo cambiar la contraseña: ${error.message}`);
+      throw new BadRequestException(
+        `No se pudo cambiar la contraseña: ${error.message}`,
+      );
     }
     return { message: 'Contraseña actualizada correctamente' };
   }
