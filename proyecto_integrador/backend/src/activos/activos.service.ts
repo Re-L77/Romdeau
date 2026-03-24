@@ -7,6 +7,18 @@ export class ActivosService {
 
   async findAll() {
     const activos = await this.prisma.activos.findMany({
+      include: {
+        categorias: true,
+        usuarios: true,
+        estados_activo: true,
+        oficinas: true,
+        estantes: true,
+        datos_financieros: {
+          include: {
+            proveedores: true,
+          },
+        },
+      },
       orderBy: {
         created_at: 'desc',
       },

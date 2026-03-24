@@ -1,49 +1,9 @@
 import { motion } from 'motion/react';
 import { QrCode, MapPin, User, ChevronDown, Navigation, Clock, Plus, Trash2, Laptop, Server, Package2, Smartphone, Monitor, Filter, Building2, Edit, ArrowRightLeft, FileText, UserCog, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ConfirmationModal } from '../shared/ConfirmationModal';
-import { mockDB } from '../../data/mockData';
+import { activosApi } from '../../../services/api';
 import { EstadoActivo } from '../../data/types';
-
-// Construir activos enriquecidos con relaciones
-const activosEnriquecidos = mockDB.activos.map(activo => {
-  const categoria = mockDB.categorias.find(c => c.id === activo.categoria_id);
-  const custodio = mockDB.usuarios.find(u => u.id === activo.custodio_actual_id);
-  const datosFinancieros = mockDB.datosFinancieros.find(d => d.activo_id === activo.id);
-  const ubicacion = mockDB.getUbicacionCompleta(activo);
-  const diasGarantia = mockDB.getDiasHastaVencimientoGarantia(activo.id);
-  
-  // Determinar el ícono basado en la categoría
-  let categoriaIcon = 'Package2';
-  if (categoria?.nombre.toLowerCase().includes('cómputo')) categoriaIcon = 'Laptop';
-  else if (categoria?.nombre.toLowerCase().includes('servidor')) categoriaIcon = 'Server';
-  else if (categoria?.nombre.toLowerCase().includes('móvil')) categoriaIcon = 'Smartphone';
-  
-  // Determinar el color del estado basado en estado_operativo_id
-  let estadoColor = 'emerald';
-  if (activo.estado_operativo_id === EstadoActivo.MALO) estadoColor = 'blue';
-  else if (activo.estado_operativo_id === EstadoActivo.BAJA) estadoColor = 'red';
-  
-  // Nombres de estados
-  const estadosNombres = {
-    [EstadoActivo.NUEVO]: 'Nuevo',
-    [EstadoActivo.BUENO]: 'Bueno',
-    [EstadoActivo.MALO]: 'Malo',
-    [EstadoActivo.BAJA]: 'Baja',
-  };
-  
-  return {
-    ...activo,
-    categoria,
-    custodio_actual: custodio,
-    datos_financieros: datosFinancieros,
-    ubicacion_texto: ubicacion,
-    dias_hasta_vencimiento_garantia: diasGarantia,
-    categoria_icon: categoriaIcon,
-    estado_color: estadoColor,
-    estado_nombre: estadosNombres[activo.estado_operativo_id],
-  };
-});
 
 const statusColors = {
   emerald: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/30',
@@ -65,6 +25,9 @@ interface AssetInventoryProps {
 }
 
 export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryProps) {
+  const [activosEnriquecidos, setActivosEnriquecidos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<number | 'all'>('all');
@@ -74,6 +37,70 @@ export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryPr
     assetId?: string;
     assetName?: string;
   }>({ isOpen: false, action: null });
+
+  useEffect(() => {
+    const loadActivos = async () => {
+      try {
+        setLoading(true);
+        const activos = await activosApi.getAll();
+        
+        // Enriquecer los datos con lógica similar al mock
+        const enriquecidos = activos.map((activo: any) => {
+          const categoria = activo.categorias;
+          const custodio = activo.usuarios;
+          const datosFinancieros = activo.datos_financieros;
+          
+          // Ubicación básica (puedes expandir con más lógica)
+          let ubicacion = '';
+          if (activo.oficinas) {
+            ubicacion = activo.oficinas.nombre;
+            if (activo.estantes) {
+              ubicacion += ` - ${activo.estantes.nombre}`;
+            }
+          }
+          
+          // Determinar el ícono basado en la categoría
+          let categoriaIcon = 'Package2';
+          if (categoria?.nombre.toLowerCase().includes('cómputo')) categoriaIcon = 'Laptop';
+          else if (categoria?.nombre.toLowerCase().includes('servidor')) categoriaIcon = 'Server';
+          else if (categoria?.nombre.toLowerCase().includes('móvil')) categoriaIcon = 'Smartphone';
+          
+          // Determinar el color del estado basado en estado_operativo_id
+          let estadoColor = 'emerald';
+          if (activo.estado_operativo_id === EstadoActivo.MALO) estadoColor = 'blue';
+          else if (activo.estado_operativo_id === EstadoActivo.BAJA) estadoColor = 'red';
+          
+          // Nombres de estados
+          const estadosNombres = {
+            [EstadoActivo.NUEVO]: 'Nuevo',
+            [EstadoActivo.BUENO]: 'Bueno',
+            [EstadoActivo.MALO]: 'Malo',
+            [EstadoActivo.BAJA]: 'Baja',
+          };
+          
+          return {
+            ...activo,
+            categoria,
+            custodio_actual: custodio,
+            datos_financieros: datosFinancieros,
+            ubicacion_texto: ubicacion,
+            dias_hasta_vencimiento_garantia: 0, // TODO: implementar lógica de garantía
+            categoria_icon: categoriaIcon,
+            estado_color: estadoColor,
+            estado_nombre: estadosNombres[activo.estado_operativo_id],
+          };
+        });
+        
+        setActivosEnriquecidos(enriquecidos);
+      } catch (err: any) {
+        setError(err.message || 'Error al cargar activos');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadActivos();
+  }, []);
 
   // Extract unique values for filters
   const categories = ['all', ...new Set(activosEnriquecidos.map(a => a.categoria?.nombre).filter(Boolean))];
@@ -173,30 +200,44 @@ export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryPr
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold mb-1 dark:text-white">Inventario de Activos Fijos</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Trazabilidad con PostGIS - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{filteredAssets.length} de {activosEnriquecidos.length} activos</span>
-        </p>
-      </div>
-
-      {/* Filters Section */}
-      <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h2 className="text-xl font-bold dark:text-white">Filtros Jerárquicos</h2>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setConfirmModal({ isOpen: true, action: 'create' })}
-            className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Crear Activo
-          </motion.button>
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600 dark:text-gray-400">Cargando activos...</div>
         </div>
+      )}
+      
+      {error && (
+        <div className="bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+          <div className="text-red-700 dark:text-red-400">{error}</div>
+        </div>
+      )}
+      
+      {!loading && !error && (
+        <>
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold mb-1 dark:text-white">Inventario de Activos Fijos</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Trazabilidad con PostGIS - <span className="font-semibold text-emerald-600 dark:text-emerald-400">{filteredAssets.length} de {activosEnriquecidos.length} activos</span>
+            </p>
+          </div>
+
+          {/* Filters Section */}
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <h2 className="text-xl font-bold dark:text-white">Filtros Jerárquicos</h2>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setConfirmModal({ isOpen: true, action: 'create' })}
+                className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Crear Activo
+              </motion.button>
+            </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Category Filter */}
           <div>
@@ -500,6 +541,8 @@ export function AssetInventory({ onAssetClick, onCreateAsset }: AssetInventoryPr
         confirmText={getModalContent().confirmText}
         icon={getModalContent().icon}
       />
+        </>
+      )}
     </div>
   );
 }

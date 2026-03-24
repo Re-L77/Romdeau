@@ -134,6 +134,12 @@ export const authApi = {
   },
 };
 
+export const activosApi = {
+  getAll: async (): Promise<any[]> => {
+    return apiClient.get('/api/activos');
+  },
+};
+
 /**
  * Cliente genérico para hacer peticiones con token automático
  */
