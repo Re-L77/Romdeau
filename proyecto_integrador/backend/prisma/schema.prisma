@@ -112,6 +112,7 @@ model direcciones {
   numero_interior String? @db.VarChar(20)
   calle_id        Int
   calles          calles  @relation(fields: [calle_id], references: [id], onUpdate: NoAction)
+  proveedores     proveedores[]
   sedes           sedes[]
 }
 
@@ -268,7 +269,9 @@ model proveedores {
   rfc_tax_id        String?
   contacto_soporte  String?
   direccion_fiscal  String?
+  direccion_id      String?             @db.Uuid
   sitio_web         String?             @db.VarChar(255)
+  direcciones       direcciones?        @relation(fields: [direccion_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   datos_financieros datos_financieros[]
 }
 
