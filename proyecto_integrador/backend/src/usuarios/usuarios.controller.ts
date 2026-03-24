@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
   Request,
@@ -65,8 +66,8 @@ export class UsuariosController {
 
   @Get()
   @Roles(Role.ADMIN, Role.AUDITOR)
-  findAll() {
-    return this.usuariosService.findAll();
+  findAll(@Query('order') order: 'asc' | 'desc' = 'desc') {
+    return this.usuariosService.findAll(order);
   }
 
   @Get(':id')

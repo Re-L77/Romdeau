@@ -55,11 +55,13 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [departamentos, setDepartamentos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const fetchData = async () => {
     try {
+      setIsLoading(true);
       const [usersData, deptData] = await Promise.all([
-        apiClient.get('/api/usuarios'),
+        apiClient.get(`/api/usuarios?order=${sortOrder}`),
         apiClient.get('/api/departamentos')
       ]);
       setUsuarios(usersData);
@@ -74,7 +76,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [sortOrder]);
 
   const roleStats = {
     admin: usuarios.filter(u => u.rol === 'ADMIN').length,
@@ -193,7 +195,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
             </motion.button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
@@ -207,7 +209,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
             >
               <option value="all">Todos los Roles</option>
               <option value="ADMIN">Administradores</option>
@@ -217,7 +219,7 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
             <select
               value={deptFilter}
               onChange={(e) => setDeptFilter(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
             >
               <option value="all">Todos los Deptos.</option>
               {departamentos.map((dept: any) => (
@@ -227,11 +229,19 @@ export function GestionUsuarios({ onUserClick }: GestionUsuariosProps) {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none"
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
             >
               <option value="all">Todos los Estados</option>
               <option value="active">Solo Activos</option>
               <option value="inactive">Solo Inactivos</option>
+            </select>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
+            >
+              <option value="desc">Más recientes</option>
+              <option value="asc">Más antiguos</option>
             </select>
           </div>
         </motion.div>

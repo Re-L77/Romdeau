@@ -226,10 +226,10 @@ export class UsuariosService {
     }
   }
 
-  async findAll() {
+  async findAll(order: 'asc' | 'desc' = 'desc') {
     const usuarios = await this.prisma.usuarios.findMany({
       orderBy: {
-        created_at: 'desc',
+        created_at: order,
       },
       select: usuarioSelect,
     });
