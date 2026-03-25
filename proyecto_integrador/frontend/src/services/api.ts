@@ -135,8 +135,79 @@ export const authApi = {
 };
 
 export const activosApi = {
+  getList: async (params?: {
+    id?: string;
+    page?: number;
+    limit?: number;
+    q?: string;
+    nombre?: string;
+    codigoEtiqueta?: string;
+    categoriaId?: string;
+    categoriaNombre?: string;
+    estadoOperativoId?: number;
+    oficinaId?: string;
+    custodioId?: string;
+    estanteId?: string;
+    sinCustodio?: boolean;
+  }): Promise<{
+    data: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNextPage: boolean;
+    };
+    filters?: Record<string, any>;
+  }> => {
+    const searchParams = new URLSearchParams();
+
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null && value !== "") {
+          searchParams.set(key, String(value));
+        }
+      }
+    }
+
+    const queryString = searchParams.toString();
+    const path = queryString ? `/api/activos?${queryString}` : "/api/activos";
+    const response = await apiClient.get<any>(path);
+
+    if (Array.isArray(response)) {
+      return {
+        data: response,
+        pagination: {
+          page: params?.page ?? 1,
+          limit: response.length,
+          total: response.length,
+          totalPages: 1,
+          hasNextPage: false,
+        },
+      };
+    }
+
+    return {
+      data: Array.isArray(response?.data) ? response.data : [],
+      pagination: response?.pagination ?? {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 20,
+        total: 0,
+        totalPages: 0,
+        hasNextPage: false,
+      },
+      filters: response?.filters,
+    };
+  },
+
   getAll: async (): Promise<any[]> => {
-    return apiClient.get('/api/activos');
+    const result = await activosApi.getList();
+    return result.data;
+  },
+
+  getById: async (id: string): Promise<any | null> => {
+    const result = await activosApi.getList({ id, page: 1, limit: 1 });
+    return result.data[0] ?? null;
   },
 };
 
