@@ -10,7 +10,6 @@ datasource db {
 model activos {
   id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   codigo_etiqueta     String?               @unique
-  nombre              String?               @db.VarChar(255)
   categoria_id        String                @db.Uuid
   custodio_actual_id  String?               @db.Uuid
   oficina_id          String?               @db.Uuid
@@ -20,6 +19,7 @@ model activos {
   foto_principal_url  String?
   created_at          DateTime?             @default(now()) @db.Timestamptz(6)
   updated_at          DateTime?             @default(now()) @db.Timestamptz(6)
+  nombre              String?               @db.VarChar(255)
   categorias          categorias            @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuarios            usuarios?             @relation(fields: [custodio_actual_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   estados_activo      estados_activo        @relation(fields: [estado_operativo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -112,7 +112,6 @@ model direcciones {
   numero_interior String? @db.VarChar(20)
   calle_id        Int
   calles          calles  @relation(fields: [calle_id], references: [id], onUpdate: NoAction)
-  proveedores     proveedores[]
   sedes           sedes[]
 }
 
@@ -269,9 +268,7 @@ model proveedores {
   rfc_tax_id        String?
   contacto_soporte  String?
   direccion_fiscal  String?
-  direccion_id      String?             @db.Uuid
   sitio_web         String?             @db.VarChar(255)
-  direcciones       direcciones?        @relation(fields: [direccion_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   datos_financieros datos_financieros[]
 }
 
@@ -312,16 +309,16 @@ model usuarios {
   email                                                                  String                @unique
   rol_id                                                                 Int                   @default(3) @db.SmallInt
   activo                                                                 Boolean?              @default(true)
+  created_at                                                             DateTime?             @default(now()) @db.Timestamptz(6)
+  departamento_id                                                        Int?                  @db.SmallInt
   foto_perfil_url                                                        String?               @db.VarChar(500)
   telefono                                                               String?               @db.VarChar(20)
-  departamento_id                                                        Int?                  @db.SmallInt
-  created_at                                                             DateTime?             @default(now()) @db.Timestamptz(6)
   activos                                                                activos[]
   bajas_activos                                                          bajas_activos[]
   logs_auditoria                                                         logs_auditoria[]
-  departamentos                                                          departamentos?        @relation(fields: [departamento_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[] @relation("movimientos_activos_custodio_anterior_idTousuarios")
   movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[] @relation("movimientos_activos_custodio_nuevo_idTousuarios")
+  departamentos                                                          departamentos?        @relation(fields: [departamento_id], references: [id], onUpdate: NoAction)
   roles_usuario                                                          roles_usuario         @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
