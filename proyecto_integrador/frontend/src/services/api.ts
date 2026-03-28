@@ -268,4 +268,28 @@ export const auditoriasProgramadasApi = {
     const data = await apiClient.get<any[]>("/api/auditorias-programadas");
     return Array.isArray(data) ? data : [];
   },
+  getAllStates: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/estados",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllAuditores: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/auditores",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllEdificios: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/edificios",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllSedes: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/sedes",
+    );
+    return Array.isArray(data) ? data : [];
+  },
 };

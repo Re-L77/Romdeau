@@ -165,7 +165,48 @@ export class AuditoriasprogramadasService {
     });
   }
 
-  async getAllStates() {
+  async getAllStates(): Promise<any[]> {
     return await this.prisma.estados_auditoria_programada.findMany();
+  }
+
+  async getAllAuditores(): Promise<any[]> {
+    return await this.prisma.usuarios.findMany({
+      where: {
+        rol_id: 2, // AUDITOR
+        activo: true,
+      },
+      select: {
+        id: true,
+        nombre_completo: true,
+        email: true,
+      },
+      orderBy: { nombre_completo: 'asc' },
+    });
+  }
+
+  async getAllEdificios(): Promise<any[]> {
+    return await this.prisma.edificios.findMany({
+      select: {
+        id: true,
+        nombre: true,
+        sede_id: true,
+        sedes: {
+          select: {
+            nombre: true,
+          },
+        },
+      },
+      orderBy: { nombre: 'asc' },
+    });
+  }
+
+  async getAllSedes(): Promise<any[]> {
+    return await this.prisma.sedes.findMany({
+      select: {
+        id: true,
+        nombre: true,
+      },
+      orderBy: { nombre: 'asc' },
+    });
   }
 }

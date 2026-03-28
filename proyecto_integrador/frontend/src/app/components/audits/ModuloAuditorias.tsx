@@ -1,5 +1,13 @@
 import { motion } from "motion/react";
-import { Calendar, MapPin, User, Plus } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  User,
+  Plus,
+  Filter,
+  Search,
+  RotateCcw,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { CrearAuditoria, AuditFormData } from "./CrearAuditoria";
 import { mockDB } from "../../data/mockData";
@@ -60,13 +68,51 @@ export function ModuloAuditorias({
   const [isCreatingAudit, setIsCreatingAudit] = useState(false);
   const [scheduledAudits, setScheduledAudits] = useState<any[]>([]);
   const [loadingScheduled, setLoadingScheduled] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [estadoFilter, setEstadoFilter] = useState("all");
+  const [auditorFilter, setAuditorFilter] = useState("all");
+  const [edificioFilter, setEdificioFilter] = useState("all");
+  const [campusFilter, setCampusFilter] = useState("all");
+
+  // Datos para los selectores de filtros
+  const [auditores, setAuditores] = useState<any[]>([]);
+  const [edificios, setEdificios] = useState<any[]>([]);
+  const [sedes, setSedes] = useState<any[]>([]);
+  const [estados, setEstados] = useState<any[]>([]);
 
   useEffect(() => {
-    auditoriasProgramadasApi
-      .getAll()
-      .then(setScheduledAudits)
-      .catch(() => setScheduledAudits([]))
-      .finally(() => setLoadingScheduled(false));
+    const loadData = async () => {
+      try {
+        setLoadingScheduled(true);
+        // Cargar auditorías, auditores, edificios, sedes y estados en paralelo
+        const [
+          auditsData,
+          auditoresData,
+          edificiosData,
+          sedesData,
+          estadosData,
+        ] = await Promise.all([
+          auditoriasProgramadasApi.getAll(),
+          auditoriasProgramadasApi.getAllAuditores?.() || Promise.resolve([]),
+          auditoriasProgramadasApi.getAllEdificios?.() || Promise.resolve([]),
+          auditoriasProgramadasApi.getAllSedes?.() || Promise.resolve([]),
+          auditoriasProgramadasApi.getAllStates?.() || Promise.resolve([]),
+        ]);
+
+        setScheduledAudits(auditsData);
+        setAuditores(auditoresData);
+        setEdificios(edificiosData);
+        setSedes(sedesData);
+        setEstados(estadosData);
+      } catch (err) {
+        console.error("Error loading audits data:", err);
+        setScheduledAudits([]);
+      } finally {
+        setLoadingScheduled(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   const handleCreateAudit = () => {
@@ -110,9 +156,63 @@ export function ModuloAuditorias({
     setIsCreatingAudit(false);
   };
 
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setEstadoFilter("all");
+    setAuditorFilter("all");
+    setEdificioFilter("all");
+    setCampusFilter("all");
+  };
+
+  // Lógica de filtrado igual que GestionUsuarios
+  const filteredAudits = scheduledAudits.filter((audit) => {
+    // Filtro por búsqueda en título o descripción
+    if (
+      searchTerm &&
+      !audit.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !audit.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) {
+      return false;
+    }
+
+    // Filtro por estado
+    if (estadoFilter !== "all") {
+      const estadoNombre = audit.estados_auditoria_programada?.nombre ?? "";
+      if (estadoNombre.toLowerCase() !== estadoFilter) {
+        return false;
+      }
+    }
+
+    // Filtro por auditor (por nombre completo)
+    if (auditorFilter !== "all") {
+      const auditorNombre = audit.usuarios?.nombre_completo ?? "";
+      if (auditorNombre.toLowerCase() !== auditorFilter) {
+        return false;
+      }
+    }
+
+    // Filtro por edificio (basado en ubicación de oficina)
+    if (edificioFilter !== "all") {
+      const ubicacion = audit.oficinas?.nombre ?? audit.estantes?.nombre ?? "";
+      if (ubicacion.toLowerCase() !== edificioFilter) {
+        return false;
+      }
+    }
+
+    // Filtro por sede/campus (basado en ubicación)
+    if (campusFilter !== "all") {
+      const ubicacion = audit.oficinas?.nombre ?? audit.estantes?.nombre ?? "";
+      if (ubicacion.toLowerCase() !== campusFilter) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
   return (
     <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
-      <div className="max-w-[1400px] mx-auto space-y-8">
+      <div className="max-w-[1400px] mx-auto">
         <div className="mb-8 mt-6">
           <h1 className="text-3xl font-bold mb-2 dark:text-white">
             Módulo de Auditorías
@@ -122,20 +222,23 @@ export function ModuloAuditorias({
           </p>
         </div>
 
-        {/* Schedule Audit Form */}
+        {/* Filter Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8"
+          className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-4"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold dark:text-white">
-              Programar Nueva Auditoría
-            </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <h2 className="text-xl font-bold dark:text-white">
+                Búsqueda y Filtros
+              </h2>
+            </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+              className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
               onClick={handleCreateAudit}
             >
               <Plus className="w-4 h-4" />
@@ -143,55 +246,78 @@ export function ModuloAuditorias({
             </motion.button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Campus
-              </label>
-              <select className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white appearance-none transition-colors">
-                <option>Campus Central</option>
-                <option>Campus Norte</option>
-                <option>Campus Sur</option>
-              </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por título..."
+                className="w-full pl-12 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+              />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Edificio
-              </label>
-              <select className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white appearance-none transition-colors">
-                <option>Edificio Administrativo A</option>
-                <option>Edificio Administrativo B</option>
-                <option>Data Center Principal</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Auditor Asignado
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <select className="w-full pl-12 pr-6 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white appearance-none transition-colors">
-                  <option>Ana Gutiérrez</option>
-                  <option>Jorge Pérez</option>
-                  <option>María Rodríguez</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Fecha y Hora
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input
-                  type="datetime-local"
-                  className="w-full pl-12 pr-6 py-3 bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors"
-                />
-              </div>
-            </div>
+            <select
+              value={estadoFilter}
+              onChange={(e) => setEstadoFilter(e.target.value)}
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
+            >
+              <option value="all">Estado: todos</option>
+              {estados.map((est: any) => (
+                <option key={est.id} value={est.nombre.toLowerCase()}>
+                  {est.nombre}
+                </option>
+              ))}
+            </select>
+            <select
+              value={auditorFilter}
+              onChange={(e) => setAuditorFilter(e.target.value)}
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
+            >
+              <option value="all">Auditor: todos</option>
+              {auditores.map((auditor: any) => (
+                <option
+                  key={auditor.id}
+                  value={auditor.nombre_completo.toLowerCase()}
+                >
+                  {auditor.nombre_completo}
+                </option>
+              ))}
+            </select>
+            <select
+              value={edificioFilter}
+              onChange={(e) => setEdificioFilter(e.target.value)}
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
+            >
+              <option value="all">Edificio: todos</option>
+              {edificios.map((ed: any) => (
+                <option key={ed.id} value={ed.nombre.toLowerCase()}>
+                  {ed.nombre}
+                </option>
+              ))}
+            </select>
+            <select
+              value={campusFilter}
+              onChange={(e) => setCampusFilter(e.target.value)}
+              className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
+            >
+              <option value="all">Campus: todos</option>
+              {sedes.map((sede: any) => (
+                <option key={sede.id} value={sede.nombre.toLowerCase()}>
+                  {sede.nombre}
+                </option>
+              ))}
+            </select>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="w-full px-4 py-2.5 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 rounded-full font-medium flex items-center justify-center gap-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              onClick={handleResetFilters}
+              title="Limpiar todos los filtros"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Limpiar
+            </motion.button>
           </div>
         </motion.div>
 
@@ -204,13 +330,13 @@ export function ModuloAuditorias({
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               Cargando auditorías...
             </div>
-          ) : scheduledAudits.length === 0 ? (
+          ) : filteredAudits.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              No hay auditorías programadas.
+              No hay auditorías que coincidan con los filtros aplicados.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {scheduledAudits.map((audit, index) => {
+              {filteredAudits.map((audit, index) => {
                 const estadoNombre: string =
                   audit.estados_auditoria_programada?.nombre ?? "Pendiente";
                 const estadoColores = getStateColor(estadoNombre);

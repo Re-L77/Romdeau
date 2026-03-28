@@ -44,6 +44,24 @@ export class AuditoriasprogramadasController {
     return this.auditoriasService.getAllStates();
   }
 
+  @Get('filtros/auditores')
+  @Roles(Role.ADMIN, Role.AUDITOR)
+  async getAllAuditores(): Promise<any[]> {
+    return await this.auditoriasService.getAllAuditores();
+  }
+
+  @Get('filtros/edificios')
+  @Roles(Role.ADMIN, Role.AUDITOR)
+  async getAllEdificios(): Promise<any[]> {
+    return await this.auditoriasService.getAllEdificios();
+  }
+
+  @Get('filtros/sedes')
+  @Roles(Role.ADMIN, Role.AUDITOR)
+  async getAllSedes(): Promise<any[]> {
+    return await this.auditoriasService.getAllSedes();
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.AUDITOR)
   findOne(@Param('id', new ParseUUIDPipe()) id: string) {
