@@ -75,11 +75,6 @@ export default function LoginScreen() {
       await login(email, password);
       // El contexto manejará la navegación
     } catch (error: any) {
-      console.error("❌ Login error:", error);
-      console.error("Request config:", error.config);
-      console.error("Response status:", error.response?.status);
-      console.error("Response data:", error.response?.data);
-
       let errorMessage = "Error al iniciar sesión. Verifica tus credenciales.";
 
       if (error.code === "ECONNREFUSED") {

@@ -146,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const isExpired = await TokenManager.isTokenExpired();
           if (isExpired) {
+            console.log("🔄 Token cercano a expiración, intentando renovar...");
             const refreshToken = await TokenManager.getRefreshToken();
             if (refreshToken) {
               const response = await authApi.refreshToken(refreshToken);
@@ -155,17 +156,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 refreshToken,
                 expiresIn,
               );
+              console.log("✅ Token renovado automáticamente");
             }
           }
         } catch (error) {
-          console.error("Token refresh error:", error);
-          // Si el refresh falla, hacer logout
-          dispatch({
-            isLoading: false,
-            isSignout: true,
-            user: null,
-            error: "Sesión expirada",
-          });
+          // No hacer logout automático en error de refresh - el próximo refresh lo intentará
+          console.error(
+            "⚠️ Auto-refresh falló (próximo intento en 30min):",
+            error,
+          );
         }
       },
       30 * 60 * 1000,
@@ -186,70 +185,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     canManageUsers: state.user?.rol_nombre === "ADMIN",
 
     // Login con credenciales
-    login: useCallback(
-      async (email: string, password: string) => {
-        dispatch({ ...state, isLoading: true, error: null });
+    login: useCallback(async (email: string, password: string) => {
+      dispatch((prev) => ({ ...prev, isLoading: true, error: null }));
 
-        try {
-          console.log("📡 Intentando login con:", email);
-          const response = await authApi.login({ email, password });
-          console.log("✅ Login exitoso:", response.user);
+      try {
+        console.log("📡 Intentando login con:", email);
+        const response = await authApi.login({ email, password });
+        console.log("✅ Login exitoso:", response.user);
 
-          // Guardar tokens de forma segura
-          // Si expires_in no viene del backend, usar 24 horas (86400 segundos)
-          const expiresIn = response.expires_in || 86400;
-          await TokenManager.saveTokens(
-            response.access_token,
-            response.refresh_token,
-            expiresIn,
-          );
+        // Guardar tokens de forma segura
+        // Si expires_in no viene del backend, usar 24 horas (86400 segundos)
+        const expiresIn = response.expires_in || 86400;
+        await TokenManager.saveTokens(
+          response.access_token,
+          response.refresh_token,
+          expiresIn,
+        );
 
-          // Guardar información del usuario
-          await TokenManager.saveUser(response.user);
+        // Guardar información del usuario
+        await TokenManager.saveUser(response.user);
 
-          dispatch({
-            isLoading: false,
-            isSignout: false,
-            user: response.user,
-            error: null,
-          });
+        dispatch({
+          isLoading: false,
+          isSignout: false,
+          user: response.user,
+          error: null,
+        });
 
-          console.log("✅ Usuario autenticado:", response.user.email);
-        } catch (error: any) {
-          console.error("❌ Login failed:", {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data,
-            config: error.config?.url,
-          });
-
-          const errorMessage =
-            error.response?.data?.message ||
-            error.message ||
-            "Error al iniciar sesión. Verifica tus credenciales.";
-
-          dispatch({
-            isLoading: false,
-            isSignout: true,
-            user: null,
-            error: errorMessage,
-          });
-
-          throw error;
+        console.log("✅ Usuario autenticado:", response.user.email);
+      } catch (error: any) {
+        // Solo loguear errores inesperados (no credenciales inválidas)
+        if (error.response?.status !== 401) {
+          console.error("❌ Login error inesperado:", error.message);
         }
-      },
-      [state],
-    ),
+
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "Error al iniciar sesión. Verifica tus credenciales.";
+
+        dispatch({
+          isLoading: false,
+          isSignout: true,
+          user: null,
+          error: errorMessage,
+        });
+
+        throw error;
+      }
+    }, []),
 
     // Logout
     logout: useCallback(async () => {
-      dispatch({ ...state, isLoading: true });
+      dispatch((prev) => ({ ...prev, isLoading: true }));
 
       try {
         // Notificar al backend
         await authApi.logout();
       } catch (error) {
-        console.error("Logout error:", error);
+        console.error("❌ Logout error (continúa local):", error);
       }
 
       // Limpiar tokens y usuario localmente
@@ -263,59 +257,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       console.log("✅ Usuario desconectado");
-    }, [state]),
+    }, []),
 
     // Validar sesión actual
     validateSession: useCallback(async () => {
       try {
         const response = await authApi.validateSession();
         await TokenManager.saveUser(response.user);
-        dispatch({
-          ...state,
-          user: response.user,
-          isSignout: false,
+        dispatch((prev) => {
+          return {
+            ...prev,
+            user: response.user,
+            isSignout: false,
+            error: null,
+          };
         });
         return true;
       } catch (error) {
         // Si la validación falla, hacer logout
+        console.error("❌ Session validation failed:", error);
         await TokenManager.clearTokens();
-        dispatch({
-          ...state,
-          user: null,
-          isSignout: true,
-          error: "Sesión inválida",
+        dispatch((prev) => {
+          return {
+            ...prev,
+            user: null,
+            isSignout: true,
+            error: "Sesión inválida",
+          };
         });
         return false;
       }
-    }, [state]),
+    }, []),
 
     // Cambiar contraseña
     changePassword: useCallback(
       async (currentPassword: string, newPassword: string) => {
-        dispatch({ ...state, isLoading: true, error: null });
+        dispatch((prev) => ({
+          ...prev,
+          isLoading: true,
+          error: null,
+        }));
 
         try {
           await authApi.changePassword(currentPassword, newPassword);
-          dispatch({
-            ...state,
+          dispatch((prev) => ({
+            ...prev,
             isLoading: false,
             error: null,
-          });
+          }));
           console.log("✅ Contraseña actualizada");
         } catch (error: any) {
           const errorMessage =
             error.response?.data?.message || "Error al cambiar la contraseña.";
 
-          dispatch({
-            ...state,
+          dispatch((prev) => ({
+            ...prev,
             isLoading: false,
             error: errorMessage,
-          });
+          }));
 
           throw error;
         }
       },
-      [state],
+      [],
     ),
   };
 
