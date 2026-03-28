@@ -110,6 +110,20 @@ export const authApi = {
     return handleResponse(response);
   },
 
+  resetPassword: async (
+    password: string,
+    refreshToken: string,
+  ): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password, refresh_token: refreshToken }),
+    });
+    return handleResponse(response);
+  },
+
   refreshToken: async (
     refreshToken: string,
   ): Promise<{ access_token: string; refresh_token: string }> => {

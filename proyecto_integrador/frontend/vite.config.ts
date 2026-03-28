@@ -19,4 +19,9 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ["**/*.svg", "**/*.csv"],
+
+  server: {
+    // SPA fallback: serve index.html for all unknown paths (e.g. /reset-password)
+    historyApiFallback: true,
+  },
 });

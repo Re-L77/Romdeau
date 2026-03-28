@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LoginScreen } from "./components/auth/LoginScreen";
+import { ResetPasswordScreen } from "./components/auth/ResetPasswordScreen";
 import { FloatingSidebar } from "./components/layout/FloatingSidebar";
 import { FloatingHeader } from "./components/layout/FloatingHeader";
 import { Dashboard } from "./components/dashboard/Dashboard";
@@ -37,6 +38,11 @@ type ViewType =
 function AppContent() {
   const { isAuthenticated, isValidating, logout } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
+  const [recoveryRefreshToken, setRecoveryRefreshToken] = useState<
+    string | null
+  >(null);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
   const [auditType, setAuditType] = useState<"scheduled" | "completed">(
@@ -52,6 +58,57 @@ function AppContent() {
   const handleLogin = () => {
     setCurrentView("dashboard");
   };
+
+  const clearRecoveryUrl = () => {
+    const cleanUrl =
+      window.location.pathname === "/reset-password"
+        ? `${window.location.origin}/`
+        : `${window.location.origin}${window.location.pathname}${window.location.search}`;
+    window.history.replaceState(null, "", cleanUrl);
+  };
+
+  useEffect(() => {
+    const handleRecoveryUrl = () => {
+      const isRecoveryPath = window.location.pathname === "/reset-password";
+      const hashValue = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : window.location.hash;
+
+      const params = new URLSearchParams(hashValue);
+      const hashType = params.get("type");
+
+      // Entrar en modo recovery si la ruta es /reset-password O si el hash dice type=recovery
+      if (!isRecoveryPath && hashType !== "recovery") {
+        setIsRecoveryMode(false);
+        setRecoveryRefreshToken(null);
+        setRecoveryError(null);
+        return;
+      }
+
+      const refreshToken = params.get("refresh_token");
+      setIsRecoveryMode(true);
+
+      if (!refreshToken) {
+        setRecoveryRefreshToken(null);
+        setRecoveryError(
+          "El enlace de recuperación es inválido o está incompleto.",
+        );
+        return;
+      }
+
+      setRecoveryRefreshToken(refreshToken);
+      setRecoveryError(null);
+    };
+
+    handleRecoveryUrl();
+    window.addEventListener("hashchange", handleRecoveryUrl);
+    window.addEventListener("popstate", handleRecoveryUrl);
+
+    return () => {
+      window.removeEventListener("hashchange", handleRecoveryUrl);
+      window.removeEventListener("popstate", handleRecoveryUrl);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -71,6 +128,23 @@ function AppContent() {
             <p className="text-white">Cargando sesión...</p>
           </div>
         </div>
+      </ThemeProvider>
+    );
+  }
+
+  if (isRecoveryMode) {
+    return (
+      <ThemeProvider>
+        <ResetPasswordScreen
+          refreshToken={recoveryRefreshToken}
+          initialError={recoveryError}
+          onBackToLogin={() => {
+            setIsRecoveryMode(false);
+            setRecoveryRefreshToken(null);
+            setRecoveryError(null);
+            clearRecoveryUrl();
+          }}
+        />
       </ThemeProvider>
     );
   }

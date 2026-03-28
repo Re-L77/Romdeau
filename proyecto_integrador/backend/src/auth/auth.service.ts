@@ -151,7 +151,14 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const { error } = await this.supabase.auth.resetPasswordForEmail(email);
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ||
+      this.configService.get<string>('CORS_ORIGIN') ||
+      'http://localhost:5173';
+
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${frontendUrl}/reset-password`,
+    });
 
     if (error) throw new BadRequestException(error.message);
     return {
