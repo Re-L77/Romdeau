@@ -11,14 +11,28 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   Mail,
   Briefcase,
-  Calendar,
-  CheckCircle,
-  Target,
   LogOut,
   ShieldCheck,
+  Phone,
+  Building2,
+  User,
+  Clock,
 } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return null;
+  try {
+    return new Date(dateStr).toLocaleDateString("es-MX", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return null;
+  }
+};
 
 export default function ProfileScreen() {
   const { user, logout, validateSession } = useAuth();
@@ -29,70 +43,42 @@ export default function ProfileScreen() {
     validateSession();
   }, []);
 
-  const stats = [
+  const infoRows: {
+    IconComp: React.ComponentType<any>;
+    label: string;
+    value: string | null | undefined;
+  }[] = [
     {
-      label: "Auditados",
-      value: 127,
-      Icon: CheckCircle,
-      gradient: ["#10b981", "#059669"],
+      IconComp: User,
+      label: "Nombre completo",
+      value:
+        user?.nombre_completo ||
+        `${user?.nombres ?? ""} ${user?.apellido_paterno ?? ""}${user?.apellido_materno ? ` ${user.apellido_materno}` : ""}`.trim() ||
+        null,
+    },
+    { IconComp: Mail, label: "Correo electrónico", value: user?.email },
+    { IconComp: Briefcase, label: "Rol", value: user?.rol_nombre },
+    {
+      IconComp: Building2,
+      label: "Departamento",
+      value: user?.departamento_nombre || null,
+    },
+    { IconComp: Phone, label: "Teléfono", value: user?.telefono || null },
+    {
+      IconComp: ShieldCheck,
+      label: "Estado de cuenta",
+      value: user?.activo === false ? "Inactiva" : "Activa",
     },
     {
-      label: "Tasa Éxito",
-      value: "98%",
-      Icon: Target,
-      gradient: ["#3b82f6", "#2563eb"],
+      IconComp: Clock,
+      label: "Cuenta creada",
+      value: formatDate(user?.created_at),
     },
-    {
-      label: "Días Activo",
-      value: 12,
-      Icon: Calendar,
-      gradient: ["#f59e0b", "#d97706"],
-    },
-  ];
-
-  const recentActivity = [
-    {
-      date: "2026-03-09 14:30",
-      asset: "ACT-00045",
-      status: "ENCONTRADO",
-      location: "Oficina 301",
-    },
-    {
-      date: "2026-03-09 11:15",
-      asset: "ACT-00044",
-      status: "ENCONTRADO",
-      location: "Sala Juntas B",
-    },
-    {
-      date: "2026-03-08 16:45",
-      asset: "ACT-00043",
-      status: "NO_LOCALIZADO",
-      location: "Data Center",
-    },
-    {
-      date: "2026-03-08 09:20",
-      asset: "ACT-00042",
-      status: "DAÑADO",
-      location: "Oficina 405",
-    },
-  ];
-
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "ENCONTRADO":
-        return { bg: "#d1fae5", text: "#047857", label: "Encontrado" };
-      case "NO_LOCALIZADO":
-        return { bg: "#fee2e2", text: "#b91c1c", label: "No Localizado" };
-      case "DAÑADO":
-        return { bg: "#fef3c7", text: "#b45309", label: "Dañado" };
-      default:
-        return {
-          bg: colors.surfaceSecondary,
-          text: colors.textSecondary,
-          label: status,
-        };
-    }
-  };
+  ].filter((row) => row.value != null) as {
+    IconComp: React.ComponentType<any>;
+    label: string;
+    value: string;
+  }[];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -118,7 +104,7 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             )}
-            {user?.activo && <View style={styles.activeBadge} />}
+            {user?.activo !== false && <View style={styles.activeBadge} />}
           </View>
           <View style={styles.profileDetails}>
             <Text style={styles.profileName}>
@@ -134,40 +120,48 @@ export default function ProfileScreen() {
               <Briefcase size={14} color="rgba(255,255,255,0.7)" />
               <Text style={styles.profileMetaText}>{user?.rol_nombre}</Text>
             </View>
-            {user?.apellido_materno ? (
-              <View style={styles.profileMeta}>
-                <ShieldCheck size={14} color="rgba(255,255,255,0.6)" />
-                <Text style={styles.profileMetaText}>
-                  {user.activo ? "Cuenta activa" : "Cuenta inactiva"}
-                </Text>
-              </View>
-            ) : null}
+            <View style={styles.profileMeta}>
+              <ShieldCheck size={14} color="rgba(255,255,255,0.6)" />
+              <Text style={styles.profileMetaText}>
+                {user?.activo === false ? "Cuenta inactiva" : "Cuenta activa"}
+              </Text>
+            </View>
           </View>
         </View>
       </LinearGradient>
 
-      {/* Stats Cards */}
-      <View style={styles.statsWrapper}>
-        <View style={styles.statsRow}>
-          {stats.map((stat) => {
-            const Icon = stat.Icon;
+      {/* Info card wrapper — overlaps header */}
+      <View style={styles.infoCardWrapper}>
+        <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
+          {infoRows.map((row, index) => {
+            const IconComp = row.IconComp;
             return (
               <View
-                key={stat.label}
-                style={[styles.statCard, { backgroundColor: colors.surface }]}
+                key={row.label}
+                style={[
+                  styles.infoRow,
+                  index < infoRows.length - 1 && {
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                  },
+                ]}
               >
-                <LinearGradient
-                  colors={stat.gradient}
-                  style={styles.statIconBox}
+                <View
+                  style={[
+                    styles.infoIconBox,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
                 >
-                  <Icon size={20} color="#fff" />
-                </LinearGradient>
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {stat.value}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  {stat.label}
-                </Text>
+                  <IconComp size={16} color={colors.textSecondary} />
+                </View>
+                <View style={styles.infoTextBlock}>
+                  <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
+                    {row.label}
+                  </Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>
+                    {row.value}
+                  </Text>
+                </View>
               </View>
             );
           })}
@@ -175,11 +169,28 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Recent Activity */}
+        {/* Placeholder for future activity — remove this block when implemented */}
         <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
           Actividad Reciente
         </Text>
+        <View
+          style={[
+            styles.activityPlaceholder,
+            { backgroundColor: colors.surface },
+          ]}
+        >
+          <Text
+            style={[
+              styles.activityPlaceholderText,
+              { color: colors.textMuted },
+            ]}
+          >
+            Próximamente
+          </Text>
+        </View>
 
+        {/* LEGACY activity items kept here for reference — will be replaced with real data */}
+        {/* 
         <View
           style={[styles.activityList, { backgroundColor: colors.surface }]}
         >
@@ -200,38 +211,12 @@ export default function ProfileScreen() {
                   <Text style={[styles.activityAsset, { color: colors.text }]}>
                     {item.asset}
                   </Text>
-                  <Text
-                    style={[
-                      styles.activityLocation,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    {item.location}
-                  </Text>
-                </View>
-                <View style={styles.activityRight}>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: statusStyle.bg },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.statusText, { color: statusStyle.text }]}
-                    >
-                      {statusStyle.label}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.activityDate, { color: colors.textMuted }]}
-                  >
-                    {item.date.split(" ")[1]}
-                  </Text>
                 </View>
               </View>
             );
           })}
         </View>
+        */}
 
         {/* Logout */}
         <TouchableOpacity
@@ -324,46 +309,51 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
     fontSize: 13,
   },
-  statsWrapper: {
+  infoCardWrapper: {
     paddingHorizontal: 20,
-    marginTop: -50,
+    marginTop: -40,
   },
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+  infoCard: {
     borderRadius: 16,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
   },
-  statIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  infoIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
   },
-  statValue: {
-    fontSize: 22,
-    fontWeight: "800",
+  infoTextBlock: {
+    flex: 1,
+    gap: 2,
   },
-  statLabel: {
+  infoLabel: {
     fontSize: 11,
-    marginTop: 2,
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 20,
   },
   sectionTitle: {
     fontSize: 12,
@@ -373,41 +363,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginLeft: 4,
   },
-  activityList: {
+  activityPlaceholder: {
     borderRadius: 16,
-    overflow: "hidden",
-  },
-  activityItem: {
-    flexDirection: "row",
+    padding: 24,
     alignItems: "center",
-    padding: 16,
+    justifyContent: "center",
   },
-  activityMain: {
-    flex: 1,
-    gap: 4,
-  },
-  activityAsset: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  activityLocation: {
-    fontSize: 12,
-  },
-  activityRight: {
-    alignItems: "flex-end",
-    gap: 6,
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  activityDate: {
-    fontSize: 11,
+  activityPlaceholderText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
   logoutButton: {
     flexDirection: "row",

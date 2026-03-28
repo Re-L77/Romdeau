@@ -52,6 +52,49 @@ export class AuthService {
     return usuario;
   }
 
+  private async getFullUserProfile(userId: string) {
+    return this.prisma.usuarios.findUnique({
+      where: { id: userId },
+      select: {
+        nombres: true,
+        apellido_paterno: true,
+        apellido_materno: true,
+        nombre_completo: true,
+        foto_perfil_url: true,
+        telefono: true,
+        created_at: true,
+        departamento_id: true,
+        activo: true,
+        roles_usuario: { select: { nombre: true } },
+        departamentos: { select: { nombre: true } },
+      },
+    });
+  }
+
+  private buildUserPayload(
+    id: string,
+    email: string | undefined,
+    rolId: number,
+    profile: Awaited<ReturnType<AuthService['getFullUserProfile']>>,
+  ) {
+    return {
+      id,
+      email: email ?? '',
+      rol_id: rolId,
+      activo: profile?.activo ?? true,
+      nombres: profile?.nombres ?? '',
+      apellido_paterno: profile?.apellido_paterno ?? '',
+      apellido_materno: profile?.apellido_materno ?? null,
+      nombre_completo: profile?.nombre_completo ?? null,
+      foto_perfil_url: profile?.foto_perfil_url ?? null,
+      telefono: profile?.telefono ?? null,
+      created_at: profile?.created_at?.toISOString() ?? null,
+      departamento_id: profile?.departamento_id ?? null,
+      rol_nombre: profile?.roles_usuario?.nombre ?? '',
+      departamento_nombre: profile?.departamentos?.nombre ?? null,
+    };
+  }
+
   async login(email: string, password: string) {
     const { data, error } = await this.supabase.auth.signInWithPassword({
       email,
@@ -65,11 +108,17 @@ export class AuthService {
     }
 
     const usuario = await this.ensureUserIsActive(data.user.id);
+    const profile = await this.getFullUserProfile(data.user.id);
 
     return {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
-      user: { ...data.user, rol_id: usuario.rol_id },
+      user: this.buildUserPayload(
+        data.user.id,
+        data.user.email,
+        usuario.rol_id,
+        profile,
+      ),
     };
   }
 
@@ -133,8 +182,17 @@ export class AuthService {
     if (error) throw new UnauthorizedException('Token inválido o expirado');
 
     const usuario = await this.ensureUserIsActive(data.user.id);
+    const profile = await this.getFullUserProfile(data.user.id);
 
-    return { isValid: true, user: { ...data.user, rol_id: usuario.rol_id } };
+    return {
+      isValid: true,
+      user: this.buildUserPayload(
+        data.user.id,
+        data.user.email,
+        usuario.rol_id,
+        profile,
+      ),
+    };
   }
 
   /**
@@ -159,12 +217,18 @@ export class AuthService {
     }
   }
 
-  async changePassword(currentPassword: string, newPassword: string, token: string) {
+  async changePassword(
+    currentPassword: string,
+    newPassword: string,
+    token: string,
+  ) {
     if (!token) throw new UnauthorizedException('Token no proporcionado');
 
     // Validar campos no vacíos
     if (!currentPassword || !currentPassword.trim()) {
-      throw new BadRequestException('La contraseña actual no puede estar vacía');
+      throw new BadRequestException(
+        'La contraseña actual no puede estar vacía',
+      );
     }
     this.validateNewPassword(newPassword);
 
@@ -172,7 +236,10 @@ export class AuthService {
 
     // Verify current password by re-authenticating with Supabase
     const email = tokenUser.email;
-    if (!email) throw new UnauthorizedException('No se pudo obtener el email del usuario');
+    if (!email)
+      throw new UnauthorizedException(
+        'No se pudo obtener el email del usuario',
+      );
 
     const { error: signInError } = await this.supabase.auth.signInWithPassword({
       email,
