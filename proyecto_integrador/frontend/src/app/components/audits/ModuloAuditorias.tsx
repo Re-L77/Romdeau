@@ -152,7 +152,7 @@ export function ModuloAuditorias({ onScheduledAuditClick, onCompletedAuditClick 
   };
 
   return (
-    <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
+    <main className="pl-6 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
       <div className="max-w-[1400px] mx-auto space-y-8">
         <div className="mb-8 mt-6">
           <h1 className="text-3xl font-bold mb-2 dark:text-white">Módulo de Auditorías</h1>

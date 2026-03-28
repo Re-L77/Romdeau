@@ -63,7 +63,7 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
   const data = isScheduled ? scheduledAuditData : completedAuditData;
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12 transition-colors duration-300">
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] pl-6 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12 transition-colors duration-300">
       <div className="max-w-[1600px] mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -10 }}

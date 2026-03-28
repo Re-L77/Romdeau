@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { motion } from 'motion/react';
-import { RefreshCw, CheckCircle, WifiOff } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 import { FinancialWidgets } from "./FinancialWidgets";
 import { AuditTimeline } from "../audits/AuditTimeline";
 import { ControlCenter } from "./ControlCenter";
@@ -21,49 +21,14 @@ function SectionSkeleton({ rows = 1, height = 'h-48' }: { rows?: number; height?
   );
 }
 
-// ─── Last-Updated Bar ────────────────────────────────────────────────────────
-interface StatusBarProps {
-  secondsSinceUpdate: number | null;
-  onRefresh: () => void;
-  isLoading: boolean;
-  hasError: boolean;
-}
-const StatusBar = memo(function StatusBar({ secondsSinceUpdate, onRefresh, isLoading, hasError }: StatusBarProps) {
-  const label = secondsSinceUpdate === null
-    ? 'Cargando...'
-    : secondsSinceUpdate < 5
-      ? 'Actualizado ahora'
-      : `Hace ${secondsSinceUpdate}s`;
-
-  return (
-    <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-      {hasError ? (
-        <>
-          <WifiOff className="w-3.5 h-3.5 text-red-400" />
-          <span className="text-red-400">Error de conexión</span>
-        </>
-      ) : (
-        <>
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-          <span>{label}</span>
-        </>
-      )}
-      <button
-        onClick={onRefresh}
-        disabled={isLoading}
-        title="Actualizar datos"
-        className="ml-1 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
-      >
-        <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${isLoading ? 'animate-spin' : ''}`} />
-      </button>
-    </div>
-  );
-});
-
 // ─── Dashboard Page ──────────────────────────────────────────────────────────
-export const Dashboard = memo(function Dashboard() {
+interface DashboardProps {
+  onNavigate?: (view: string) => void;
+}
+
+export const Dashboard = memo(function Dashboard({ onNavigate }: DashboardProps) {
   const { user } = useAuth();
-  const { data, loading, error, secondsSinceUpdate, refetch } = useDashboard();
+  const { data, loading, error } = useDashboard();
 
   const displayName =
     user?.nombre_completo ||
@@ -72,8 +37,8 @@ export const Dashboard = memo(function Dashboard() {
 
   return (
     <>
-      <AuditTimeline auditorias={data.auditorias} />
-      <main className="px-4 sm:px-6 lg:pl-80 xl:pr-[440px] pt-6 lg:pt-8 pb-16">
+      <AuditTimeline auditorias={data.auditorias} onNavigate={onNavigate} />
+      <main className="pl-4 pr-16 sm:pl-6 sm:pr-20 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] lg:pr-20 pt-6 lg:pt-8 pb-16 relative">
         <div className="max-w-[1400px] mx-auto space-y-8">
 
           {/* Header */}
@@ -86,12 +51,6 @@ export const Dashboard = memo(function Dashboard() {
                 Panel de control — Gestión de activos fijos
               </p>
             </div>
-            <StatusBar
-              secondsSinceUpdate={secondsSinceUpdate}
-              onRefresh={refetch}
-              isLoading={loading}
-              hasError={!!error}
-            />
           </div>
 
           {/* Error Banner (non-blocking) */}

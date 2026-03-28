@@ -40,7 +40,7 @@ function KpiCard({ name, icon: Icon, value, subtext, status, bgColor, iconBg, te
       title={tooltip}
       className={`bg-gradient-to-br ${bgColor} dark:from-gray-800/80 dark:to-gray-900 rounded-2xl p-6 border-2 ${statusStyles[status]} cursor-default select-none`}
     >
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-5">
         <div className={`${iconBg} w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
@@ -53,13 +53,15 @@ function KpiCard({ name, icon: Icon, value, subtext, status, bgColor, iconBg, te
         } shadow-[0_0_8px_2px_rgba(0,0,0,.12)]`} />
       </div>
 
-      <p className={`text-sm font-bold ${textColor} dark:text-white mb-1`}>{name}</p>
-
-      <div className={`${textColor} dark:text-white font-bold text-3xl tabular-nums mb-1`}>
-        {animated.toLocaleString('es-MX')}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
+          <p className={`text-sm font-bold ${textColor} dark:text-white mb-1`}>{name}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight pr-2">{subtext}</p>
+        </div>
+        <div className={`${textColor} dark:text-white font-bold text-4xl tabular-nums tracking-tight`}>
+          {animated.toLocaleString('es-MX')}
+        </div>
       </div>
-
-      <p className="text-xs text-gray-500 dark:text-gray-400">{subtext}</p>
     </motion.div>
   );
 }
@@ -117,7 +119,7 @@ export const ControlCenter = memo(function ControlCenter({ resumen }: ControlCen
   ];
 
   return (
-    <div className="mb-2">
+    <div className="mb-10">
       <div className="mb-5">
         <h2 className="text-2xl font-bold mb-1 dark:text-white">Resumen Operativo</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">

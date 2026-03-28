@@ -257,7 +257,7 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12 transition-colors duration-300">
+      <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] pl-6 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12 transition-colors duration-300">
         <div className="max-w-[1600px] mx-auto">
           <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
             <p className="text-gray-600 dark:text-gray-400">
@@ -271,7 +271,7 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
 
   if (error || !asset) {
     return (
-      <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12 transition-colors duration-300">
+      <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] pl-6 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12 transition-colors duration-300">
         <div className="max-w-[1600px] mx-auto space-y-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -293,7 +293,7 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12 transition-colors duration-300">
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0a0a0a] pl-6 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 pr-6 lg:pr-12 transition-colors duration-300">
       <div className="max-w-[1600px] mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -10 }}

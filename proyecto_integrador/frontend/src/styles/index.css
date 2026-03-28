@@ -1,3 +1,13 @@
 @import './tailwind.css';
 @import './fonts.css';
 @import './theme.css';
+
+:root {
+  --sidebar-width: 16rem; /* equivalent to w-64 */
+  --content-padding: 21.5rem; /* leaving enough gap (left-6 + w-64 + gap) */
+}
+
+body.sidebar-minimized {
+  --sidebar-width: 6.5rem; /* ~104px */
+  --content-padding: 10rem; /* ~160px */
+}

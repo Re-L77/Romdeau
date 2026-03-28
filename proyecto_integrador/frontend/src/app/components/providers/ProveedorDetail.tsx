@@ -176,7 +176,7 @@ export function ProveedorDetail({ proveedorId, onBack }: ProveedorDetailProps) {
 
   if (!proveedor) {
     return (
-      <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
+      <main className="pl-6 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
         <div className="max-w-[1400px] mx-auto">
           <p className="text-gray-600 dark:text-gray-400">Proveedor no encontrado</p>
         </div>
@@ -196,7 +196,7 @@ export function ProveedorDetail({ proveedorId, onBack }: ProveedorDetailProps) {
   const totalGarantias = proveedor.garantias_activas + proveedor.garantias_vencidas + proveedor.garantias_por_vencer;
 
   return (
-    <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
+    <main className="pl-6 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
       <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="mb-8">
