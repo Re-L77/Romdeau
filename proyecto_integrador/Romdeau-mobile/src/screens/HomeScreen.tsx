@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -30,7 +31,7 @@ interface AuditStats {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, validateSession } = useAuth();
   const { colors, isDark } = useTheme();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [notifications] = useState(3);
@@ -47,6 +48,10 @@ export default function HomeScreen() {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    validateSession();
   }, []);
 
   const recentActivity = [
@@ -92,11 +97,18 @@ export default function HomeScreen() {
       >
         <View style={styles.headerTop}>
           <View style={styles.userInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.nombres?.charAt(0).toUpperCase() || "A"}
-              </Text>
-            </View>
+            {user?.foto_perfil_url ? (
+              <Image
+                source={{ uri: user.foto_perfil_url }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {user?.nombres?.charAt(0).toUpperCase() || "A"}
+                </Text>
+              </View>
+            )}
             <View>
               <Text style={styles.userName}>
                 {user?.nombre_completo ||
@@ -289,6 +301,13 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  avatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.3)",
   },
