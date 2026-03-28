@@ -1,26 +1,62 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 
 @Injectable()
 export class AuditoriasService {
-  create(createAuditoriaDto: CreateAuditoriaDto) {
-    return 'This action adds a new auditoria';
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(createAuditoriaDto: CreateAuditoriaDto) {
+    return this.prisma.logs_auditoria.create({
+      data: createAuditoriaDto,
+      include: {
+        activos: true,
+        usuarios: true,
+        estados_auditoria: true,
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all auditorias`;
+  async findAll() {
+    return this.prisma.logs_auditoria.findMany({
+      include: {
+        activos: { select: { id: true, nombre: true, codigo_etiqueta: true } },
+        usuarios: { select: { id: true, nombre_completo: true, email: true } },
+        estados_auditoria: true,
+      },
+      orderBy: { fecha_hora: 'desc' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auditoria`;
+  async findOne(id: string) {
+    const record = await this.prisma.logs_auditoria.findUnique({
+      where: { id },
+      include: {
+        activos: true,
+        usuarios: true,
+        estados_auditoria: true,
+      },
+    });
+    if (!record) throw new NotFoundException(`Auditoría ${id} no encontrada`);
+    return record;
   }
 
-  update(id: number, updateAuditoriaDto: UpdateAuditoriaDto) {
-    return `This action updates a #${id} auditoria`;
+  async update(id: string, updateAuditoriaDto: UpdateAuditoriaDto) {
+    await this.findOne(id);
+    return this.prisma.logs_auditoria.update({
+      where: { id },
+      data: updateAuditoriaDto,
+      include: {
+        activos: true,
+        usuarios: true,
+        estados_auditoria: true,
+      },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} auditoria`;
+  async remove(id: string) {
+    await this.findOne(id);
+    return this.prisma.logs_auditoria.delete({ where: { id } });
   }
 }

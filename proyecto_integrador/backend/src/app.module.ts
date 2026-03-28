@@ -10,7 +10,6 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 import { DepartamentosModule } from './departamentos/departamentos.module';
 import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
 import { RolesGuard } from './auth/roles/roles.guard';
-import { AuditoriasModule } from './auditorias/auditorias.module';
 import { AuditoriasprogramadasModule } from './auditorias-programadas/auditorias-programadas.module';
 
 function validateEnv(config: Record<string, unknown>) {
@@ -55,7 +54,6 @@ function validateEnv(config: Record<string, unknown>) {
     ActivosModule,
     UsuariosModule,
     DepartamentosModule,
-    AuditoriasModule,
     AuditoriasprogramadasModule,
   ],
   controllers: [AppController],

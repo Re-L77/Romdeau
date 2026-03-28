@@ -262,3 +262,10 @@ export const apiClient = {
     return handleResponse(response);
   },
 };
+
+export const auditoriasProgramadasApi = {
+  getAll: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>("/api/auditorias-programadas");
+    return Array.isArray(data) ? data : [];
+  },
+};

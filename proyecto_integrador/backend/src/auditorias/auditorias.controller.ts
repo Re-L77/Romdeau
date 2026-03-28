@@ -32,7 +32,7 @@ export class AuditoriasController {
   @Roles(Role.ADMIN, Role.AUDITOR)
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.auditoriasService.findOne(+id);
+    return this.auditoriasService.findOne(id);
   }
 
   @Roles(Role.ADMIN)
@@ -41,11 +41,11 @@ export class AuditoriasController {
     @Param('id') id: string,
     @Body() updateAuditoriaDto: UpdateAuditoriaDto,
   ) {
-    return this.auditoriasService.update(+id, updateAuditoriaDto);
+    return this.auditoriasService.update(id, updateAuditoriaDto);
   }
   @Roles(Role.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.auditoriasService.remove(+id);
+    return this.auditoriasService.remove(id);
   }
 }
