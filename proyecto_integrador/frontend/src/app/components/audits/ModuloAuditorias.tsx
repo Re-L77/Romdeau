@@ -15,7 +15,7 @@ const _scheduledAuditsMock = [];
 
 const getStateColor = (estadoNombre: string) => {
   const estado = estadoNombre?.toLowerCase().trim() ?? "";
-  
+
   // Mapeo semántico de estados a colores
   if (estado.includes("pendiente") || estado.includes("programada")) {
     return {
@@ -251,7 +251,9 @@ export function ModuloAuditorias({
                           </p>
                         )}
                       </div>
-                      <div className={`px-4 py-2 rounded-full text-sm font-medium border whitespace-nowrap ${estadoColores.bg} ${estadoColores.text} ${estadoColores.border}`}>
+                      <div
+                        className={`px-4 py-2 rounded-full text-sm font-medium border whitespace-nowrap ${estadoColores.bg} ${estadoColores.text} ${estadoColores.border}`}
+                      >
                         {estadoNombre}
                       </div>
                     </div>
