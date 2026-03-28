@@ -1,0 +1,66 @@
+{
+    "expo": {
+        "name": "Romdeau Audit",
+        "slug": "romdeau-audit",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "automatic",
+        "scheme": "romdeau-audit",
+        "splash": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#1e293b"
+        },
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.romdeau.audit",
+            "infoPlist": {
+                "NSCameraUsageDescription": "Esta aplicación necesita acceso a la cámara para escanear códigos QR de activos.",
+                "NSLocationWhenInUseUsageDescription": "Esta aplicación necesita acceso a tu ubicación para registrar la posición GPS durante las auditorías."
+            }
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#1e293b"
+            },
+            "package": "com.romdeau.audit",
+            "permissions": [
+                "android.permission.CAMERA",
+                "android.permission.ACCESS_FINE_LOCATION",
+                "android.permission.ACCESS_COARSE_LOCATION"
+            ]
+        },
+        "web": {
+            "favicon": "./assets/favicon.png",
+            "bundler": "metro"
+        },
+        "plugins": [
+            [
+                "expo-router",
+                {
+                    "root": "./src/app"
+                }
+            ],
+            [
+                "expo-camera",
+                {
+                    "cameraPermission": "Permitir acceso a la cámara para escanear códigos QR"
+                }
+            ],
+            [
+                "expo-location",
+                {
+                    "locationWhenInUsePermission": "Permitir acceso a la ubicación para registrar auditorías"
+                }
+            ]
+        ],
+        "experiments": {
+            "typedRoutes": true
+        }
+    }
+}
