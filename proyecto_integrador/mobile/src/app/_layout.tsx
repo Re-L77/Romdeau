@@ -52,13 +52,29 @@ function RootLayoutNav() {
           />
         </>
       ) : (
-        // Flujo NO Autenticado - Solo Login
-        <Stack.Screen
-          name="index"
-          options={{
-            animationEnabled: false,
-          }}
-        />
+        // Flujo NO Autenticado
+        <>
+          <Stack.Screen
+            name="index"
+            options={{
+              animation: "none",
+            }}
+          />
+          <Stack.Screen
+            name="forgot-password"
+            options={{
+              presentation: "card",
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="reset-password"
+            options={{
+              presentation: "card",
+              animation: "slide_from_right",
+            }}
+          />
+        </>
       )}
     </Stack>
   );

@@ -24,11 +24,13 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNetInfo } from "@react-native-community/netinfo";
+import { useRouter } from "expo-router";
 
 export default function LoginScreen() {
   const { login, isLoading, error: authError } = useAuth();
   const { colors, isDark } = useTheme();
   const { isConnected } = useNetInfo();
+  const router = useRouter();
 
   const [email, setEmail] = useState("124051537@upq.edu.mx");
   const [password, setPassword] = useState("");
@@ -75,11 +77,6 @@ export default function LoginScreen() {
       await login(email, password);
       // El contexto manejará la navegación
     } catch (error: any) {
-      console.error("❌ Login error:", error);
-      console.error("Request config:", error.config);
-      console.error("Response status:", error.response?.status);
-      console.error("Response data:", error.response?.data);
-
       let errorMessage = "Error al iniciar sesión. Verifica tus credenciales.";
 
       if (error.code === "ECONNREFUSED") {
@@ -313,6 +310,19 @@ export default function LoginScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.forgotPasswordButton}
+            onPress={() => router.push("/forgot-password" as any)}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[styles.forgotPasswordText, { color: colors.primary }]}
+            >
+              ¿Olvidaste tu contraseña?
+            </Text>
+          </TouchableOpacity>
+
           {/* Demo Login Button */}
           <TouchableOpacity
             style={[
@@ -506,6 +516,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  forgotPasswordButton: {
+    alignItems: "center",
+    marginTop: -6,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   demoButton: {
     paddingVertical: 12,

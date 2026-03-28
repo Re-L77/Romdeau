@@ -5,37 +5,28 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in?: number; // Opcional - si no viene, usar valor por defecto
-  user: {
-    id: string;
-    email: string;
-    nombres: string;
-    apellido_paterno: string;
-    apellido_materno?: string;
-    nombre_completo?: string;
-    rol_id: number;
-    rol_nombre: string;
-    activo: boolean;
-    departamento_id?: number;
-    foto_perfil_url?: string;
-  };
-}
-
 export interface AuthUser {
   id: string;
   email: string;
   nombres: string;
   apellido_paterno: string;
-  apellido_materno?: string;
-  nombre_completo?: string;
+  apellido_materno?: string | null;
+  nombre_completo?: string | null;
   rol_id: number;
   rol_nombre: string;
   activo: boolean;
-  departamento_id?: number;
-  foto_perfil_url?: string;
+  departamento_id?: number | null;
+  departamento_nombre?: string | null;
+  foto_perfil_url?: string | null;
+  telefono?: string | null;
+  created_at?: string | null;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in?: number; // Opcional - si no viene, usar valor por defecto
+  user: AuthUser;
 }
 
 export interface RefreshTokenRequest {
@@ -106,8 +97,11 @@ export const authApi = {
   },
 
   // Solicitar reset de contraseña
-  forgotPassword: async (email: string): Promise<void> => {
-    await apiClient.post("/api/auth/forgot-password", { email });
+  forgotPassword: async (email: string, redirectTo?: string): Promise<void> => {
+    await apiClient.post("/api/auth/forgot-password", {
+      email,
+      ...(redirectTo ? { redirect_to: redirectTo } : {}),
+    });
   },
 
   // Reset de contraseña con token
@@ -116,7 +110,7 @@ export const authApi = {
     refreshToken: string,
   ): Promise<void> => {
     await apiClient.post("/api/auth/reset-password", {
-      new_password: newPassword,
+      password: newPassword,
       refresh_token: refreshToken,
     });
   },
