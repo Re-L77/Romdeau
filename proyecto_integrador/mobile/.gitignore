@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Expo generated files
+.expo/
+expo-env.d.ts
+
+# Build outputs
+dist/
+web-build/
+coverage/
+*.tsbuildinfo
+
+# Native build artifacts
+android/
+android/build/
+ios/build/
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# Local environment files
+.env
+.env*.local
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
