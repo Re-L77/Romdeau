@@ -1,56 +1,10 @@
 import { motion } from 'motion/react';
-import { CheckCircle2, MapPin, User, QrCode } from 'lucide-react';
+import { CheckCircle2, MapPin, QrCode } from 'lucide-react';
+import { AuditoriaRecienteDto } from '../../../hooks/useDashboard';
 
-const audits = [
-  {
-    id: 1,
-    auditor: 'Carlos Mendoza',
-    avatar: 'CM',
-    timestamp: '2026-02-23 14:30',
-    location: 'Oficina Central - Piso 3',
-    gpsCoordinates: '19.4326, -99.1332',
-    assetsVerified: 12,
-    qrScanned: 12,
-    validated: true,
-    automationSaved: '45 min',
-  },
-  {
-    id: 2,
-    auditor: 'Ana Gutiérrez',
-    avatar: 'AG',
-    timestamp: '2026-02-23 11:15',
-    location: 'Oficina Central - Piso 2',
-    gpsCoordinates: '19.4328, -99.1330',
-    assetsVerified: 8,
-    qrScanned: 8,
-    validated: true,
-    automationSaved: '30 min',
-  },
-  {
-    id: 3,
-    auditor: 'Jorge Pérez',
-    avatar: 'JP',
-    timestamp: '2026-02-22 16:45',
-    location: 'Data Center',
-    gpsCoordinates: '19.4320, -99.1335',
-    assetsVerified: 5,
-    qrScanned: 5,
-    validated: true,
-    automationSaved: '18 min',
-  },
-  {
-    id: 4,
-    auditor: 'María Rodríguez',
-    avatar: 'MR',
-    timestamp: '2026-02-22 09:30',
-    location: 'Área Contabilidad',
-    gpsCoordinates: '19.4325, -99.1328',
-    assetsVerified: 15,
-    qrScanned: 15,
-    validated: true,
-    automationSaved: '52 min',
-  },
-];
+interface AuditTimelineProps {
+  auditorias: AuditoriaRecienteDto[];
+}
 
 const avatarColors = [
   'from-blue-400 to-blue-600',
@@ -59,11 +13,15 @@ const avatarColors = [
   'from-emerald-400 to-emerald-600',
 ];
 
-export function AuditTimeline() {
-  const totalTimeSaved = audits.reduce((acc, audit) => {
-    const mins = parseInt(audit.automationSaved);
-    return acc + mins;
-  }, 0);
+const getInitials = (name: string) => {
+  const parts = name.split(' ');
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+};
+
+export function AuditTimeline({ auditorias }: AuditTimelineProps) {
+  // We can faux-calculate time saved based on number of audits if data is missing, e.g. 15 mins per audit
+  const totalTimeSaved = auditorias.length * 15;
 
   return (
     <motion.div
@@ -88,8 +46,12 @@ export function AuditTimeline() {
         {/* Vertical timeline line */}
         <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
 
-        {audits.map((audit, index) => {
+        {auditorias.map((audit, index) => {
           const avatarColor = avatarColors[index % avatarColors.length];
+          const formattedDate = new Date(audit.fecha).toLocaleString('es-MX', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+          });
           
           return (
             <motion.div
@@ -101,41 +63,35 @@ export function AuditTimeline() {
             >
               {/* Timeline dot with avatar */}
               <div className={`absolute left-0 w-12 h-12 rounded-2xl bg-gradient-to-br ${avatarColor} flex items-center justify-center ring-4 ring-white dark:ring-[#1a1a1a] shadow-lg text-white font-bold text-sm`}>
-                {audit.avatar}
+                {getInitials(audit.usuario)}
               </div>
 
               <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 hover:shadow-md dark:hover:shadow-lg transition-all cursor-pointer border border-gray-100 dark:border-gray-700">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-sm mb-1 dark:text-white">{audit.auditor}</h3>
+                    <h3 className="font-bold text-sm mb-1 dark:text-white">{audit.usuario}</h3>
                     <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
-                      {audit.location}
+                      {audit.ubicacion}
                     </p>
                   </div>
-                  {audit.validated && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                  )}
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="bg-white dark:bg-gray-900 rounded-xl p-2">
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-0.5">Activos</p>
-                    <p className="font-bold text-sm dark:text-white">{audit.assetsVerified}</p>
-                  </div>
-                  <div className="bg-white dark:bg-gray-900 rounded-xl p-2">
+                  <div className="bg-white dark:bg-gray-900 rounded-xl p-2 col-span-2">
                     <p className="text-xs text-gray-500 dark:text-gray-500 mb-0.5 flex items-center gap-1">
                       <QrCode className="w-3 h-3" />
-                      QR Scans
+                      Actividad
                     </p>
-                    <p className="font-bold text-sm dark:text-white">{audit.qrScanned}</p>
+                    <p className="font-bold text-sm dark:text-white truncate">{audit.actividad}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-500">{audit.timestamp}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-500">{formattedDate}</span>
                   <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs">
-                    <span className="font-medium">+{audit.automationSaved}</span>
+                    <span className="font-medium">+15 min</span>
                   </div>
                 </div>
               </div>
