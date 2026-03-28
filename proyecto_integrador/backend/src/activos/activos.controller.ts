@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ActivosService } from './activos.service';
 
 interface FindActivosQuery {
@@ -15,11 +15,12 @@ interface FindActivosQuery {
   custodioId?: string;
   estanteId?: string;
   sinCustodio?: string;
+  tipoRastreo?: string;
 }
 
 @Controller('api/activos')
 export class ActivosController {
-  constructor(private readonly activosService: ActivosService) {}
+  constructor(private readonly activosService: ActivosService) { }
 
   private parsePositiveInt(value: string | undefined, fieldName: string) {
     if (value === undefined) {
@@ -75,6 +76,37 @@ export class ActivosController {
       custodioId: query.custodioId,
       estanteId: query.estanteId,
       sinCustodio,
+      tipoRastreo: query.tipoRastreo,
     });
+  }
+
+  @Get(':id/trazabilidad')
+  getTrazabilidad(@Param('id') id: string) {
+    return this.activosService.getTrazabilidad(id);
+  }
+
+  @Get('debug/seed-trazabilidad')
+  async seedTrazabilidad() {
+    return this.activosService.seedTestData();
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateActivoDto: any) {
+    return this.activosService.update(id, updateActivoDto);
+  }
+
+  @Post()
+  create(@Body() createActivoDto: any) {
+    return this.activosService.create(createActivoDto);
+  }
+
+  @Get('categorias/list')
+  getCategorias() {
+    return this.activosService.getCategorias();
+  }
+
+  @Get('estados/list')
+  getEstados() {
+    return this.activosService.getEstados();
   }
 }

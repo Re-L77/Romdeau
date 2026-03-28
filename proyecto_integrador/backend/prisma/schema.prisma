@@ -10,7 +10,6 @@ datasource db {
 model activos {
   id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   codigo_etiqueta     String?               @unique
-  nombre              String?               @db.VarChar(255)
   categoria_id        String                @db.Uuid
   custodio_actual_id  String?               @db.Uuid
   oficina_id          String?               @db.Uuid
@@ -20,6 +19,7 @@ model activos {
   foto_principal_url  String?
   created_at          DateTime?             @default(now()) @db.Timestamptz(6)
   updated_at          DateTime?             @default(now()) @db.Timestamptz(6)
+  nombre              String?               @db.VarChar(255)
   categorias          categorias            @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuarios            usuarios?             @relation(fields: [custodio_actual_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   estados_activo      estados_activo        @relation(fields: [estado_operativo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -112,7 +112,6 @@ model direcciones {
   numero_interior String? @db.VarChar(20)
   calle_id        Int
   calles          calles  @relation(fields: [calle_id], references: [id], onUpdate: NoAction)
-  proveedores     proveedores[]
   sedes           sedes[]
 }
 
@@ -154,13 +153,14 @@ model estados_rep {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model estantes {
-  id                                                                    String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  nombre                                                                String                @db.VarChar(50)
-  pasillo_id                                                            String                @db.Uuid
+  id                                                                    String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre                                                                String                   @db.VarChar(50)
+  pasillo_id                                                            String                   @db.Uuid
   activos                                                               activos[]
-  pasillos                                                              pasillos              @relation(fields: [pasillo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  movimientos_activos_movimientos_activos_estante_anterior_idToestantes movimientos_activos[] @relation("movimientos_activos_estante_anterior_idToestantes")
-  movimientos_activos_movimientos_activos_estante_nuevo_idToestantes    movimientos_activos[] @relation("movimientos_activos_estante_nuevo_idToestantes")
+  auditorias_programadas                                                auditorias_programadas[]
+  pasillos                                                              pasillos                 @relation(fields: [pasillo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  movimientos_activos_movimientos_activos_estante_anterior_idToestantes movimientos_activos[]    @relation("movimientos_activos_estante_anterior_idToestantes")
+  movimientos_activos_movimientos_activos_estante_nuevo_idToestantes    movimientos_activos[]    @relation("movimientos_activos_estante_nuevo_idToestantes")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -228,13 +228,14 @@ model municipios {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model oficinas {
-  id                                                                    String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  nombre                                                                String                @db.VarChar(100)
-  piso_id                                                               String                @db.Uuid
+  id                                                                    String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre                                                                String                   @db.VarChar(100)
+  piso_id                                                               String                   @db.Uuid
   activos                                                               activos[]
-  movimientos_activos_movimientos_activos_oficina_anterior_idTooficinas movimientos_activos[] @relation("movimientos_activos_oficina_anterior_idTooficinas")
-  movimientos_activos_movimientos_activos_oficina_nueva_idTooficinas    movimientos_activos[] @relation("movimientos_activos_oficina_nueva_idTooficinas")
-  pisos                                                                 pisos                 @relation(fields: [piso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  auditorias_programadas                                                auditorias_programadas[]
+  movimientos_activos_movimientos_activos_oficina_anterior_idTooficinas movimientos_activos[]    @relation("movimientos_activos_oficina_anterior_idTooficinas")
+  movimientos_activos_movimientos_activos_oficina_nueva_idTooficinas    movimientos_activos[]    @relation("movimientos_activos_oficina_nueva_idTooficinas")
+  pisos                                                                 pisos                    @relation(fields: [piso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -269,9 +270,7 @@ model proveedores {
   rfc_tax_id        String?
   contacto_soporte  String?
   direccion_fiscal  String?
-  direccion_id      String?             @db.Uuid
   sitio_web         String?             @db.VarChar(255)
-  direcciones       direcciones?        @relation(fields: [direccion_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   datos_financieros datos_financieros[]
 }
 
@@ -304,25 +303,26 @@ model spatial_ref_sys {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model usuarios {
-  id                                                                     String                @id @default(dbgenerated("auth.uid()")) @db.Uuid
+  id                                                                     String                   @id @default(dbgenerated("auth.uid()")) @db.Uuid
   nombres                                                                String
   apellido_paterno                                                       String
   apellido_materno                                                       String?
-  nombre_completo                                                        String?               @default(dbgenerated("TRIM(BOTH FROM (((nombres || ' '::text) || apellido_paterno) || COALESCE((' '::text || apellido_materno), ''::text)))"))
-  email                                                                  String                @unique
-  rol_id                                                                 Int                   @default(3) @db.SmallInt
-  activo                                                                 Boolean?              @default(true)
-  foto_perfil_url                                                        String?               @db.VarChar(500)
-  telefono                                                               String?               @db.VarChar(20)
-  departamento_id                                                        Int?                  @db.SmallInt
-  created_at                                                             DateTime?             @default(now()) @db.Timestamptz(6)
+  nombre_completo                                                        String?                  @default(dbgenerated("TRIM(BOTH FROM (((nombres || ' '::text) || apellido_paterno) || COALESCE((' '::text || apellido_materno), ''::text)))"))
+  email                                                                  String                   @unique
+  rol_id                                                                 Int                      @default(3) @db.SmallInt
+  activo                                                                 Boolean?                 @default(true)
+  created_at                                                             DateTime?                @default(now()) @db.Timestamptz(6)
+  departamento_id                                                        Int?                     @db.SmallInt
+  foto_perfil_url                                                        String?                  @db.VarChar(500)
+  telefono                                                               String?                  @db.VarChar(20)
   activos                                                                activos[]
+  auditorias_programadas                                                 auditorias_programadas[]
   bajas_activos                                                          bajas_activos[]
   logs_auditoria                                                         logs_auditoria[]
-  departamentos                                                          departamentos?        @relation(fields: [departamento_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[] @relation("movimientos_activos_custodio_anterior_idTousuarios")
-  movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[] @relation("movimientos_activos_custodio_nuevo_idTousuarios")
-  roles_usuario                                                          roles_usuario         @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[]    @relation("movimientos_activos_custodio_anterior_idTousuarios")
+  movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[]    @relation("movimientos_activos_custodio_nuevo_idTousuarios")
+  departamentos                                                          departamentos?           @relation(fields: [departamento_id], references: [id], onUpdate: NoAction)
+  roles_usuario                                                          roles_usuario            @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -343,4 +343,35 @@ model departamentos {
   nombre      String     @unique @db.VarChar(100)
   descripcion String?
   usuarios    usuarios[]
+}
+
+model auditorias_programadas {
+  id                           String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  titulo                       String                       @db.VarChar(255)
+  descripcion                  String?
+  fecha_programada             DateTime                     @db.Timestamptz(6)
+  fecha_inicio                 DateTime?                    @db.Timestamptz(6)
+  fecha_fin                    DateTime?                    @db.Timestamptz(6)
+  estado_id                    Int                          @default(1) @db.SmallInt
+  auditor_id                   String                       @db.Uuid
+  oficina_id                   String?                      @db.Uuid
+  estante_id                   String?                      @db.Uuid
+  created_at                   DateTime?                    @default(now()) @db.Timestamptz(6)
+  updated_at                   DateTime?                    @default(now()) @db.Timestamptz(6)
+  estados_auditoria_programada estados_auditoria_programada @relation(fields: [estado_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estado")
+  estantes                     estantes?                    @relation(fields: [estante_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estante")
+  oficinas                     oficinas?                    @relation(fields: [oficina_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_oficina")
+  usuarios                     usuarios                     @relation(fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_usuario")
+
+  @@index([auditor_id], map: "idx_auditorias_auditor")
+  @@index([estado_id], map: "idx_auditorias_estado")
+  @@index([estante_id], map: "idx_auditorias_estante")
+  @@index([oficina_id], map: "idx_auditorias_oficina")
+}
+
+model estados_auditoria_programada {
+  id                     Int                      @id @db.SmallInt
+  nombre                 String                   @unique @db.VarChar(50)
+  descripcion            String?
+  auditorias_programadas auditorias_programadas[]
 }

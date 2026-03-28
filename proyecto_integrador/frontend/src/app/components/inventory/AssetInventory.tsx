@@ -1,11 +1,8 @@
 import { motion } from "motion/react";
 import {
   QrCode,
-  MapPin,
   User,
   ChevronDown,
-  Navigation,
-  Clock,
   Plus,
   Trash2,
   Laptop,
@@ -53,6 +50,7 @@ export function AssetInventory({
   onCreateAsset,
 }: AssetInventoryProps) {
   const [activosEnriquecidos, setActivosEnriquecidos] = useState<any[]>([]);
+  const [allActivos, setAllActivos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +59,7 @@ export function AssetInventory({
   const [statusFilter, setStatusFilter] = useState<number | "all">("all");
   const [oficinaFilter, setOficinaFilter] = useState<string>("all");
   const [estanteFilter, setEstanteFilter] = useState<string>("all");
+  const [tipoRastreoFilter, setTipoRastreoFilter] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
   const [sinCustodio, setSinCustodio] = useState(false);
   const [pagination, setPagination] = useState({
@@ -73,14 +72,14 @@ export function AssetInventory({
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     action:
-      | "create"
-      | "edit"
-      | "transfer"
-      | "delete"
-      | "editSpecs"
-      | "printLabel"
-      | "changeCustodian"
-      | null;
+    | "create"
+    | "edit"
+    | "transfer"
+    | "delete"
+    | "editSpecs"
+    | "printLabel"
+    | "changeCustodian"
+    | null;
     assetId?: string;
     assetName?: string;
   }>({ isOpen: false, action: null });
@@ -129,9 +128,18 @@ export function AssetInventory({
         dias_hasta_vencimiento_garantia: 0,
         categoria_icon: categoriaIcon,
         estado_color: estadoColor,
-        estado_nombre: estadosNombres[activo.estado_operativo_id],
+        estado_nombre: (estadosNombres as Record<number, string>)[activo.estado_operativo_id] ?? 'Desconocido',
       };
     });
+  };
+
+  const loadAllActivos = async () => {
+    try {
+      const result = await activosApi.getList({ limit: 100 });
+      setAllActivos(enrichActivos(result.data));
+    } catch {
+      // silently fail — dropdowns may be empty but filtering still works
+    }
   };
 
   const loadActivos = async (page: number, append = false) => {
@@ -151,6 +159,7 @@ export function AssetInventory({
         oficinaId: oficinaFilter !== "all" ? oficinaFilter : undefined,
         estanteId: estanteFilter !== "all" ? estanteFilter : undefined,
         sinCustodio: sinCustodio || undefined,
+        tipoRastreo: tipoRastreoFilter !== "all" ? tipoRastreoFilter : undefined,
       });
 
       const enriquecidos = enrichActivos(result.data);
@@ -170,6 +179,11 @@ export function AssetInventory({
     }
   };
 
+  // Load master list once for populating filter dropdowns
+  useEffect(() => {
+    loadAllActivos();
+  }, []);
+
   useEffect(() => {
     loadActivos(1);
   }, [
@@ -179,13 +193,17 @@ export function AssetInventory({
     estanteFilter,
     searchText,
     sinCustodio,
+    tipoRastreoFilter,
   ]);
 
-  // Extract unique values for filters
+  // Extract unique values for filters from master list (allActivos)
+  // This ensures dropdown options never disappear when filters are applied
+  const sourceForDropdowns = allActivos.length > 0 ? allActivos : activosEnriquecidos;
+
   const categories = [
     "all",
     ...new Set(
-      activosEnriquecidos.map((a) => a.categoria?.nombre).filter(Boolean),
+      sourceForDropdowns.map((a) => a.categoria?.nombre).filter(Boolean),
     ),
   ];
   const statuses = [
@@ -196,11 +214,17 @@ export function AssetInventory({
     { id: EstadoActivo.BAJA, nombre: "Baja" },
   ];
 
+  const tiposRastreo = [
+    { id: "all", nombre: "Todos los tipos" },
+    { id: "FIJO", nombre: "Fijo" },
+    { id: "MOVIL", nombre: "Móvil" },
+  ];
+
   const oficinas = [
     { id: "all", nombre: "Todas las oficinas" },
     ...Array.from(
       new Map(
-        activosEnriquecidos
+        sourceForDropdowns
           .filter((a) => a.oficinas?.id)
           .map((a) => [
             a.oficinas.id,
@@ -214,7 +238,7 @@ export function AssetInventory({
     { id: "all", nombre: "Todos los estantes" },
     ...Array.from(
       new Map(
-        activosEnriquecidos
+        sourceForDropdowns
           .filter((a) => a.estantes?.id)
           .filter(
             (a) => oficinaFilter === "all" || a.oficinas?.id === oficinaFilter,
@@ -348,9 +372,9 @@ export function AssetInventory({
       {!loading && !error && (
         <>
           <div className="mb-4">
-            <h2 className="text-2xl font-bold mb-1 dark:text-white">
+            <h1 className="text-3xl font-bold mb-1 dark:text-white">
               Inventario de Activos Fijos
-            </h2>
+            </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Trazabilidad con PostGIS -{" "}
               <span className="font-semibold text-emerald-600 dark:text-emerald-400">
@@ -380,7 +404,7 @@ export function AssetInventory({
                 Crear Activo
               </motion.button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
               <div className="md:col-span-2 lg:col-span-2">
                 <label className="text-xs text-gray-500 dark:text-gray-500 mb-2 block">
                   Buscar por nombre o etiqueta
@@ -448,6 +472,24 @@ export function AssetInventory({
                 </select>
               </div>
 
+              {/* Tipo de Activo Filter */}
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-500 mb-2 block">
+                  Tipo de Activo
+                </label>
+                <select
+                  value={tipoRastreoFilter}
+                  onChange={(e) => setTipoRastreoFilter(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 dark:text-white border border-gray-200 dark:border-gray-700 rounded-full text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+                >
+                  {tiposRastreo.map((tipo) => (
+                    <option key={tipo.id} value={tipo.id}>
+                      {tipo.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Status Filter */}
               <div>
                 <label className="text-xs text-gray-500 dark:text-gray-500 mb-2 block">
@@ -477,11 +519,10 @@ export function AssetInventory({
                   className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <span
-                    className={`h-5 w-5 rounded-md border flex items-center justify-center transition-all ${
-                      sinCustodio
-                        ? "bg-black border-black text-white dark:bg-white dark:border-white dark:text-black"
-                        : "bg-transparent border-gray-300 dark:border-gray-600 text-transparent"
-                    }`}
+                    className={`h-5 w-5 rounded-md border flex items-center justify-center transition-all ${sinCustodio
+                      ? "bg-black border-black text-white dark:bg-white dark:border-white dark:text-black"
+                      : "bg-transparent border-gray-300 dark:border-gray-600 text-transparent"
+                      }`}
                   >
                     <Check className="w-3.5 h-3.5" />
                   </span>
@@ -496,7 +537,7 @@ export function AssetInventory({
               const isExpanded = expandedRow === asset.id;
               const CategoryIcon =
                 categoryIcons[
-                  asset.categoria_icon as keyof typeof categoryIcons
+                asset.categoria_icon as keyof typeof categoryIcons
                 ] || Package2;
 
               return (
@@ -577,11 +618,10 @@ export function AssetInventory({
                             Estado
                           </p>
                           <span
-                            className={`inline-block px-4 py-2 rounded-full text-sm font-medium border ${
-                              statusColors[
-                                asset.estado_color as keyof typeof statusColors
-                              ]
-                            }`}
+                            className={`inline-block px-4 py-2 rounded-full text-sm font-medium border ${statusColors[
+                              asset.estado_color as keyof typeof statusColors
+                            ]
+                              }`}
                           >
                             {asset.estado_nombre}
                           </span>
@@ -628,7 +668,7 @@ export function AssetInventory({
                         className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 space-y-6"
                       >
                         {asset.especificaciones &&
-                        Object.keys(asset.especificaciones).length > 0 ? (
+                          Object.keys(asset.especificaciones).length > 0 ? (
                           <>
                             <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">
                               Especificaciones Técnicas (JSONB Dinámico)
@@ -713,30 +753,27 @@ export function AssetInventory({
                               </p>
                             </div>
                             <div
-                              className={`p-4 rounded-2xl border ${
-                                asset.dias_hasta_vencimiento_garantia &&
+                              className={`p-4 rounded-2xl border ${asset.dias_hasta_vencimiento_garantia &&
                                 asset.dias_hasta_vencimiento_garantia < 30
-                                  ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-700/30"
-                                  : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
-                              }`}
+                                ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-700/30"
+                                : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
+                                }`}
                             >
                               <p
-                                className={`text-xs mb-1 ${
-                                  asset.dias_hasta_vencimiento_garantia &&
+                                className={`text-xs mb-1 ${asset.dias_hasta_vencimiento_garantia &&
                                   asset.dias_hasta_vencimiento_garantia < 30
-                                    ? "text-red-600 dark:text-red-400"
-                                    : "text-gray-500 dark:text-gray-500"
-                                }`}
+                                  ? "text-red-600 dark:text-red-400"
+                                  : "text-gray-500 dark:text-gray-500"
+                                  }`}
                               >
                                 Vencimiento Garantía
                               </p>
                               <p
-                                className={`text-lg font-bold ${
-                                  asset.dias_hasta_vencimiento_garantia &&
+                                className={`text-lg font-bold ${asset.dias_hasta_vencimiento_garantia &&
                                   asset.dias_hasta_vencimiento_garantia < 30
-                                    ? "text-red-700 dark:text-red-400"
-                                    : "text-gray-700 dark:text-gray-300"
-                                }`}
+                                  ? "text-red-700 dark:text-red-400"
+                                  : "text-gray-700 dark:text-gray-300"
+                                  }`}
                               >
                                 {asset.dias_hasta_vencimiento_garantia
                                   ? asset.dias_hasta_vencimiento_garantia > 0
@@ -748,127 +785,7 @@ export function AssetInventory({
                           </div>
                         )}
 
-                        {/* Action Buttons */}
-                        <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                          <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">
-                            Acciones Disponibles
-                          </p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                            <motion.button
-                              whileHover={{ scale: 1.02, y: -2 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() =>
-                                setConfirmModal({
-                                  isOpen: true,
-                                  action: "edit",
-                                  assetId: asset.id,
-                                  assetName: asset.nombre,
-                                })
-                              }
-                              className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-black dark:hover:border-white transition-colors flex flex-col items-center gap-2"
-                            >
-                              <Edit className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                              <span className="text-xs font-medium text-gray-900 dark:text-white">
-                                Editar Activo
-                              </span>
-                            </motion.button>
 
-                            <motion.button
-                              whileHover={{ scale: 1.02, y: -2 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() =>
-                                setConfirmModal({
-                                  isOpen: true,
-                                  action: "transfer",
-                                  assetId: asset.id,
-                                  assetName: asset.nombre,
-                                })
-                              }
-                              className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-black dark:hover:border-white transition-colors flex flex-col items-center gap-2"
-                            >
-                              <ArrowRightLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                              <span className="text-xs font-medium text-gray-900 dark:text-white">
-                                Transferir
-                              </span>
-                            </motion.button>
-
-                            <motion.button
-                              whileHover={{ scale: 1.02, y: -2 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() =>
-                                setConfirmModal({
-                                  isOpen: true,
-                                  action: "changeCustodian",
-                                  assetId: asset.id,
-                                  assetName: asset.nombre,
-                                })
-                              }
-                              className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-black dark:hover:border-white transition-colors flex flex-col items-center gap-2"
-                            >
-                              <UserCog className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                              <span className="text-xs font-medium text-gray-900 dark:text-white">
-                                Cambiar Custodio
-                              </span>
-                            </motion.button>
-
-                            <motion.button
-                              whileHover={{ scale: 1.02, y: -2 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() =>
-                                setConfirmModal({
-                                  isOpen: true,
-                                  action: "editSpecs",
-                                  assetId: asset.id,
-                                  assetName: asset.nombre,
-                                })
-                              }
-                              className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-black dark:hover:border-white transition-colors flex flex-col items-center gap-2"
-                            >
-                              <Settings className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                              <span className="text-xs font-medium text-gray-900 dark:text-white">
-                                Editar Specs
-                              </span>
-                            </motion.button>
-
-                            <motion.button
-                              whileHover={{ scale: 1.02, y: -2 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() =>
-                                setConfirmModal({
-                                  isOpen: true,
-                                  action: "printLabel",
-                                  assetId: asset.id,
-                                  assetName: asset.nombre,
-                                })
-                              }
-                              className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-black dark:hover:border-white transition-colors flex flex-col items-center gap-2"
-                            >
-                              <FileText className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                              <span className="text-xs font-medium text-gray-900 dark:text-white">
-                                Imprimir Etiqueta
-                              </span>
-                            </motion.button>
-
-                            <motion.button
-                              whileHover={{ scale: 1.02, y: -2 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() =>
-                                setConfirmModal({
-                                  isOpen: true,
-                                  action: "delete",
-                                  assetId: asset.id,
-                                  assetName: asset.nombre,
-                                })
-                              }
-                              className="px-4 py-3 bg-red-50 dark:bg-red-500/10 rounded-xl border border-red-200 dark:border-red-700/30 hover:border-red-600 dark:hover:border-red-500 transition-colors flex flex-col items-center gap-2"
-                            >
-                              <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
-                              <span className="text-xs font-medium text-red-900 dark:text-red-400">
-                                Eliminar
-                              </span>
-                            </motion.button>
-                          </div>
-                        </div>
                       </motion.div>
                     )}
                   </div>

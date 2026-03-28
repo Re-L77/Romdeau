@@ -12,7 +12,7 @@ export interface LoginResponse {
   };
 }
 
-export interface ApiError extends ExtendedApiError {}
+export interface ApiError extends ExtendedApiError { }
 
 /**
  * Almacena funciones de callback para interceptar y refrescar tokens
@@ -149,6 +149,7 @@ export const activosApi = {
     custodioId?: string;
     estanteId?: string;
     sinCustodio?: boolean;
+    tipoRastreo?: string;
   }): Promise<{
     data: any[];
     pagination: {
@@ -209,7 +210,105 @@ export const activosApi = {
     const result = await activosApi.getList({ id, page: 1, limit: 1 });
     return result.data[0] ?? null;
   },
+
+  getTrazabilidad: async (id: string): Promise<any[]> => {
+    return apiClient.get(`/api/activos/${id}/trazabilidad`);
+  },
+
+  update: async (id: string, data: any): Promise<any> => {
+    return apiClient.patch(`/api/activos/${id}`, data);
+  },
+
+  create: async (data: any): Promise<any> => {
+    return apiClient.post('/api/activos', data);
+  },
 };
+
+export interface Categoria {
+  id: string;
+  nombre: string;
+  tipo_rastreo: 'FIJO' | 'MOVIL';
+  vida_util_anios: number;
+}
+
+export const categoriasApi = {
+  getAll: async (): Promise<Categoria[]> => {
+    return apiClient.get('/api/activos/categorias/list');
+  },
+};
+
+export const estadosApi = {
+  getAll: async (): Promise<any[]> => {
+    return apiClient.get('/api/activos/estados/list');
+  },
+};
+
+export const ubicacionesApi = {
+  getOficinas: async (): Promise<any[]> => {
+    return apiClient.get("/api/ubicaciones/oficinas");
+  },
+
+  getEstantes: async (sedeId?: string): Promise<any[]> => {
+    const path = sedeId
+      ? `/api/ubicaciones/estantes?sedeId=${sedeId}`
+      : "/api/ubicaciones/estantes";
+    return apiClient.get(path);
+  },
+};
+
+export const usuariosApi = {
+  getAll: async (
+    order: "asc" | "desc" = "desc",
+    departamentoId?: number,
+    activo?: boolean
+  ): Promise<any[]> => {
+    let url = `/api/usuarios?order=${order}`;
+    if (departamentoId !== undefined) {
+      url += `&departamento_id=${departamentoId}`;
+    }
+    if (activo !== undefined) {
+      url += `&activo=${activo}`;
+    }
+    return apiClient.get(url);
+  },
+
+  getById: async (id: string): Promise<any> => {
+    return apiClient.get(`/api/usuarios/${id}`);
+  },
+
+  create: async (data: any): Promise<any> => {
+    return apiClient.post("/api/usuarios", data);
+  },
+
+  update: async (id: string, data: any): Promise<any> => {
+    return apiClient.patch(`/api/usuarios/${id}`, data);
+  },
+
+  uploadFoto: async (id: string, file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const token = localStorage.getItem("accessToken");
+    const response = await fetch(
+      `${API_BASE_URL}/api/usuarios/${id}/foto-perfil/upload`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      },
+    );
+    return handleResponse(response);
+  },
+};
+
+export const departamentosApi = {
+  getAll: async (): Promise<any[]> => {
+    return apiClient.get("/api/departamentos");
+  },
+};
+
 
 /**
  * Cliente genérico para hacer peticiones con token automático

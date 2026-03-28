@@ -57,6 +57,7 @@ type UsuarioConRol = {
   departamentos: {
     nombre: string;
   } | null;
+  departamento_id: number | null;
 };
 
 const usuarioSelect = {
@@ -70,6 +71,7 @@ const usuarioSelect = {
   foto_perfil_url: true,
   telefono: true,
   created_at: true,
+  departamento_id: true,
   roles_usuario: {
     select: {
       nombre: true,
@@ -226,8 +228,21 @@ export class UsuariosService {
     }
   }
 
-  async findAll(order: 'asc' | 'desc' = 'desc') {
+  async findAll(
+    order: 'asc' | 'desc' = 'desc',
+    departamentoId?: number,
+    activo?: boolean,
+  ) {
+    const where: Prisma.usuariosWhereInput = {};
+    if (departamentoId !== undefined && !isNaN(departamentoId)) {
+      where.departamento_id = departamentoId;
+    }
+    if (activo !== undefined) {
+      where.activo = activo;
+    }
+
     const usuarios = await this.prisma.usuarios.findMany({
+      where,
       orderBy: {
         created_at: order,
       },
