@@ -23,6 +23,11 @@ interface ResetPasswordBody {
   refresh_token: string;
 }
 
+interface ForgotPasswordBody {
+  email: string;
+  redirect_to?: string;
+}
+
 interface ChangePasswordBody {
   currentPassword: string;
   newPassword: string;
@@ -71,8 +76,15 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  async forgotPassword(@Body('email') email: string) {
-    return this.authService.forgotPassword(email);
+  async forgotPassword(@Body() body?: ForgotPasswordBody) {
+    const email = body?.email;
+    const redirectTo = body?.redirect_to;
+
+    if (!email) {
+      throw new BadRequestException('Debes enviar email');
+    }
+
+    return this.authService.forgotPassword(email, redirectTo);
   }
 
   @Post('reset-password')

@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  type KeyboardTypeOptions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
@@ -175,54 +176,59 @@ export default function ProfileScreen() {
     }
   };
 
-  const infoRows: {
+  type InfoRow = {
     key: string;
-    IconComp: React.ComponentType<any>;
+    IconComp: any;
     label: string;
     value: string | null | undefined;
     editable?: boolean;
     inputValue?: string;
     onChangeText?: (value: string) => void;
-    keyboardType?: "default" | "phone-pad";
-  }[] = [
-    ...(isEditing
-      ? [
-          {
-            key: "nombres",
-            IconComp: User,
-            label: "Nombre(s)",
-            value: nombres,
-            editable: true,
-            inputValue: nombres,
-            onChangeText: setNombres,
-          },
-          {
-            key: "apellido_paterno",
-            IconComp: User,
-            label: "Apellido paterno",
-            value: apellidoPaterno,
-            editable: true,
-            inputValue: apellidoPaterno,
-            onChangeText: setApellidoPaterno,
-          },
-          {
-            key: "apellido_materno",
-            IconComp: User,
-            label: "Apellido materno",
-            value: apellidoMaterno,
-            editable: true,
-            inputValue: apellidoMaterno,
-            onChangeText: setApellidoMaterno,
-          },
-        ]
-      : [
-          {
-            key: "nombre_completo",
-            IconComp: User,
-            label: "Nombre completo",
-            value: fullName || null,
-          },
-        ]),
+    keyboardType?: KeyboardTypeOptions;
+  };
+
+  const infoRowsDraft: InfoRow[] = [];
+
+  if (isEditing) {
+    infoRowsDraft.push(
+      {
+        key: "nombres",
+        IconComp: User,
+        label: "Nombre(s)",
+        value: nombres,
+        editable: true,
+        inputValue: nombres,
+        onChangeText: setNombres,
+      },
+      {
+        key: "apellido_paterno",
+        IconComp: User,
+        label: "Apellido paterno",
+        value: apellidoPaterno,
+        editable: true,
+        inputValue: apellidoPaterno,
+        onChangeText: setApellidoPaterno,
+      },
+      {
+        key: "apellido_materno",
+        IconComp: User,
+        label: "Apellido materno",
+        value: apellidoMaterno,
+        editable: true,
+        inputValue: apellidoMaterno,
+        onChangeText: setApellidoMaterno,
+      },
+    );
+  } else {
+    infoRowsDraft.push({
+      key: "nombre_completo",
+      IconComp: User,
+      label: "Nombre completo",
+      value: fullName || null,
+    });
+  }
+
+  infoRowsDraft.push(
     {
       key: "email",
       IconComp: Mail,
@@ -263,11 +269,9 @@ export default function ProfileScreen() {
       label: "Cuenta creada",
       value: formatDate(user?.created_at),
     },
-  ].filter((row) => row.value != null) as {
-    IconComp: React.ComponentType<any>;
-    label: string;
-    value: string;
-  }[];
+  );
+
+  const infoRows = infoRowsDraft.filter((row) => row.value != null);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

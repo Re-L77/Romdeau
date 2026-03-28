@@ -97,8 +97,11 @@ export const authApi = {
   },
 
   // Solicitar reset de contraseña
-  forgotPassword: async (email: string): Promise<void> => {
-    await apiClient.post("/api/auth/forgot-password", { email });
+  forgotPassword: async (email: string, redirectTo?: string): Promise<void> => {
+    await apiClient.post("/api/auth/forgot-password", {
+      email,
+      ...(redirectTo ? { redirect_to: redirectTo } : {}),
+    });
   },
 
   // Reset de contraseña con token
@@ -107,7 +110,7 @@ export const authApi = {
     refreshToken: string,
   ): Promise<void> => {
     await apiClient.post("/api/auth/reset-password", {
-      new_password: newPassword,
+      password: newPassword,
       refresh_token: refreshToken,
     });
   },

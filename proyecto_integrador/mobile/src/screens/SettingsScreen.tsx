@@ -28,6 +28,21 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { usePermissions, useRoleActions } from "../hooks/usePermissions";
 
+type SettingItem = {
+  label: string;
+  icon: React.ComponentType<any>;
+  value?: string;
+  toggle?: boolean;
+  isOn?: boolean;
+  onToggle?: () => void;
+  onPress?: () => void;
+};
+
+type SettingsSection = {
+  title: string;
+  items: SettingItem[];
+};
+
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const { colors, isDark, setThemeMode, themeMode } = useTheme();
@@ -60,7 +75,7 @@ export default function SettingsScreen() {
     );
   };
 
-  const settingsSections = [
+  const settingsSections: SettingsSection[] = [
     {
       title: "Preferencias",
       items: [
@@ -250,7 +265,9 @@ export default function SettingsScreen() {
                         <View
                           style={[
                             styles.toggleKnob,
-                            { transform: [{ translateX: item.isOn ? 20 : 0 }] },
+                            {
+                              transform: [{ translateX: item.isOn ? 20 : 0 }],
+                            },
                           ]}
                         />
                       </View>
