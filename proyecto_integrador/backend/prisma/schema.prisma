@@ -301,14 +301,23 @@ model pisos {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model proveedores {
-  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  razon_social      String
-  rfc_tax_id        String?
-  contacto_soporte  String?
-  direccion_fiscal  String?
-  sitio_web         String?             @db.VarChar(255)
-  is_active         Boolean?
-  datos_financieros datos_financieros[]
+  id                    String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  razon_social          String
+  rfc_tax_id            String?
+  contacto_soporte      String?
+  direccion_fiscal      String?
+  sitio_web             String?             @db.VarChar(255)
+  is_active             Boolean?
+  nombre_comercial      String?
+  telefono              String?
+  telefono_alternativo  String?
+  contacto_nombre       String?
+  contacto_puesto       String?
+  categoria             String?
+  descripcion_servicios String?
+  calificacion          String?
+  notas                 String?
+  datos_financieros     datos_financieros[]
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -358,20 +367,22 @@ model usuarios {
   logs_auditoria                                                         logs_auditoria[]
   movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[]    @relation("movimientos_activos_custodio_anterior_idTousuarios")
   movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[]    @relation("movimientos_activos_custodio_nuevo_idTousuarios")
+  notificaciones                                                         notificaciones[]
   departamentos                                                          departamentos?           @relation(fields: [departamento_id], references: [id], onUpdate: NoAction)
   roles_usuario                                                          roles_usuario            @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model notificaciones {
-  id         String   @id
-  usuario_id String
+  id         String   @id @db.Uuid
+  usuario_id String   @db.Uuid
   tipo       String
   titulo     String
   mensaje    String
   leida      Boolean  @default(false)
   accion_url String?
   creado_en  DateTime @default(now())
+  usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
