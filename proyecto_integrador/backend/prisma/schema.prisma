@@ -191,9 +191,10 @@ model estantes {
   nombre                                                                String                   @db.VarChar(50)
   pasillo_id                                                            String                   @db.Uuid
   activos                                                               activos[]
-  pasillos                                                              pasillos              @relation(fields: [pasillo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  movimientos_activos_movimientos_activos_estante_anterior_idToestantes movimientos_activos[] @relation("movimientos_activos_estante_anterior_idToestantes")
-  movimientos_activos_movimientos_activos_estante_nuevo_idToestantes    movimientos_activos[] @relation("movimientos_activos_estante_nuevo_idToestantes")
+  auditorias_programadas                                                auditorias_programadas[] @relation("AuditoriasEstante")
+  pasillos                                                              pasillos                 @relation(fields: [pasillo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  movimientos_activos_movimientos_activos_estante_anterior_idToestantes movimientos_activos[]    @relation("movimientos_activos_estante_anterior_idToestantes")
+  movimientos_activos_movimientos_activos_estante_nuevo_idToestantes    movimientos_activos[]    @relation("movimientos_activos_estante_nuevo_idToestantes")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -267,9 +268,10 @@ model oficinas {
   nombre                                                                String                   @db.VarChar(100)
   piso_id                                                               String                   @db.Uuid
   activos                                                               activos[]
-  movimientos_activos_movimientos_activos_oficina_anterior_idTooficinas movimientos_activos[] @relation("movimientos_activos_oficina_anterior_idTooficinas")
-  movimientos_activos_movimientos_activos_oficina_nueva_idTooficinas    movimientos_activos[] @relation("movimientos_activos_oficina_nueva_idTooficinas")
-  pisos                                                                 pisos                 @relation(fields: [piso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  auditorias_programadas                                                auditorias_programadas[] @relation("AuditoriasOficina")
+  movimientos_activos_movimientos_activos_oficina_anterior_idTooficinas movimientos_activos[]    @relation("movimientos_activos_oficina_anterior_idTooficinas")
+  movimientos_activos_movimientos_activos_oficina_nueva_idTooficinas    movimientos_activos[]    @relation("movimientos_activos_oficina_nueva_idTooficinas")
+  pisos                                                                 pisos                    @relation(fields: [piso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -299,14 +301,22 @@ model pisos {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model proveedores {
-  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  razon_social      String
-  rfc_tax_id        String?
-  contacto_soporte  String?
-  direccion_fiscal  String?
-  sitio_web         String?             @db.VarChar(255)
-  is_active         Boolean?
-  datos_financieros datos_financieros[]
+  id                    String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  razon_social          String
+  rfc_tax_id            String?
+  contacto_soporte      String?
+  direccion_fiscal      String?
+  sitio_web             String?             @db.VarChar(255)
+  is_active             Boolean?
+  nombre_comercial      String?
+  telefono              String?
+  telefono_alternativo  String?
+  contacto_nombre       String?
+  contacto_puesto       String?
+  categoria             String?
+  descripcion_servicios String?
+  calificacion          String?
+  datos_financieros     datos_financieros[]
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -351,6 +361,7 @@ model usuarios {
   foto_perfil_url                                                        String?                  @db.VarChar(500)
   telefono                                                               String?                  @db.VarChar(20)
   activos                                                                activos[]
+  auditorias_programadas                                                 auditorias_programadas[] @relation("AuditoriasUsuario")
   bajas_activos                                                          bajas_activos[]
   logs_auditoria                                                         logs_auditoria[]
   movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[]    @relation("movimientos_activos_custodio_anterior_idTousuarios")
@@ -377,36 +388,4 @@ model departamentos {
   nombre      String     @unique @db.VarChar(100)
   descripcion String?
   usuarios    usuarios[]
-}
-
-model auditorias_programadas {
-  id                           String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  titulo                       String                       @db.VarChar(255)
-  descripcion                  String?
-  fecha_programada             DateTime                     @db.Timestamptz(6)
-  fecha_inicio                 DateTime?                    @db.Timestamptz(6)
-  fecha_fin                    DateTime?                    @db.Timestamptz(6)
-  estado_id                    Int                          @default(1) @db.SmallInt
-  auditor_id                   String                       @db.Uuid
-  oficina_id                   String?                      @db.Uuid
-  estante_id                   String?                      @db.Uuid
-  created_at                   DateTime?                    @default(now()) @db.Timestamptz(6)
-  updated_at                   DateTime?                    @default(now()) @db.Timestamptz(6)
-  estados_auditoria_programada estados_auditoria_programada @relation(fields: [estado_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estado")
-  estantes                     estantes?                    @relation(fields: [estante_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estante")
-  oficinas                     oficinas?                    @relation(fields: [oficina_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_oficina")
-  usuarios                     usuarios                     @relation(fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_usuario")
-  logs_auditoria               logs_auditoria[]
-
-  @@index([auditor_id], map: "idx_auditorias_auditor")
-  @@index([estado_id], map: "idx_auditorias_estado")
-  @@index([estante_id], map: "idx_auditorias_estante")
-  @@index([oficina_id], map: "idx_auditorias_oficina")
-}
-
-model estados_auditoria_programada {
-  id                     Int                      @id @db.SmallInt
-  nombre                 String                   @unique @db.VarChar(50)
-  descripcion            String?
-  auditorias_programadas auditorias_programadas[]
 }
