@@ -5,23 +5,12 @@ import {
   ShieldAlert,
   DollarSign,
   BarChart3,
-  Clock,
   PieChart,
-  AlertTriangle,
-  CheckCircle,
 } from "lucide-react";
 import { mockDB } from "../../data/mockData";
 
 function formatCurrency(value: number) {
   return "$" + value.toLocaleString("es-MX", { minimumFractionDigits: 2 });
-}
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("es-MX", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function getDiasRestantes(fechaFin: string) {
@@ -123,9 +112,6 @@ function SimpleBarChart({
   data: Array<{ name: string; value: number; color: string }>;
   maxValue: number;
 }) {
-  const barWidth = 100 / data.length;
-  const chartHeight = 200;
-
   return (
     <div className="flex items-end justify-center gap-2 h-64 p-4">
       {data.map((item, i) => {
@@ -241,13 +227,6 @@ export function Alertas() {
     (a) =>
       a.diasGarantia !== null && a.diasGarantia > 0 && a.diasGarantia <= 90,
   );
-
-  // Datos para gráficas
-  const garActivityChartData = {
-    vigentes: garantiasVigentes.length,
-    porVencer: garantiasPorVencer.length,
-    vencidas: garantiasVencidas.length,
-  };
 
   const categoriaDepreciacion = mockDB.categorias
     .map((cat) => {
@@ -467,25 +446,31 @@ export function Alertas() {
                 <>
                   <SimplePieChart data={pieChartData} size={140} />
                   <div className="mt-6 w-full space-y-2">
-                    {pieChartData.map((item, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between text-xs"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className="text-gray-700 dark:text-gray-300 truncate">
-                            {item.name}
+                    {pieChartData.map((item, i) => {
+                      const total = pieChartData.reduce(
+                        (sum, d) => sum + d.value,
+                        0,
+                      );
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between text-xs"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span className="text-gray-700 dark:text-gray-300 truncate">
+                              {item.name}
+                            </span>
+                          </div>
+                          <span className="font-bold text-gray-900 dark:text-white">
+                            {((item.value / total) * 100).toFixed(1)}%
                           </span>
                         </div>
-                        <span className="font-bold text-gray-900 dark:text-white">
-                          {item.percentage}%
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               ) : (
