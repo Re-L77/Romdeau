@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
@@ -7,13 +11,87 @@ import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 export class AuditoriasService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Valida que los IDs requeridos existan antes de crear la auditoría
+   */
+  private async validateReferences(
+    activoId: string,
+    auditorId: string,
+    estadoId: number,
+    auditoriaId?: string,
+  ): Promise<void> {
+    // Validar activo
+    const activo = await this.prisma.activos.findUnique({
+      where: { id: activoId },
+    });
+    if (!activo) {
+      throw new BadRequestException(`Activo con ID ${activoId} no encontrado`);
+    }
+
+    // Validar auditor
+    const auditor = await this.prisma.usuarios.findUnique({
+      where: { id: auditorId },
+    });
+    if (!auditor) {
+      throw new BadRequestException(
+        `Auditor con ID ${auditorId} no encontrado`,
+      );
+    }
+
+    // Validar estado de auditoría
+    const estado = await this.prisma.estados_auditoria.findUnique({
+      where: { id: estadoId },
+    });
+    if (!estado) {
+      throw new BadRequestException(
+        `Estado de auditoría con ID ${estadoId} no encontrado`,
+      );
+    }
+
+    // Validar auditoría programada si se proporciona
+    if (auditoriaId) {
+      const auditoriaProgramada =
+        await this.prisma.auditorias_programadas.findUnique({
+          where: { id: auditoriaId },
+        });
+      if (!auditoriaProgramada) {
+        throw new BadRequestException(
+          `Auditoría programada con ID ${auditoriaId} no encontrada`,
+        );
+      }
+    }
+  }
+
   async create(createAuditoriaDto: CreateAuditoriaDto) {
+    // Validar que todas las referencias existan
+    await this.validateReferences(
+      createAuditoriaDto.activo_id,
+      createAuditoriaDto.auditor_id,
+      createAuditoriaDto.estado_reportado_id,
+      createAuditoriaDto.auditoria,
+    );
+
     return this.prisma.logs_auditoria.create({
       data: createAuditoriaDto,
       include: {
-        activos: true,
-        usuarios: true,
+        activos: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo_etiqueta: true,
+            categoria_id: true,
+          },
+        },
+        usuarios: {
+          select: {
+            id: true,
+            nombre_completo: true,
+            email: true,
+            telefono: true,
+          },
+        },
         estados_auditoria: true,
+        auditorias_programadas: true,
       },
     });
   }
@@ -21,9 +99,30 @@ export class AuditoriasService {
   async findAll() {
     return this.prisma.logs_auditoria.findMany({
       include: {
-        activos: { select: { id: true, nombre: true, codigo_etiqueta: true } },
-        usuarios: { select: { id: true, nombre_completo: true, email: true } },
+        activos: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo_etiqueta: true,
+            categoria_id: true,
+          },
+        },
+        usuarios: {
+          select: {
+            id: true,
+            nombre_completo: true,
+            email: true,
+            telefono: true,
+          },
+        },
         estados_auditoria: true,
+        auditorias_programadas: {
+          select: {
+            id: true,
+            titulo: true,
+            fecha_programada: true,
+          },
+        },
       },
       orderBy: { fecha_hora: 'desc' },
     });
@@ -34,23 +133,63 @@ export class AuditoriasService {
       where: { id },
       include: {
         activos: true,
-        usuarios: true,
+        usuarios: {
+          select: {
+            id: true,
+            nombre_completo: true,
+            email: true,
+            telefono: true,
+          },
+        },
         estados_auditoria: true,
+        auditorias_programadas: true,
       },
     });
-    if (!record) throw new NotFoundException(`Auditoría ${id} no encontrada`);
+    if (!record) {
+      throw new NotFoundException(`Auditoría ${id} no encontrada`);
+    }
     return record;
   }
 
   async update(id: string, updateAuditoriaDto: UpdateAuditoriaDto) {
     await this.findOne(id);
+
+    // Validar referencias si se están actualizando
+    if (
+      updateAuditoriaDto.activo_id ||
+      updateAuditoriaDto.auditor_id ||
+      updateAuditoriaDto.estado_reportado_id
+    ) {
+      const current = await this.prisma.logs_auditoria.findUnique({
+        where: { id },
+      });
+      if (!current) {
+        throw new NotFoundException(`Auditoría ${id} no encontrada`);
+      }
+
+      await this.validateReferences(
+        updateAuditoriaDto.activo_id || current.activo_id,
+        updateAuditoriaDto.auditor_id || current.auditor_id,
+        updateAuditoriaDto.estado_reportado_id || current.estado_reportado_id,
+        updateAuditoriaDto.auditoria || current.auditoria || undefined,
+      );
+    }
+
     return this.prisma.logs_auditoria.update({
       where: { id },
       data: updateAuditoriaDto,
       include: {
         activos: true,
-        usuarios: true,
+        usuarios: {
+          select: {
+            id: true,
+            nombre_completo: true,
+            email: true,
+            telefono: true,
+          },
+        },
         estados_auditoria: true,
+        auditorias_programadas: true,
       },
     });
   }
@@ -58,5 +197,59 @@ export class AuditoriasService {
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.logs_auditoria.delete({ where: { id } });
+  }
+
+  /**
+   * Obtiene todas las auditorías de un activo específico
+   */
+  async findByActivo(activoId: string) {
+    const activo = await this.prisma.activos.findUnique({
+      where: { id: activoId },
+    });
+    if (!activo) {
+      throw new NotFoundException(`Activo ${activoId} no encontrado`);
+    }
+
+    return this.prisma.logs_auditoria.findMany({
+      where: { activo_id: activoId },
+      include: {
+        usuarios: {
+          select: {
+            id: true,
+            nombre_completo: true,
+            email: true,
+          },
+        },
+        estados_auditoria: true,
+      },
+      orderBy: { fecha_hora: 'desc' },
+    });
+  }
+
+  /**
+   * Obtiene todas las auditorías realizadas por un auditor específico
+   */
+  async findByAuditor(auditorId: string) {
+    const auditor = await this.prisma.usuarios.findUnique({
+      where: { id: auditorId },
+    });
+    if (!auditor) {
+      throw new NotFoundException(`Auditor ${auditorId} no encontrado`);
+    }
+
+    return this.prisma.logs_auditoria.findMany({
+      where: { auditor_id: auditorId },
+      include: {
+        activos: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo_etiqueta: true,
+          },
+        },
+        estados_auditoria: true,
+      },
+      orderBy: { fecha_hora: 'desc' },
+    });
   }
 }

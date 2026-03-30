@@ -226,4 +226,69 @@ export class AuditoriasprogramadasService {
       orderBy: { nombre: 'asc' },
     });
   }
+
+  async getFormCatalogs() {
+    const [auditores, sedes] = await Promise.all([
+      this.prisma.usuarios.findMany({
+        where: {
+          rol_id: 2,
+          activo: true,
+        },
+        select: {
+          id: true,
+          nombre_completo: true,
+          email: true,
+        },
+        orderBy: { nombre_completo: 'asc' },
+      }),
+      this.prisma.sedes.findMany({
+        select: {
+          id: true,
+          nombre: true,
+          edificios: {
+            select: {
+              id: true,
+              nombre: true,
+              pisos: {
+                select: {
+                  id: true,
+                  nombre: true,
+                  oficinas: {
+                    select: {
+                      id: true,
+                      nombre: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          almacenes: {
+            select: {
+              id: true,
+              nombre: true,
+              pasillos: {
+                select: {
+                  id: true,
+                  nombre: true,
+                  estantes: {
+                    select: {
+                      id: true,
+                      nombre: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { nombre: 'asc' },
+      }),
+    ]);
+
+    return {
+      auditores,
+      sedes,
+    };
+  }
 }
