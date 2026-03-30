@@ -6,6 +6,40 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Tabla para los posibles estados de una auditoría programada
+model estados_auditoria_programada {
+  id          Int                      @id @db.SmallInt
+  nombre      String                   @unique @db.VarChar(50)
+  descripcion String?
+  auditorias  auditorias_programadas[]
+}
+
+/// Tabla para auditorías programadas
+model auditorias_programadas {
+  id                           String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  titulo                       String                       @db.VarChar(255)
+  descripcion                  String?
+  fecha_programada             DateTime                     @db.Timestamptz(6)
+  fecha_inicio                 DateTime?                    @db.Timestamptz(6)
+  fecha_fin                    DateTime?                    @db.Timestamptz(6)
+  estado_id                    Int                          @default(1) @db.SmallInt
+  auditor_id                   String                       @db.Uuid
+  oficina_id                   String?                      @db.Uuid
+  estante_id                   String?                      @db.Uuid
+  created_at                   DateTime?                    @default(now()) @db.Timestamptz(6)
+  updated_at                   DateTime?                    @default(now()) @db.Timestamptz(6)
+  estados_auditoria_programada estados_auditoria_programada @relation(fields: [estado_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estado")
+  estantes                     estantes?                    @relation("AuditoriasEstante", fields: [estante_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estante")
+  oficinas                     oficinas?                    @relation("AuditoriasOficina", fields: [oficina_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_oficina")
+  usuarios                     usuarios                     @relation("AuditoriasUsuario", fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_usuario")
+  logs_auditoria               logs_auditoria[]
+
+  @@index([estado_id], map: "idx_auditorias_estado")
+  @@index([auditor_id], map: "idx_auditorias_auditor")
+  @@index([oficina_id], map: "idx_auditorias_oficina")
+  @@index([estante_id], map: "idx_auditorias_estante")
+}
+
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model activos {
   id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
@@ -157,10 +191,9 @@ model estantes {
   nombre                                                                String                   @db.VarChar(50)
   pasillo_id                                                            String                   @db.Uuid
   activos                                                               activos[]
-  auditorias_programadas                                                auditorias_programadas[]
-  pasillos                                                              pasillos                 @relation(fields: [pasillo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  movimientos_activos_movimientos_activos_estante_anterior_idToestantes movimientos_activos[]    @relation("movimientos_activos_estante_anterior_idToestantes")
-  movimientos_activos_movimientos_activos_estante_nuevo_idToestantes    movimientos_activos[]    @relation("movimientos_activos_estante_nuevo_idToestantes")
+  pasillos                                                              pasillos              @relation(fields: [pasillo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  movimientos_activos_movimientos_activos_estante_anterior_idToestantes movimientos_activos[] @relation("movimientos_activos_estante_anterior_idToestantes")
+  movimientos_activos_movimientos_activos_estante_nuevo_idToestantes    movimientos_activos[] @relation("movimientos_activos_estante_nuevo_idToestantes")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -234,10 +267,9 @@ model oficinas {
   nombre                                                                String                   @db.VarChar(100)
   piso_id                                                               String                   @db.Uuid
   activos                                                               activos[]
-  auditorias_programadas                                                auditorias_programadas[]
-  movimientos_activos_movimientos_activos_oficina_anterior_idTooficinas movimientos_activos[]    @relation("movimientos_activos_oficina_anterior_idTooficinas")
-  movimientos_activos_movimientos_activos_oficina_nueva_idTooficinas    movimientos_activos[]    @relation("movimientos_activos_oficina_nueva_idTooficinas")
-  pisos                                                                 pisos                    @relation(fields: [piso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  movimientos_activos_movimientos_activos_oficina_anterior_idTooficinas movimientos_activos[] @relation("movimientos_activos_oficina_anterior_idTooficinas")
+  movimientos_activos_movimientos_activos_oficina_nueva_idTooficinas    movimientos_activos[] @relation("movimientos_activos_oficina_nueva_idTooficinas")
+  pisos                                                                 pisos                 @relation(fields: [piso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -319,7 +351,6 @@ model usuarios {
   foto_perfil_url                                                        String?                  @db.VarChar(500)
   telefono                                                               String?                  @db.VarChar(20)
   activos                                                                activos[]
-  auditorias_programadas                                                 auditorias_programadas[]
   bajas_activos                                                          bajas_activos[]
   logs_auditoria                                                         logs_auditoria[]
   movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[]    @relation("movimientos_activos_custodio_anterior_idTousuarios")

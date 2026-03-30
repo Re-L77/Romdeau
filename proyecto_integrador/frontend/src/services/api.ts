@@ -364,3 +364,45 @@ export const apiClient = {
     return handleResponse(response);
   },
 };
+
+export const auditoriasProgramadasApi = {
+  getAll: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>("/api/auditorias-programadas");
+    return Array.isArray(data) ? data : [];
+  },
+  getById: async (id: string): Promise<any | null> => {
+    if (!id) return null;
+    try {
+      const data = await apiClient.get<any>(
+        `/api/auditorias-programadas/${id}`,
+      );
+      return data ?? null;
+    } catch {
+      return null;
+    }
+  },
+  getAllStates: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/estados",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllAuditores: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/auditores",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllEdificios: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/edificios",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllSedes: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/sedes",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+};

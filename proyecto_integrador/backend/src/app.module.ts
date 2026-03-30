@@ -12,6 +12,7 @@ import { LogsAuditoriaModule } from './logs-auditoria/logs-auditoria.module';
 import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
 import { RolesGuard } from './auth/roles/roles.guard';
 import { UbicacionesModule } from './ubicaciones/ubicaciones.module';
+import { AuditoriasprogramadasModule } from './auditorias-programadas/auditorias-programadas.module';
 
 function validateEnv(config: Record<string, unknown>) {
   const requiredVars = [
@@ -57,6 +58,7 @@ function validateEnv(config: Record<string, unknown>) {
     DepartamentosModule,
     UbicacionesModule,
     LogsAuditoriaModule,
+    AuditoriasprogramadasModule,
   ],
   controllers: [AppController],
   providers: [
