@@ -9,11 +9,13 @@ import {
   Search,
   RotateCcw,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import {
   CrearAuditoria,
   AuditFormData,
   AuditoriaFormCatalogs,
+  CreateAuditoriaProgramadaDto,
 } from "./CrearAuditoria";
 import { auditoriasProgramadasApi } from "../../../services/api";
 import { Skeleton } from "../ui/skeleton";
@@ -83,90 +85,63 @@ export function ModuloAuditorias({
     sedes: [],
   });
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoadingScheduled(true);
-        const [
-          auditsData,
-          auditoresData,
-          edificiosData,
-          sedesData,
-          estadosData,
-          formCatalogsData,
-        ] = await Promise.all([
-          auditoriasProgramadasApi.getAll(),
-          auditoriasProgramadasApi.getAllAuditores?.() || Promise.resolve([]),
-          auditoriasProgramadasApi.getAllEdificios?.() || Promise.resolve([]),
-          auditoriasProgramadasApi.getAllSedes?.() || Promise.resolve([]),
-          auditoriasProgramadasApi.getAllStates?.() || Promise.resolve([]),
-          auditoriasProgramadasApi.getFormCatalogs?.() ||
-            Promise.resolve({ auditores: [], sedes: [] }),
-        ]);
+  const loadData = useCallback(async () => {
+    try {
+      setLoadingScheduled(true);
+      const [
+        auditsData,
+        auditoresData,
+        edificiosData,
+        sedesData,
+        estadosData,
+        formCatalogsData,
+      ] = await Promise.all([
+        auditoriasProgramadasApi.getAll(),
+        auditoriasProgramadasApi.getAllAuditores?.() || Promise.resolve([]),
+        auditoriasProgramadasApi.getAllEdificios?.() || Promise.resolve([]),
+        auditoriasProgramadasApi.getAllSedes?.() || Promise.resolve([]),
+        auditoriasProgramadasApi.getAllStates?.() || Promise.resolve([]),
+        auditoriasProgramadasApi.getFormCatalogs?.() ||
+          Promise.resolve({ auditores: [], sedes: [] }),
+      ]);
 
-        setScheduledAudits(auditsData);
-        setAuditores(auditoresData);
-        setEdificios(edificiosData);
-        setSedes(sedesData);
-        setEstados(estadosData);
-        setFormCatalogs(formCatalogsData || { auditores: [], sedes: [] });
-      } catch (err) {
-        console.error("Error loading audits data:", err);
-        setScheduledAudits([]);
-      } finally {
-        setLoadingScheduled(false);
-      }
-    };
-
-    loadData();
+      setScheduledAudits(auditsData);
+      setAuditores(auditoresData);
+      setEdificios(edificiosData);
+      setSedes(sedesData);
+      setEstados(estadosData);
+      setFormCatalogs(formCatalogsData || { auditores: [], sedes: [] });
+    } catch (err) {
+      console.error("Error loading audits data:", err);
+      setScheduledAudits([]);
+    } finally {
+      setLoadingScheduled(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreateAudit = () => setIsCreatingAudit(true);
 
-  const handleSaveAudit = (formData: AuditFormData) => {
-    const sede = formCatalogs.sedes.find((s) => s.id === formData.sede_id);
-    const auditor = formCatalogs.auditores.find(
-      (u) => u.id === formData.auditor_id,
-    );
+  const handleSaveAudit = async (formData: CreateAuditoriaProgramadaDto) => {
+    try {
+      // Guardar en la base de datos
+      await auditoriasProgramadasApi.create(formData);
 
-    let ubicacionTexto = "";
-    if (formData.tipo_ubicacion === "oficina" && formData.oficina_id) {
-      const edificio = sede?.edificios.find((e) =>
-        e.pisos.some((p) =>
-          p.oficinas.some((o) => o.id === formData.oficina_id),
-        ),
-      );
-      const piso = edificio?.pisos.find((p) =>
-        p.oficinas.some((o) => o.id === formData.oficina_id),
-      );
-      const oficina = piso?.oficinas.find((o) => o.id === formData.oficina_id);
-      ubicacionTexto = `${sede?.nombre} → ${edificio?.nombre} → ${piso?.nombre} → ${oficina?.nombre}`;
-    } else if (formData.tipo_ubicacion === "estante" && formData.estante_id) {
-      const almacen = sede?.almacenes.find((a) =>
-        a.pasillos.some((p) =>
-          p.estantes.some((e) => e.id === formData.estante_id),
-        ),
-      );
-      const pasillo = almacen?.pasillos.find((p) =>
-        p.estantes.some((e) => e.id === formData.estante_id),
-      );
-      const estante = pasillo?.estantes.find(
-        (e) => e.id === formData.estante_id,
-      );
-      ubicacionTexto = `${sede?.nombre} → ${almacen?.nombre} → ${pasillo?.nombre} → ${estante?.nombre}`;
+      // Mostrar notificación de éxito
+      toast.success(`Auditoría "${formData.titulo}" programada correctamente`);
+
+      // Cerrar el modal
+      setIsCreatingAudit(false);
+
+      // Recargar la lista de auditorías
+      loadData();
+    } catch (error) {
+      console.error("Error al guardar auditoría:", error);
+      toast.error("Error al guardar la auditoría. Intenta de nuevo.");
     }
-
-    console.log("Nueva auditoría programada:", {
-      ...formData,
-      ubicacion_texto: ubicacionTexto,
-      auditor_nombre: auditor?.nombre_completo,
-    });
-
-    alert(
-      `✅ Auditoría programada exitosamente\n\n📋 Título: ${formData.titulo}\n📍 Ubicación: ${ubicacionTexto}\n👤 Auditor: ${auditor?.nombre_completo}\n🕐 Hora: ${formData.hora}\n📅 Inicio: ${formData.fecha_inicio || "Sin definir"}\n🏁 Fin: ${formData.fecha_fin || "Sin definir"}\n📦 Activos: ${formData.activos_programados.length}`,
-    );
-
-    setIsCreatingAudit(false);
   };
 
   const handleCloseModal = () => setIsCreatingAudit(false);
@@ -481,6 +456,7 @@ export function ModuloAuditorias({
           onClose={handleCloseModal}
           onSave={handleSaveAudit}
           catalogs={formCatalogs}
+          existingAudits={scheduledAudits}
         />
       )}
     </main>

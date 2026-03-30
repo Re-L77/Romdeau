@@ -73,8 +73,20 @@ export interface AuditoriaFormCatalogs {
 
 interface CrearAuditoriaProps {
   onClose: () => void;
-  onSave: (auditData: AuditFormData) => void;
+  onSave: (auditData: CreateAuditoriaProgramadaDto) => void;
   catalogs: AuditoriaFormCatalogs;
+  existingAudits?: Array<{ titulo: string }>;
+}
+
+export interface CreateAuditoriaProgramadaDto {
+  titulo: string;
+  descripcion?: string;
+  fecha_programada: Date;
+  fecha_inicio?: Date;
+  fecha_fin?: Date;
+  auditor_id: string;
+  oficina_id?: string;
+  estante_id?: string;
 }
 
 export interface AuditFormData {
@@ -100,6 +112,7 @@ export function CrearAuditoria({
   onClose,
   onSave,
   catalogs,
+  existingAudits = [],
 }: CrearAuditoriaProps) {
   const [step, setStep] = useState<"form" | "summary">("form");
   const [formData, setFormData] = useState<AuditFormData>({
@@ -281,6 +294,12 @@ export function CrearAuditoria({
       newErrors.titulo = "El título es obligatorio";
     } else if (formData.titulo.trim().length > TITULO_MAX) {
       newErrors.titulo = `El título no puede superar ${TITULO_MAX} caracteres`;
+    } else if (
+      existingAudits.some(
+        (audit) => audit.titulo.toLowerCase() === formData.titulo.toLowerCase(),
+      )
+    ) {
+      newErrors.titulo = "Ya existe una auditoría con este título";
     }
 
     if (formData.descripcion && formData.descripcion.length > DESCRIPCION_MAX) {
@@ -315,6 +334,19 @@ export function CrearAuditoria({
         "La fecha de fin no puede ser anterior a la fecha de inicio";
     }
 
+    if (formData.fecha_inicio && formData.fecha_fin) {
+      const inicio = new Date(formData.fecha_inicio);
+      const fin = new Date(formData.fecha_fin);
+      const diferenciaDias = Math.ceil(
+        (fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      if (diferenciaDias < 1) {
+        newErrors.fecha_fin =
+          "Debe haber al menos 1 día de diferencia entre la fecha de inicio y fin";
+      }
+    }
+
     if (formData.tipo_ubicacion === "oficina") {
       if (!formData.oficina_id) newErrors.ubicacion = "Selecciona una oficina";
     } else {
@@ -346,12 +378,29 @@ export function CrearAuditoria({
     }
   };
 
-  const handleConfirmSubmit = () => {
-    onSave({
-      ...formData,
-      fecha_programada: new Date().toISOString().split("T")[0],
-    });
-    onClose();
+  const handleConfirmSubmit = async () => {
+    try {
+      // Transformar datos al formato del DTO
+      const dataToSend = {
+        titulo: formData.titulo,
+        descripcion: formData.descripcion || undefined,
+        fecha_programada: new Date(),
+        fecha_inicio: formData.fecha_inicio
+          ? new Date(formData.fecha_inicio)
+          : undefined,
+        fecha_fin: formData.fecha_fin
+          ? new Date(formData.fecha_fin)
+          : undefined,
+        auditor_id: formData.auditor_id,
+        ...(formData.tipo_ubicacion === "oficina"
+          ? { oficina_id: formData.oficina_id }
+          : { estante_id: formData.estante_id }),
+      };
+
+      onSave(dataToSend);
+    } catch (error) {
+      console.error("Error al procesar auditoría:", error);
+    }
   };
 
   // Obtener fecha mínima (mañana, para el plazo de 1 día)
@@ -471,7 +520,7 @@ export function CrearAuditoria({
                       />
                       <div className="flex justify-between mt-1">
                         {errors.titulo ? (
-                          <p className="text-red-500 text-xs">
+                          <p className="text-red-600 dark:text-red-400 text-sm font-medium">
                             {errors.titulo}
                           </p>
                         ) : (
@@ -508,7 +557,7 @@ export function CrearAuditoria({
                       />
                       <div className="flex justify-between mt-1">
                         {errors.descripcion ? (
-                          <p className="text-red-500 text-xs">
+                          <p className="text-red-600 dark:text-red-400 text-sm font-medium">
                             {errors.descripcion}
                           </p>
                         ) : (
@@ -581,7 +630,9 @@ export function CrearAuditoria({
                       ))}
                     </select>
                     {errors.sede && (
-                      <p className="text-red-500 text-xs mt-1">{errors.sede}</p>
+                      <p className="text-red-600 dark:text-red-400 text-sm font-medium mt-1">
+                        {errors.sede}
+                      </p>
                     )}
                   </div>
 
@@ -730,7 +781,9 @@ export function CrearAuditoria({
                   )}
 
                   {errors.ubicacion && (
-                    <p className="text-red-500 text-xs">{errors.ubicacion}</p>
+                    <p className="text-red-600 dark:text-red-400 text-sm font-medium">
+                      {errors.ubicacion}
+                    </p>
                   )}
 
                   {/* Auditor y Fechas */}
@@ -759,7 +812,7 @@ export function CrearAuditoria({
                         ))}
                       </select>
                       {errors.auditor && (
-                        <p className="text-red-500 text-xs mt-1">
+                        <p className="text-red-600 dark:text-red-400 text-sm font-medium mt-1">
                           {errors.auditor}
                         </p>
                       )}
@@ -780,7 +833,7 @@ export function CrearAuditoria({
                         className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                       />
                       {errors.hora && (
-                        <p className="text-red-500 text-xs mt-1">
+                        <p className="text-red-600 dark:text-red-400 text-sm font-medium mt-1">
                           {errors.hora}
                         </p>
                       )}
@@ -807,7 +860,7 @@ export function CrearAuditoria({
                         className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                       />
                       {errors.fecha_inicio && (
-                        <p className="text-red-500 text-xs mt-1">
+                        <p className="text-red-600 dark:text-red-400 text-sm font-medium mt-1">
                           {errors.fecha_inicio}
                         </p>
                       )}
@@ -832,7 +885,7 @@ export function CrearAuditoria({
                         className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                       />
                       {errors.fecha_fin && (
-                        <p className="text-red-500 text-xs mt-1">
+                        <p className="text-red-600 dark:text-red-400 text-sm font-medium mt-1">
                           {errors.fecha_fin}
                         </p>
                       )}
@@ -899,7 +952,7 @@ export function CrearAuditoria({
                         })}
                       </div>
                       {errors.activos && (
-                        <p className="text-red-500 text-xs mt-2">
+                        <p className="text-red-600 dark:text-red-400 text-sm font-medium mt-2">
                           {errors.activos}
                         </p>
                       )}
@@ -921,7 +974,9 @@ export function CrearAuditoria({
                       </div>
                     )}
                   {errors.activos && activosDisponibles.length === 0 && (
-                    <p className="text-red-500 text-xs">{errors.activos}</p>
+                    <p className="text-red-600 dark:text-red-400 text-sm font-medium">
+                      {errors.activos}
+                    </p>
                   )}
                 </div>
 
