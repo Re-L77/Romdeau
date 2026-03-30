@@ -47,10 +47,29 @@ function descargar(blob: Blob, nombre: string) {
   URL.revokeObjectURL(url);
 }
 
-function esc(v: string | null | undefined) {
-  const s = (v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return s;
-}
+const esc = (s: string | null | undefined) => {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+};
+
+const LogSkeleton = () => (
+  <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 mb-4 animate-pulse border border-gray-100 dark:border-gray-800/50">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i}>
+          <div className="h-2.5 w-16 bg-gray-200 dark:bg-gray-800 rounded-full mb-3"></div>
+          <div className="h-4 w-32 bg-gray-300/80 dark:bg-gray-700/80 rounded-lg mb-2"></div>
+          {i === 1 && <div className="h-2.5 w-24 bg-gray-200 dark:bg-gray-800 rounded-full mt-2"></div>}
+          {i === 4 && <div className="flex gap-1.5 mt-2">
+            <div className="h-3 w-3 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+            <div className="h-3 w-20 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+          </div>}
+          {i === 5 && <div className="h-6 w-24 bg-gray-200 dark:bg-gray-800 rounded-full mt-2"></div>}
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 // ─── CSV con estilo de encabezado y metadatos ─────────────────────────────────
 function exportarCSV(logs: LogAuditoria[], periodo: string) {
@@ -65,12 +84,14 @@ function exportarCSV(logs: LogAuditoria[], periodo: string) {
     `"Total registros:","${logs.length}"`,
     '',
   ];
-  const encabezados = ['Código Activo', 'Nombre Activo', 'Ubicación', 'Auditor', 'Fecha y Hora', 'Estado', 'Comentarios'];
+  const encabezados = ['Código Activo', 'Nombre Activo', 'Ubicación', 'Método', 'Auditor', 'Plan / Auditoría', 'Fecha y Hora', 'Estado', 'Comentarios'];
   const filas = logs.map((l) => [
     escaparCsv(l.activo?.codigo_etiqueta),
     escaparCsv(l.activo?.nombre),
     escaparCsv(l.ubicacion),
+    escaparCsv(l.metodo_auditoria),
     escaparCsv(l.auditor),
+    escaparCsv(l.plan_auditoria),
     escaparCsv(formatFecha(l.fecha_hora)),
     escaparCsv(l.estado_reportado),
     escaparCsv(l.comentarios),
@@ -90,7 +111,9 @@ function exportarExcel(logs: LogAuditoria[], periodo: string) {
       ${celda(l.activo?.codigo_etiqueta ?? '—', style)}
       ${celda(l.activo?.nombre ?? '—', style)}
       ${celda(l.ubicacion ?? '—', style)}
+      ${celda(l.metodo_auditoria ?? '—', style)}
       ${celda(l.auditor ?? '—', style)}
+      ${celda(l.plan_auditoria ?? '—', style)}
       ${celda(formatFecha(l.fecha_hora), style)}
       ${celda(l.estado_reportado ?? '—', style)}
       ${celda(l.comentarios ?? '', style)}
@@ -145,7 +168,9 @@ function exportarExcel(logs: LogAuditoria[], periodo: string) {
       <Column ss:Width="110"/>
       <Column ss:Width="160"/>
       <Column ss:Width="150"/>
-      <Column ss:Width="140"/>
+      <Column ss:Width="120"/>
+      <Column ss:Width="160"/>
+      <Column ss:Width="160"/>
       <Column ss:Width="140"/>
       <Column ss:Width="110"/>
       <Column ss:Width="200"/>
@@ -162,7 +187,9 @@ function exportarExcel(logs: LogAuditoria[], periodo: string) {
         <Cell ss:StyleID="Header"><Data ss:Type="String">Código Activo</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Nombre Activo</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Ubicación</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Método</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Auditor</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Plan / Auditoría</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Fecha y Hora</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Estado</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Comentarios</Data></Cell>
@@ -185,7 +212,9 @@ function exportarPDF(logs: LogAuditoria[], periodo: string) {
       <td>${esc(l.activo?.codigo_etiqueta)}</td>
       <td>${esc(l.activo?.nombre)}</td>
       <td>${esc(l.ubicacion)}</td>
+      <td>${esc(l.metodo_auditoria ?? 'MANUAL')}</td>
       <td>${esc(l.auditor)}</td>
+      <td>${esc(l.plan_auditoria ?? 'N/A')}</td>
       <td>${esc(formatFecha(l.fecha_hora))}</td>
       <td>${esc(l.estado_reportado)}</td>
     </tr>`).join('');
@@ -215,7 +244,7 @@ function exportarPDF(logs: LogAuditoria[], periodo: string) {
       </div>
       <table>
         <thead><tr>
-          <th>Código</th><th>Activo</th><th>Ubicación</th><th>Auditor</th><th>Fecha y Hora</th><th>Estado</th>
+          <th>Código</th><th>Activo</th><th>Ubicación</th><th>Método</th><th>Auditor</th><th>Plan / Auditoría</th><th>Fecha y Hora</th><th>Estado</th>
         </tr></thead>
         <tbody>${filas}</tbody>
       </table>
@@ -264,16 +293,16 @@ const periodoLabel: Record<Periodo, string> = {
 type FormatoExport = 'CSV' | 'EXCEL' | 'PDF';
 
 const formatoOpciones: { value: FormatoExport; label: string; desc: string; icon: typeof FileText }[] = [
-  { value: 'CSV',   label: 'CSV',   desc: 'Texto separado por comas · universal', icon: FileText },
+  { value: 'CSV', label: 'CSV', desc: 'Texto separado por comas · universal', icon: FileText },
   { value: 'EXCEL', label: 'Excel', desc: 'Hoja de cálculo nativa con estilos', icon: FileSpreadsheet },
-  { value: 'PDF',   label: 'PDF',   desc: 'Documento formateado listo para imprimir', icon: FileText },
+  { value: 'PDF', label: 'PDF', desc: 'Documento formateado listo para imprimir', icon: FileText },
 ];
 
 const periodoOpciones: { value: Periodo; label: string; desc: string }[] = [
-  { value: 'today', label: 'Hoy',             desc: 'Solo registros de hoy' },
-  { value: 'week',  label: 'Esta semana',      desc: 'Últimos 7 días' },
-  { value: 'month', label: 'Este mes',         desc: 'Últimos 30 días' },
-  { value: 'custom',label: 'Personalizado',    desc: 'Elige rango de fechas' },
+  { value: 'today', label: 'Hoy', desc: 'Solo registros de hoy' },
+  { value: 'week', label: 'Esta semana', desc: 'Últimos 7 días' },
+  { value: 'month', label: 'Este mes', desc: 'Últimos 30 días' },
+  { value: 'custom', label: 'Personalizado', desc: 'Elige rango de fechas' },
 ];
 
 interface ExportModalProps {
@@ -282,13 +311,13 @@ interface ExportModalProps {
 }
 
 function ExportModal({ logs, onClose }: ExportModalProps) {
-  const [formato, setFormato]           = useState<FormatoExport>('EXCEL');
-  const [periodo, setPeriodo]           = useState<Periodo>('month');
-  const [fechaInicio, setFechaInicio]   = useState('');
-  const [fechaFin, setFechaFin]         = useState('');
-  const [exporting, setExporting]       = useState(false);
-  const [exportError, setExportError]   = useState<string | null>(null);
-  const [dateError, setDateError]       = useState<string | null>(null);
+  const [formato, setFormato] = useState<FormatoExport>('EXCEL');
+  const [periodo, setPeriodo] = useState<Periodo>('month');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -309,14 +338,14 @@ function ExportModal({ logs, onClose }: ExportModalProps) {
     setDateError(null);
     if (periodo === 'custom') {
       if (!fechaInicio || !fechaFin) { setDateError('Selecciona fecha de inicio y fin'); return; }
-      if (fechaInicio > fechaFin)    { setDateError('La fecha de fin debe ser posterior al inicio'); return; }
+      if (fechaInicio > fechaFin) { setDateError('La fecha de fin debe ser posterior al inicio'); return; }
     }
     try {
       setExporting(true); setExportError(null);
       await new Promise((r) => setTimeout(r, 250));
-      if (formato === 'CSV')   exportarCSV(logsExport, etiquetaPeriodo);
+      if (formato === 'CSV') exportarCSV(logsExport, etiquetaPeriodo);
       if (formato === 'EXCEL') exportarExcel(logsExport, etiquetaPeriodo);
-      if (formato === 'PDF')   exportarPDF(logsExport, etiquetaPeriodo);
+      if (formato === 'PDF') exportarPDF(logsExport, etiquetaPeriodo);
       onClose();
     } catch {
       setExportError('Error al generar el archivo. Intenta de nuevo.');
@@ -365,11 +394,10 @@ function ExportModal({ logs, onClose }: ExportModalProps) {
                     key={value}
                     type="button"
                     onClick={() => setPeriodo(value)}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${
-                      activo
+                    className={`p-3 rounded-xl border-2 text-left transition-all ${activo
                         ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -420,11 +448,10 @@ function ExportModal({ logs, onClose }: ExportModalProps) {
                     key={value}
                     type="button"
                     onClick={() => setFormato(value)}
-                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${
-                      activo
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${activo
                         ? 'border-black dark:border-white bg-black dark:bg-white'
                         : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
-                    }`}
+                      }`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${activo ? 'bg-white/20 dark:bg-black/20' : 'bg-white dark:bg-gray-700'}`}>
                       <Icon className={`w-5 h-5 ${activo ? 'text-white dark:text-black' : 'text-gray-600 dark:text-gray-300'}`} />
@@ -512,20 +539,31 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       if (!log.activo?.nombre?.toLowerCase().includes(q) &&
-          !log.activo?.codigo_etiqueta?.toLowerCase().includes(q) &&
-          !log.auditor?.toLowerCase().includes(q)) return false;
+        !log.activo?.codigo_etiqueta?.toLowerCase().includes(q) &&
+        !log.auditor?.toLowerCase().includes(q)) return false;
     }
     if (statusFilter !== 'all' && log.estado_reportado !== statusFilter) return false;
     if (auditorFilter !== 'all' && log.auditor !== auditorFilter) return false;
     return true;
   }), [logs, searchTerm, statusFilter, auditorFilter]);
 
-  const stats = {
-    total:         logs.length,
-    bueno:         logs.filter((l) => { const n = (l.estado_reportado ?? '').toUpperCase(); return n.includes('BUENO') || n.includes('NUEVO'); }).length,
-    danado:        logs.filter((l) => { const n = (l.estado_reportado ?? '').toUpperCase(); return n.includes('MALO') || n.includes('DA'); }).length,
-    no_encontrado: logs.filter((l) => { const n = (l.estado_reportado ?? '').toUpperCase(); return n.includes('BAJA') || n.includes('NO'); }).length,
-  };
+  const stats = useMemo(() => {
+    return {
+      total: filteredLogs.length,
+      bueno: filteredLogs.filter((l) => {
+        const n = (l.estado_reportado ?? '').toLowerCase();
+        return n.includes('bueno') || n.includes('nuevo');
+      }).length,
+      danado: filteredLogs.filter((l) => {
+        const n = (l.estado_reportado ?? '').toLowerCase();
+        return n.includes('dañado') || n.includes('malo') || n.includes('da');
+      }).length,
+      no_encontrado: filteredLogs.filter((l) => {
+        const n = (l.estado_reportado ?? '').toLowerCase();
+        return n.includes('no encontrado') || n.includes('baja') || n.includes('no');
+      }).length,
+    };
+  }, [filteredLogs]);
 
   return (
     <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
@@ -544,10 +582,10 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total Auditorías',      value: stats.total,          color: 'dark:text-white' },
-            { label: 'Buen estado',            value: stats.bueno,          color: 'text-emerald-600 dark:text-emerald-400' },
-            { label: 'Dañados / Malos',        value: stats.danado,         color: 'text-amber-600 dark:text-amber-400' },
-            { label: 'No Encontrados / Baja',  value: stats.no_encontrado,  color: 'text-red-600 dark:text-red-400' },
+            { label: 'Total Auditorías', value: stats.total, color: 'dark:text-white' },
+            { label: 'Buen estado', value: stats.bueno, color: 'text-emerald-600 dark:text-emerald-400' },
+            { label: 'Dañados / Malos', value: stats.danado, color: 'text-amber-600 dark:text-amber-400' },
+            { label: 'No Encontrados / Baja', value: stats.no_encontrado, color: 'text-red-600 dark:text-red-400' },
           ].map((s, i) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
@@ -590,14 +628,13 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
         </div>
 
         {/* Loading */}
-        {loading && (
-          <div className="flex justify-center items-center py-16">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-700 border-t-black dark:border-t-white rounded-full animate-spin" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Cargando registros...</p>
-            </div>
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <LogSkeleton key={i} />
+            ))}
           </div>
-        )}
+        ) : null}
 
         {/* Error */}
         {!loading && error && (
@@ -626,7 +663,7 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
                 <motion.div key={log.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}
                   onClick={() => onAuditClick(log.id)}
                   className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all cursor-pointer">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Activo</p>
                       <p className="font-bold text-gray-900 dark:text-white">{log.activo?.codigo_etiqueta ?? '—'}</p>
@@ -640,15 +677,31 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
                           <p className="text-sm font-medium text-gray-900 dark:text-white">{log.ubicacion}</p>
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-400 dark:text-gray-600">Sin ubicación</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-600">—</p>
                       )}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Método</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${log.metodo_auditoria === 'QR'
+                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-700/30'
+                            : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30'
+                          }`}>
+                          {log.metodo_auditoria || 'MANUAL'}
+                        </span>
+                      </div>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Auditor</p>
                       <div className="flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{log.auditor ?? 'Desconocido'}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[120px]">{log.auditor ?? '—'}</p>
                       </div>
+                      {log.plan_auditoria && (
+                        <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mt-1 truncate max-w-[120px]" title={log.plan_auditoria}>
+                          Plan: {log.plan_auditoria}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Fecha y Hora</p>

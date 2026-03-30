@@ -231,6 +231,8 @@ export interface LogAuditoria {
   };
   ubicacion: string | null;
   auditor: string | null;
+  plan_auditoria: string | null;
+  metodo_auditoria: string | null;
   estado_reportado: string | null;
   estado_reportado_id: number;
 }

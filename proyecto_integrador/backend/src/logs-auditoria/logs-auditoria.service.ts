@@ -11,7 +11,7 @@ type FindLogsParams = {
 
 @Injectable()
 export class LogsAuditoriaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async findAll({ page, limit, auditorId, activoId, estadoId }: FindLogsParams) {
     const take = Math.min(limit, 100);
@@ -53,6 +53,11 @@ export class LogsAuditoriaService {
               nombre: true,
             },
           },
+          auditorias_programadas: {
+            select: {
+              titulo: true,
+            },
+          },
         },
         orderBy: { fecha_hora: 'desc' },
         skip,
@@ -81,6 +86,7 @@ export class LogsAuditoriaService {
         },
         ubicacion,
         auditor: log.usuarios?.nombre_completo ?? null,
+        plan_auditoria: log.auditorias_programadas?.titulo ?? null,
         estado_reportado: log.estados_auditoria?.nombre ?? null,
         estado_reportado_id: log.estado_reportado_id,
       };

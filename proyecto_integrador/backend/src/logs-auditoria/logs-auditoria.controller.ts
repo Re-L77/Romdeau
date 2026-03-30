@@ -11,7 +11,7 @@ interface FindLogsQuery {
 
 @Controller('api/logs-auditoria')
 export class LogsAuditoriaController {
-  constructor(private readonly logsAuditoriaService: LogsAuditoriaService) {}
+  constructor(private readonly logsAuditoriaService: LogsAuditoriaService) { }
 
   private parsePositiveInt(value: string | undefined, fieldName: string) {
     if (value === undefined) return undefined;
