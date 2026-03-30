@@ -406,3 +406,12 @@ export const auditoriasProgramadasApi = {
     return Array.isArray(data) ? data : [];
   },
 };
+
+export const depreciacionApi = {
+  getSummary: async (): Promise<any> => {
+    return apiClient.get<any>('/api/depreciacion/summary');
+  },
+  getDetalleKpi: async (tipo: string): Promise<any> => {
+    return apiClient.get<any>(`/api/depreciacion/detalle/${tipo}`);
+  },
+};
