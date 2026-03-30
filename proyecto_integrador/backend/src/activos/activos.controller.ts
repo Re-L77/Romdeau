@@ -15,6 +15,7 @@ interface FindActivosQuery {
   custodioId?: string;
   estanteId?: string;
   sinCustodio?: string;
+  proveedorId?: string;
 }
 
 @Controller('api/activos')
@@ -75,6 +76,7 @@ export class ActivosController {
       custodioId: query.custodioId,
       estanteId: query.estanteId,
       sinCustodio,
+      proveedorId: query.proveedorId,
     });
   }
 }

@@ -165,16 +165,18 @@ model estantes {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model logs_auditoria {
-  id                  String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  activo_id           String                    @db.Uuid
-  auditor_id          String                    @db.Uuid
-  fecha_hora          DateTime?                 @default(now()) @db.Timestamptz(6)
-  coordenadas_gps     Unsupported("geography")?
-  estado_reportado_id Int                       @db.SmallInt
-  comentarios         String?
-  activos             activos                   @relation(fields: [activo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuarios            usuarios                  @relation(fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  estados_auditoria   estados_auditoria         @relation(fields: [estado_reportado_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                     String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activo_id              String                    @db.Uuid
+  auditor_id             String                    @db.Uuid
+  fecha_hora             DateTime?                 @default(now()) @db.Timestamptz(6)
+  coordenadas_gps        Unsupported("geography")?
+  estado_reportado_id    Int                       @db.SmallInt
+  comentarios            String?
+  auditoria              String?                   @db.Uuid
+  activos                activos                   @relation(fields: [activo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios               usuarios                  @relation(fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  auditorias_programadas auditorias_programadas?   @relation(fields: [auditoria], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estados_auditoria      estados_auditoria         @relation(fields: [estado_reportado_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -265,13 +267,23 @@ model pisos {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model proveedores {
-  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  razon_social      String
-  rfc_tax_id        String?
-  contacto_soporte  String?
-  direccion_fiscal  String?
-  sitio_web         String?             @db.VarChar(255)
-  datos_financieros datos_financieros[]
+  id                    String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  razon_social          String
+  rfc_tax_id            String?
+  contacto_soporte      String?
+  direccion_fiscal      String?
+  sitio_web             String?             @db.VarChar(255)
+  is_active             Boolean?
+  nombre_comercial      String?
+  telefono              String?
+  telefono_alternativo  String?
+  contacto_nombre       String?
+  contacto_puesto       String?
+  categoria             String?
+  descripcion_servicios String?
+  calificacion          String?
+  notas                 String?
+  datos_financieros     datos_financieros[]
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -362,6 +374,7 @@ model auditorias_programadas {
   estantes                     estantes?                    @relation(fields: [estante_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estante")
   oficinas                     oficinas?                    @relation(fields: [oficina_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_oficina")
   usuarios                     usuarios                     @relation(fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_usuario")
+  logs_auditoria               logs_auditoria[]
 
   @@index([auditor_id], map: "idx_auditorias_auditor")
   @@index([estado_id], map: "idx_auditorias_estado")
