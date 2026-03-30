@@ -1,24 +1,38 @@
-import { motion } from 'motion/react';
-import { LayoutDashboard, Package, ClipboardCheck, Building2, Users, Settings, Menu, X, FileText, Bell } from 'lucide-react';
-import { useState } from 'react';
-import iconSrc from '../../../../assets/icon.png';
+import { motion } from "motion/react";
+import {
+  LayoutDashboard,
+  Package,
+  ClipboardCheck,
+  Building2,
+  Users,
+  Settings,
+  Menu,
+  X,
+  FileText,
+  TrendingDown,
+} from "lucide-react";
+import { useState } from "react";
+import iconSrc from "../../../../assets/icon.png";
 
 interface FloatingSidebarProps {
   activeView: string;
   onNavigate: (view: string) => void;
 }
 
-export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps) {
+export function FloatingSidebar({
+  activeView,
+  onNavigate,
+}: FloatingSidebarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'inventario', label: 'Inventario', icon: Package },
-    { id: 'auditorias', label: 'Auditorías', icon: ClipboardCheck },
-    { id: 'registro-auditorias', label: 'Logs Auditorías', icon: FileText },
-    { id: 'alertas', label: 'Alertas', icon: Bell },
-    { id: 'proveedores', label: 'Proveedores', icon: Building2 },
-    { id: 'usuarios', label: 'Usuarios', icon: Users },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "inventario", label: "Inventario", icon: Package },
+    { id: "auditorias", label: "Auditorías", icon: ClipboardCheck },
+    { id: "registro-auditorias", label: "Logs Auditorías", icon: FileText },
+    { id: "depreciacion-garantias", label: "Depreciación", icon: TrendingDown },
+    { id: "proveedores", label: "Proveedores", icon: Building2 },
+    { id: "usuarios", label: "Usuarios", icon: Users },
   ];
 
   const handleNavigation = (view: string) => {
@@ -37,7 +51,11 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         className="lg:hidden fixed top-6 left-6 z-[60] w-14 h-14 bg-white dark:bg-[#1a1a1a] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center"
       >
-        {mobileMenuOpen ? <X className="w-6 h-6 dark:text-white" /> : <Menu className="w-6 h-6 dark:text-white" />}
+        {mobileMenuOpen ? (
+          <X className="w-6 h-6 dark:text-white" />
+        ) : (
+          <Menu className="w-6 h-6 dark:text-white" />
+        )}
       </motion.button>
 
       {/* Mobile Backdrop */}
@@ -58,16 +76,24 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
         transition={{ duration: 0.5 }}
         className={`fixed left-6 top-6 bottom-6 w-64 bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 z-50 flex flex-col
           max-lg:left-0 max-lg:top-0 max-lg:bottom-0 max-lg:rounded-none max-lg:rounded-r-3xl
-          ${mobileMenuOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'}
+          ${mobileMenuOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full"}
           lg:translate-x-0 transition-transform duration-300`}
       >
         <div className="mb-8 flex items-center gap-3">
           <div className="flex items-center justify-center flex-shrink-0">
-            <img src={iconSrc} alt="Romdeau Icon" className="w-14 h-14 object-contain dark:invert" />
+            <img
+              src={iconSrc}
+              alt="Romdeau Icon"
+              className="w-14 h-14 object-contain dark:invert"
+            />
           </div>
           <div>
-            <h1 className="text-2xl font-bold mb-0.5 dark:text-white leading-none">Romdeau</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Asset Management</p>
+            <h1 className="text-2xl font-bold mb-0.5 dark:text-white leading-none">
+              Romdeau
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Asset Management
+            </p>
           </div>
         </div>
 
@@ -84,8 +110,8 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
                 onClick={() => handleNavigation(item.id)}
                 className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl font-medium transition-all ${
                   isActive
-                    ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? "bg-black dark:bg-white text-white dark:text-black shadow-lg"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -99,11 +125,11 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => handleNavigation('settings')}
+            onClick={() => handleNavigation("settings")}
             className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl font-medium transition-all ${
-              activeView === 'settings'
-                ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              activeView === "settings"
+                ? "bg-black dark:bg-white text-white dark:text-black shadow-lg"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             }`}
           >
             <Settings className="w-5 h-5" />

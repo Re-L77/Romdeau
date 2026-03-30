@@ -6,7 +6,7 @@ import { Dashboard } from "./components/dashboard/Dashboard";
 import { ModuloInventario } from "./components/inventory/ModuloInventario";
 import { ModuloAuditorias } from "./components/audits/ModuloAuditorias";
 import { RegistroAuditorias } from "./components/audits/RegistroAuditorias";
-import { Alertas } from "./components/alerts/Alertas";
+import { Alertas as DepreciacionGarantias } from "./components/alerts/Alertas";
 import { DirectorioProveedores } from "./components/providers/DirectorioProveedores";
 import { GestionUsuarios } from "./components/users/GestionUsuarios";
 import { AssetDetail } from "./components/inventory/AssetDetail";
@@ -25,7 +25,7 @@ type ViewType =
   | "inventario"
   | "auditorias"
   | "registro-auditorias"
-  | "alertas"
+  | "depreciacion-garantias"
   | "proveedores"
   | "usuarios"
   | "assetDetail"
@@ -213,8 +213,8 @@ function AppContent() {
           <RegistroAuditorias onAuditClick={handleAuditClick} />
         )}
 
-        {/* View 5.5: Alertas */}
-        {currentView === "alertas" && <Alertas />}
+        {/* View 5.5: Depreciación y Garantías */}
+        {currentView === "depreciacion-garantias" && <DepreciacionGarantias />}
 
         {/* View 6: Directorio de Proveedores */}
         {currentView === "proveedores" && (
