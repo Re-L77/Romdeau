@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import {
   Calendar,
+  Clock3,
   MapPin,
   User,
   Plus,
@@ -12,19 +13,16 @@ import { useState, useEffect } from "react";
 import { CrearAuditoria, AuditFormData } from "./CrearAuditoria";
 import { mockDB } from "../../data/mockData";
 import { auditoriasProgramadasApi } from "../../../services/api";
+import { Skeleton } from "../ui/skeleton";
 
 interface ModuloAuditoriasProps {
   onScheduledAuditClick: (auditId: string) => void;
   onCompletedAuditClick: (auditId: string) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _scheduledAuditsMock = [];
-
 const getStateColor = (estadoNombre: string) => {
   const estado = estadoNombre?.toLowerCase().trim() ?? "";
 
-  // Mapeo semántico de estados a colores
   if (estado.includes("pendiente") || estado.includes("programada")) {
     return {
       bg: "bg-blue-100 dark:bg-blue-500/20",
@@ -53,7 +51,7 @@ const getStateColor = (estadoNombre: string) => {
       border: "border-red-200 dark:border-red-700/30",
     };
   }
-  // Color por defecto
+
   return {
     bg: "bg-gray-100 dark:bg-gray-500/20",
     text: "text-gray-700 dark:text-gray-400",
@@ -63,7 +61,6 @@ const getStateColor = (estadoNombre: string) => {
 
 export function ModuloAuditorias({
   onScheduledAuditClick,
-  onCompletedAuditClick,
 }: ModuloAuditoriasProps) {
   const [isCreatingAudit, setIsCreatingAudit] = useState(false);
   const [scheduledAudits, setScheduledAudits] = useState<any[]>([]);
@@ -74,7 +71,6 @@ export function ModuloAuditorias({
   const [edificioFilter, setEdificioFilter] = useState("all");
   const [campusFilter, setCampusFilter] = useState("all");
 
-  // Datos para los selectores de filtros
   const [auditores, setAuditores] = useState<any[]>([]);
   const [edificios, setEdificios] = useState<any[]>([]);
   const [sedes, setSedes] = useState<any[]>([]);
@@ -84,7 +80,6 @@ export function ModuloAuditorias({
     const loadData = async () => {
       try {
         setLoadingScheduled(true);
-        // Cargar auditorías, auditores, edificios, sedes y estados en paralelo
         const [
           auditsData,
           auditoresData,
@@ -115,12 +110,9 @@ export function ModuloAuditorias({
     loadData();
   }, []);
 
-  const handleCreateAudit = () => {
-    setIsCreatingAudit(true);
-  };
+  const handleCreateAudit = () => setIsCreatingAudit(true);
 
   const handleSaveAudit = (formData: AuditFormData) => {
-    // Obtener información adicional para mostrar la confirmación
     const sede = mockDB.sedes.find((s) => s.id === formData.sede_id);
     const auditor = mockDB.usuarios.find((u) => u.id === formData.auditor_id);
 
@@ -152,9 +144,7 @@ export function ModuloAuditorias({
     setIsCreatingAudit(false);
   };
 
-  const handleCloseModal = () => {
-    setIsCreatingAudit(false);
-  };
+  const handleCloseModal = () => setIsCreatingAudit(false);
 
   const handleResetFilters = () => {
     setSearchTerm("");
@@ -164,9 +154,7 @@ export function ModuloAuditorias({
     setCampusFilter("all");
   };
 
-  // Lógica de filtrado igual que GestionUsuarios
   const filteredAudits = scheduledAudits.filter((audit) => {
-    // Filtro por búsqueda en título o descripción
     if (
       searchTerm &&
       !audit.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -175,36 +163,24 @@ export function ModuloAuditorias({
       return false;
     }
 
-    // Filtro por estado
     if (estadoFilter !== "all") {
       const estadoNombre = audit.estados_auditoria_programada?.nombre ?? "";
-      if (estadoNombre.toLowerCase() !== estadoFilter) {
-        return false;
-      }
+      if (estadoNombre.toLowerCase() !== estadoFilter) return false;
     }
 
-    // Filtro por auditor (por nombre completo)
     if (auditorFilter !== "all") {
       const auditorNombre = audit.usuarios?.nombre_completo ?? "";
-      if (auditorNombre.toLowerCase() !== auditorFilter) {
-        return false;
-      }
+      if (auditorNombre.toLowerCase() !== auditorFilter) return false;
     }
 
-    // Filtro por edificio (basado en ubicación de oficina)
     if (edificioFilter !== "all") {
       const ubicacion = audit.oficinas?.nombre ?? audit.estantes?.nombre ?? "";
-      if (ubicacion.toLowerCase() !== edificioFilter) {
-        return false;
-      }
+      if (ubicacion.toLowerCase() !== edificioFilter) return false;
     }
 
-    // Filtro por sede/campus (basado en ubicación)
     if (campusFilter !== "all") {
       const ubicacion = audit.oficinas?.nombre ?? audit.estantes?.nombre ?? "";
-      if (ubicacion.toLowerCase() !== campusFilter) {
-        return false;
-      }
+      if (ubicacion.toLowerCase() !== campusFilter) return false;
     }
 
     return true;
@@ -222,7 +198,6 @@ export function ModuloAuditorias({
           </p>
         </div>
 
-        {/* Filter Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -321,14 +296,40 @@ export function ModuloAuditorias({
           </div>
         </motion.div>
 
-        {/* Scheduled Audits */}
         <div>
           <h2 className="text-xl font-bold mb-4 dark:text-white">
             Auditorías Programadas
           </h2>
           {loadingScheduled ? (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              Cargando auditorías...
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 space-y-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1 mr-4">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                    <Skeleton className="h-8 w-24 rounded-full shrink-0" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-4 w-52" />
+                  </div>
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                    <Skeleton className="h-3 w-16" />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredAudits.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -344,6 +345,30 @@ export function ModuloAuditorias({
                   audit.usuarios?.nombre_completo ?? audit.auditor_id ?? "—";
                 const fechaProgramada = audit.fecha_programada
                   ? new Date(audit.fecha_programada).toLocaleString("es-MX", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })
+                  : "—";
+                const fechaInicio = audit.fecha_inicio
+                  ? new Date(audit.fecha_inicio).toLocaleString("es-MX", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })
+                  : "—";
+                const fechaFin = audit.fecha_fin
+                  ? new Date(audit.fecha_fin).toLocaleString("es-MX", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })
+                  : "—";
+                const fechaCreacion = audit.created_at
+                  ? new Date(audit.created_at).toLocaleString("es-MX", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })
+                  : "—";
+                const fechaActualizacion = audit.updated_at
+                  ? new Date(audit.updated_at).toLocaleString("es-MX", {
                       dateStyle: "short",
                       timeStyle: "short",
                     })
@@ -391,7 +416,31 @@ export function ModuloAuditorias({
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                         <Calendar className="w-4 h-4" />
-                        <span>{fechaProgramada}</span>
+                        <span>Programada: {fechaProgramada}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Registros
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-2">
+                          <Clock3 className="w-3.5 h-3.5" />
+                          <span>Creada: {fechaCreacion}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock3 className="w-3.5 h-3.5" />
+                          <span>Actualizada: {fechaActualizacion}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock3 className="w-3.5 h-3.5" />
+                          <span>Inicio: {fechaInicio}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock3 className="w-3.5 h-3.5" />
+                          <span>Cierre: {fechaFin}</span>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -402,7 +451,6 @@ export function ModuloAuditorias({
         </div>
       </div>
 
-      {/* Modal de Crear Auditoría */}
       {isCreatingAudit && (
         <CrearAuditoria onClose={handleCloseModal} onSave={handleSaveAudit} />
       )}

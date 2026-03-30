@@ -268,6 +268,17 @@ export const auditoriasProgramadasApi = {
     const data = await apiClient.get<any[]>("/api/auditorias-programadas");
     return Array.isArray(data) ? data : [];
   },
+  getById: async (id: string): Promise<any | null> => {
+    if (!id) return null;
+    try {
+      const data = await apiClient.get<any>(
+        `/api/auditorias-programadas/${id}`,
+      );
+      return data ?? null;
+    } catch {
+      return null;
+    }
+  },
   getAllStates: async (): Promise<any[]> => {
     const data = await apiClient.get<any[]>(
       "/api/auditorias-programadas/estados",

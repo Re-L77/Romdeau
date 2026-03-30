@@ -59,6 +59,23 @@ export class AuditoriasprogramadasService {
         estados_auditoria_programada: true,
         oficinas: true,
         estantes: true,
+        logs_auditoria: {
+          include: {
+            activos: {
+              select: {
+                id: true,
+                nombre: true,
+                codigo_etiqueta: true,
+                categorias: { select: { nombre: true } },
+              },
+            },
+            estados_auditoria: true,
+            usuarios: {
+              select: { id: true, nombre_completo: true },
+            },
+          },
+          orderBy: { fecha_hora: 'asc' },
+        },
       },
     });
 
