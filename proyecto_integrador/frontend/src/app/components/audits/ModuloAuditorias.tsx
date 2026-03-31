@@ -9,9 +9,14 @@ import {
   Search,
   RotateCcw,
 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { CrearAuditoria, AuditFormData } from "./CrearAuditoria";
-import { mockDB } from "../../data/mockData";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import {
+  CrearAuditoria,
+  AuditFormData,
+  AuditoriaFormCatalogs,
+  CreateAuditoriaProgramadaDto,
+} from "./CrearAuditoria";
 import { auditoriasProgramadasApi } from "../../../services/api";
 import { Skeleton } from "../ui/skeleton";
 
@@ -69,79 +74,74 @@ export function ModuloAuditorias({
   const [estadoFilter, setEstadoFilter] = useState("all");
   const [auditorFilter, setAuditorFilter] = useState("all");
   const [edificioFilter, setEdificioFilter] = useState("all");
-  const [campusFilter, setCampusFilter] = useState("all");
+  const [sedeFilter, setSedeFilter] = useState("all");
 
   const [auditores, setAuditores] = useState<any[]>([]);
   const [edificios, setEdificios] = useState<any[]>([]);
   const [sedes, setSedes] = useState<any[]>([]);
   const [estados, setEstados] = useState<any[]>([]);
+  const [formCatalogs, setFormCatalogs] = useState<AuditoriaFormCatalogs>({
+    auditores: [],
+    sedes: [],
+  });
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoadingScheduled(true);
+      const [
+        auditsData,
+        auditoresData,
+        edificiosData,
+        sedesData,
+        estadosData,
+        formCatalogsData,
+      ] = await Promise.all([
+        auditoriasProgramadasApi.getAll(),
+        auditoriasProgramadasApi.getAllAuditores?.() || Promise.resolve([]),
+        auditoriasProgramadasApi.getAllEdificios?.() || Promise.resolve([]),
+        auditoriasProgramadasApi.getAllSedes?.() || Promise.resolve([]),
+        auditoriasProgramadasApi.getAllStates?.() || Promise.resolve([]),
+        auditoriasProgramadasApi.getFormCatalogs?.() ||
+          Promise.resolve({ auditores: [], sedes: [] }),
+      ]);
+
+      setScheduledAudits(auditsData);
+      setAuditores(auditoresData);
+      setEdificios(edificiosData);
+      setSedes(sedesData);
+      setEstados(estadosData);
+      setFormCatalogs(formCatalogsData || { auditores: [], sedes: [] });
+    } catch (err) {
+      console.error("Error loading audits data:", err);
+      setScheduledAudits([]);
+    } finally {
+      setLoadingScheduled(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoadingScheduled(true);
-        const [
-          auditsData,
-          auditoresData,
-          edificiosData,
-          sedesData,
-          estadosData,
-        ] = await Promise.all([
-          auditoriasProgramadasApi.getAll(),
-          auditoriasProgramadasApi.getAllAuditores?.() || Promise.resolve([]),
-          auditoriasProgramadasApi.getAllEdificios?.() || Promise.resolve([]),
-          auditoriasProgramadasApi.getAllSedes?.() || Promise.resolve([]),
-          auditoriasProgramadasApi.getAllStates?.() || Promise.resolve([]),
-        ]);
-
-        setScheduledAudits(auditsData);
-        setAuditores(auditoresData);
-        setEdificios(edificiosData);
-        setSedes(sedesData);
-        setEstados(estadosData);
-      } catch (err) {
-        console.error("Error loading audits data:", err);
-        setScheduledAudits([]);
-      } finally {
-        setLoadingScheduled(false);
-      }
-    };
-
     loadData();
-  }, []);
+  }, [loadData]);
 
   const handleCreateAudit = () => setIsCreatingAudit(true);
 
-  const handleSaveAudit = (formData: AuditFormData) => {
-    const sede = mockDB.sedes.find((s) => s.id === formData.sede_id);
-    const auditor = mockDB.usuarios.find((u) => u.id === formData.auditor_id);
+  const handleSaveAudit = async (formData: CreateAuditoriaProgramadaDto) => {
+    try {
+      // Guardar en la base de datos
+      await auditoriasProgramadasApi.create(formData);
 
-    let ubicacionTexto = "";
-    if (formData.tipo_ubicacion === "oficina" && formData.oficina_id) {
-      const oficina = mockDB.oficinas.find((o) => o.id === formData.oficina_id);
-      const piso = mockDB.pisos.find((p) => p.id === oficina?.piso_id);
-      const edificio = mockDB.edificios.find((e) => e.id === piso?.edificio_id);
-      ubicacionTexto = `${sede?.nombre} → ${edificio?.nombre} → ${piso?.nombre} → ${oficina?.nombre}`;
-    } else if (formData.tipo_ubicacion === "estante" && formData.estante_id) {
-      const estante = mockDB.estantes.find((e) => e.id === formData.estante_id);
-      const pasillo = mockDB.pasillos.find((p) => p.id === estante?.pasillo_id);
-      const almacen = mockDB.almacenes.find(
-        (a) => a.id === pasillo?.almacen_id,
-      );
-      ubicacionTexto = `${sede?.nombre} → ${almacen?.nombre} → ${pasillo?.nombre} → ${estante?.nombre}`;
+      // Mostrar notificación de éxito
+      toast.success(`Auditoría "${formData.titulo}" programada correctamente`);
+
+      // Cerrar el modal
+      setIsCreatingAudit(false);
+
+      // Recargar la lista de auditorías
+      loadData();
+    } catch (error) {
+      console.error("Error al guardar auditoría:", error);
+      toast.error("Error al guardar la auditoría. Intenta de nuevo.");
     }
-
-    console.log("Nueva auditoría programada:", {
-      ...formData,
-      ubicacion_texto: ubicacionTexto,
-      auditor_nombre: auditor?.nombre_completo,
-    });
-
-    alert(
-      `✅ Auditoría programada exitosamente\n\n📍 Ubicación: ${ubicacionTexto}\n👤 Auditor: ${auditor?.nombre_completo}\n📅 Fecha: ${formData.fecha} a las ${formData.hora}\n📦 Activos: ${formData.activos_programados.length}`,
-    );
-
-    setIsCreatingAudit(false);
   };
 
   const handleCloseModal = () => setIsCreatingAudit(false);
@@ -151,7 +151,7 @@ export function ModuloAuditorias({
     setEstadoFilter("all");
     setAuditorFilter("all");
     setEdificioFilter("all");
-    setCampusFilter("all");
+    setSedeFilter("all");
   };
 
   const filteredAudits = scheduledAudits.filter((audit) => {
@@ -178,9 +178,9 @@ export function ModuloAuditorias({
       if (ubicacion.toLowerCase() !== edificioFilter) return false;
     }
 
-    if (campusFilter !== "all") {
+    if (sedeFilter !== "all") {
       const ubicacion = audit.oficinas?.nombre ?? audit.estantes?.nombre ?? "";
-      if (ubicacion.toLowerCase() !== campusFilter) return false;
+      if (ubicacion.toLowerCase() !== sedeFilter) return false;
     }
 
     return true;
@@ -272,11 +272,11 @@ export function ModuloAuditorias({
               ))}
             </select>
             <select
-              value={campusFilter}
-              onChange={(e) => setCampusFilter(e.target.value)}
+              value={sedeFilter}
+              onChange={(e) => setSedeFilter(e.target.value)}
               className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
             >
-              <option value="all">Campus: todos</option>
+              <option value="all">Sede: todas</option>
               {sedes.map((sede: any) => (
                 <option key={sede.id} value={sede.nombre.toLowerCase()}>
                   {sede.nombre}
@@ -452,7 +452,12 @@ export function ModuloAuditorias({
       </div>
 
       {isCreatingAudit && (
-        <CrearAuditoria onClose={handleCloseModal} onSave={handleSaveAudit} />
+        <CrearAuditoria
+          onClose={handleCloseModal}
+          onSave={handleSaveAudit}
+          catalogs={formCatalogs}
+          existingAudits={scheduledAudits}
+        />
       )}
     </main>
   );

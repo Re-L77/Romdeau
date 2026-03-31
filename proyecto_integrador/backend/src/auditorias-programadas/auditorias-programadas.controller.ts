@@ -62,6 +62,12 @@ export class AuditoriasprogramadasController {
     return await this.auditoriasService.getAllSedes();
   }
 
+  @Get('filtros/formulario')
+  @Roles(Role.ADMIN, Role.AUDITOR)
+  getFormCatalogs() {
+    return this.auditoriasService.getFormCatalogs();
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.AUDITOR)
   findOne(@Param('id', new ParseUUIDPipe()) id: string) {

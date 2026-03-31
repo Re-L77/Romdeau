@@ -419,6 +419,12 @@ export const auditoriasProgramadasApi = {
     );
     return Array.isArray(data) ? data : [];
   },
+  getFormCatalogs: async (): Promise<any> => {
+    return apiClient.get<any>("/api/auditorias-programadas/filtros/formulario");
+  },
+  create: async (data: any): Promise<any> => {
+    return apiClient.post<any>("/api/auditorias-programadas", data);
+  },
 };
 
 export const depreciacionApi = {

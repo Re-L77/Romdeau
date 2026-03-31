@@ -5,4 +5,5 @@ export class UpdateAuditoriaDto implements Partial<CreateAuditoriaDto> {
   auditor_id?: string;
   estado_reportado_id?: number;
   comentarios?: string;
+  auditoria?: string;
 }
