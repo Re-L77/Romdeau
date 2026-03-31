@@ -170,6 +170,30 @@ export default function HomeScreen() {
               ]}
             />
           </View>
+          <View style={styles.progressInfo}>
+            <View style={styles.progressInfoRow}>
+              <View
+                style={[styles.progressDot, { backgroundColor: "#10b981" }]}
+              />
+              <Text style={styles.progressInfoText}>
+                <Text style={{ color: "#10b981", fontWeight: "700" }}>
+                  {stats.completed}
+                </Text>{" "}
+                Completadas
+              </Text>
+            </View>
+            <View style={styles.progressInfoRow}>
+              <View
+                style={[styles.progressDot, { backgroundColor: "#f59e0b" }]}
+              />
+              <Text style={styles.progressInfoText}>
+                <Text style={{ color: "#f59e0b", fontWeight: "700" }}>
+                  {stats.pending}
+                </Text>{" "}
+                Pendientes
+              </Text>
+            </View>
+          </View>
           <View style={styles.progressStats}>
             <View style={styles.progressStat}>
               <Text style={styles.statValue}>{stats.completed}</Text>
@@ -497,16 +521,43 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   progressBarBg: {
-    height: 8,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 4,
+    height: 12,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 6,
     overflow: "hidden",
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
   progressBarFill: {
     height: "100%",
     backgroundColor: "#10b981",
+    borderRadius: 6,
+    shadowColor: "#10b981",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  progressInfo: {
+    flexDirection: "column",
+    gap: 8,
+    marginBottom: 16,
+  },
+  progressInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
     borderRadius: 4,
+  },
+  progressInfoText: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 13,
+    fontWeight: "500",
   },
   progressStats: {
     flexDirection: "row",
