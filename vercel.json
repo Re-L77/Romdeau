@@ -1,0 +1,4 @@
+{
+  "buildCommand": "cd proyecto_integrador/frontend && npm install && npm run build",
+  "outputDirectory": "proyecto_integrador/frontend/dist"
+}
