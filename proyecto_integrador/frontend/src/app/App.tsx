@@ -162,11 +162,6 @@ function AppContent() {
     setCurrentView("assetDetail");
   };
 
-  const handleAuditClick = (auditId: string) => {
-    setSelectedAuditId(auditId);
-    setAuditType("completed"); // Las auditorías clickeables son completadas (logs)
-    setCurrentView("auditDetail");
-  };
 
   const handleScheduledAuditClick = (auditId: string) => {
     setSelectedAuditId(auditId);
@@ -284,7 +279,7 @@ function AppContent() {
 
         {/* View 5: Registro de Auditorías */}
         {currentView === "registro-auditorias" && (
-          <RegistroAuditorias onAuditClick={handleAuditClick} />
+          <RegistroAuditorias />
         )}
 
         {/* View 5.5: Depreciación y Garantías */}

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { logsAuditoriaApi, LogAuditoria } from "../../../services/api";
+import { AuditDetailFullView } from "./AuditDetailFullView";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const getEstadoConfig = (nombre: string | null) => {
@@ -667,11 +668,7 @@ function ExportModal({ logs, onClose }: ExportModalProps) {
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-interface RegistroAuditoriasProps {
-  onAuditClick: (auditId: string) => void;
-}
-
-export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
+export function RegistroAuditorias() {
   const [logs, setLogs] = useState<LogAuditoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -680,6 +677,7 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
   const [ubicacionFilter, setUbicacionFilter] = useState<string>("all");
   const [auditorFilter, setAuditorFilter] = useState<string>("all");
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -792,6 +790,17 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
       color: "text-red-600 dark:text-red-400",
     },
   ];
+
+  if (selectedAuditId) {
+    return (
+      <main className="transition-[padding] duration-300 pl-6 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
+        <AuditDetailFullView
+          auditId={selectedAuditId}
+          onBack={() => setSelectedAuditId(null)}
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="transition-[padding] duration-300 pl-6 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
@@ -952,9 +961,9 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
                   onClick={() => {
-                    console.log('--- NAVEGACIÓN DESDE LOG ---');
-                    console.log('ID del Log:', log.id);
-                    onAuditClick(log.id);
+                    if (log.id) {
+                      setSelectedAuditId(log.id);
+                    }
                   }}
                   className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all cursor-pointer"
                 >
