@@ -37,7 +37,6 @@ export class AuditoriasService {
         `Auditor con ID ${auditorId} no encontrado`,
       );
     }
-
     // Validar estado de auditoría
     const estado = await this.prisma.estados_auditoria.findUnique({
       where: { id: estadoId },
@@ -47,7 +46,6 @@ export class AuditoriasService {
         `Estado de auditoría con ID ${estadoId} no encontrado`,
       );
     }
-
     // Validar auditoría programada si se proporciona
     if (auditoriaId) {
       const auditoriaProgramada =
@@ -61,7 +59,6 @@ export class AuditoriasService {
       }
     }
   }
-
   async create(createAuditoriaDto: CreateAuditoriaDto) {
     // Validar que todas las referencias existan
     await this.validateReferences(
