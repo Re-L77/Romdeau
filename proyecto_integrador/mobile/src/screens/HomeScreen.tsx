@@ -21,6 +21,7 @@ import {
 } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { useNotificaciones } from "../contexts/NotificacionesContext";
 
 interface AuditStats {
   pending: number;
@@ -33,8 +34,9 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, logout, validateSession } = useAuth();
   const { colors, isDark } = useTheme();
+  const { noLeidasCount } = useNotificaciones();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [notifications] = useState(3);
+  const notifications = noLeidasCount;
 
   const stats: AuditStats = {
     pending: 47,
@@ -123,7 +125,7 @@ export default function HomeScreen() {
 
           <TouchableOpacity
             style={styles.notificationButton}
-            onPress={() => console.log("Notifications")}
+            onPress={() => router.push("/notificaciones")}
           >
             <Bell size={20} color="#fff" />
             {notifications > 0 && (

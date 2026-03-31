@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { useColorScheme, ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
+import { NotificacionesProvider } from "../contexts/NotificacionesContext";
 
 function RootLayoutNav() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -50,6 +51,13 @@ function RootLayoutNav() {
               animation: "slide_from_bottom",
             }}
           />
+          <Stack.Screen
+            name="notificaciones"
+            options={{
+              presentation: "card",
+              animation: "slide_from_right",
+            }}
+          />
         </>
       ) : (
         // Flujo NO Autenticado
@@ -86,8 +94,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-        <RootLayoutNav />
+        <NotificacionesProvider>
+          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+          <RootLayoutNav />
+        </NotificacionesProvider>
       </AuthProvider>
     </ThemeProvider>
   );

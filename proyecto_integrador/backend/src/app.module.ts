@@ -16,6 +16,7 @@ import { UbicacionesModule } from './ubicaciones/ubicaciones.module';
 import { AuditoriasprogramadasModule } from './auditorias-programadas/auditorias-programadas.module';
 import { AuditoriasModule } from './auditorias/auditorias.module';
 import { DepreciacionModule } from './depreciacion/depreciacion.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
 
 function validateEnv(config: Record<string, unknown>) {
   const requiredVars = [
@@ -65,6 +66,7 @@ function validateEnv(config: Record<string, unknown>) {
     AuditoriasprogramadasModule,
     AuditoriasModule,
     DepreciacionModule,
+    NotificacionesModule,
   ],
   controllers: [AppController],
   providers: [

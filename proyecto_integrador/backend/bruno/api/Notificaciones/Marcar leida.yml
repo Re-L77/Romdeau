@@ -1,0 +1,17 @@
+info:
+  name: Marcar leida
+  type: http
+  seq: 5
+
+http:
+  method: PATCH
+  url: '{{baseUrl}}/api/notificaciones/{{notificacionId}}/leer'
+  auth:
+    type: bearer
+    token: '{{token}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

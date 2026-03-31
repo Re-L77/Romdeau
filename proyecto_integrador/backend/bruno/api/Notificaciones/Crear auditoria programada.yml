@@ -1,0 +1,29 @@
+info:
+  name: Crear auditoria programada (test notif)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: '{{baseUrl}}/api/auditorias-programadas'
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "titulo": "Auditoría de prueba notificaciones",
+        "descripcion": "Creada para probar que se genere la notificación en tiempo real",
+        "fecha_programada": "2026-04-15T10:00:00.000Z",
+        "auditor_id": "{{userId}}"
+      }
+  auth:
+    type: bearer
+    token: '{{token}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

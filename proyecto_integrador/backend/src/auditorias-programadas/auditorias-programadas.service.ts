@@ -6,10 +6,14 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAuditoriaProgramadaDto } from './dto/create-auditoria-programada.dto';
 import { UpdateAuditoriaProgramadaDto } from './dto/update-auditoria-programada.dto';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 @Injectable()
 export class AuditoriasprogramadasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificacionesService: NotificacionesService,
+  ) {}
 
   async create(createAuditoriaProgramadaDto: CreateAuditoriaProgramadaDto) {
     const { auditor_id, ...data } = createAuditoriaProgramadaDto;
@@ -24,7 +28,7 @@ export class AuditoriasprogramadasService {
     }
 
     // Crear auditoría con estado inicial "Recién programada" (id: 1)
-    return this.prisma.auditorias_programadas.create({
+    const auditoria = await this.prisma.auditorias_programadas.create({
       data: {
         ...data,
         auditor_id,
@@ -61,6 +65,17 @@ export class AuditoriasprogramadasService {
         },
       },
     });
+
+    // Notificar al auditor asignado
+    await this.notificacionesService.crear({
+      usuario_id: auditor_id,
+      tipo: 'AUDITORIA_ASIGNADA',
+      titulo: 'Nueva auditoría asignada',
+      mensaje: `Se te asignó la auditoría "${auditoria.titulo}"`,
+      accion_url: `/auditorias/${auditoria.id}`,
+    });
+
+    return auditoria;
   }
 
   async findAll() {
