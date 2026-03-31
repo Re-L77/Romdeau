@@ -8,9 +8,13 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ActivosModule } from './activos/activos.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { DepartamentosModule } from './departamentos/departamentos.module';
+import { LogsAuditoriaModule } from './logs-auditoria/logs-auditoria.module';
 import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
 import { RolesGuard } from './auth/roles/roles.guard';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { UbicacionesModule } from './ubicaciones/ubicaciones.module';
+import { AuditoriasprogramadasModule } from './auditorias-programadas/auditorias-programadas.module';
+import { DepreciacionModule } from './depreciacion/depreciacion.module';
 
 function validateEnv(config: Record<string, unknown>) {
   const requiredVars = [
@@ -54,7 +58,14 @@ function validateEnv(config: Record<string, unknown>) {
     ActivosModule,
     UsuariosModule,
     DepartamentosModule,
+<<<<<<< HEAD
     DashboardModule,
+=======
+    UbicacionesModule,
+    LogsAuditoriaModule,
+    AuditoriasprogramadasModule,
+    DepreciacionModule,
+>>>>>>> sofia
   ],
   controllers: [AppController],
   providers: [

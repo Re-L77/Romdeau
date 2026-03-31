@@ -12,7 +12,7 @@ export interface LoginResponse {
   };
 }
 
-export interface ApiError extends ExtendedApiError {}
+export interface ApiError extends ExtendedApiError { }
 
 /**
  * Almacena funciones de callback para interceptar y refrescar tokens
@@ -163,6 +163,7 @@ export const activosApi = {
     custodioId?: string;
     estanteId?: string;
     sinCustodio?: boolean;
+    tipoRastreo?: string;
   }): Promise<{
     data: any[];
     pagination: {
@@ -223,6 +224,107 @@ export const activosApi = {
     const result = await activosApi.getList({ id, page: 1, limit: 1 });
     return result.data[0] ?? null;
   },
+
+  create: async (data: any): Promise<any> => {
+    return apiClient.post<any>('/api/activos', data);
+  },
+
+  update: async (id: string, data: any): Promise<any> => {
+    return apiClient.patch<any>(`/api/activos/${id}`, data);
+  },
+};
+
+export interface LogAuditoria {
+  id: string;
+  fecha_hora: string | null;
+  comentarios: string | null;
+  activo: {
+    id: string | null;
+    nombre: string | null;
+    codigo_etiqueta: string | null;
+  };
+  ubicacion: string | null;
+  auditor: string | null;
+  plan_auditoria: string | null;
+  metodo_auditoria: string | null;
+  estado_reportado: string | null;
+  estado_reportado_id: number;
+}
+
+export const logsAuditoriaApi = {
+  getList: async (params?: {
+    page?: number;
+    limit?: number;
+    auditorId?: string;
+    activoId?: string;
+    estadoId?: number;
+  }): Promise<{
+    data: LogAuditoria[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNextPage: boolean;
+    };
+  }> => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null && value !== '') {
+          searchParams.set(key, String(value));
+        }
+      }
+    }
+    const queryString = searchParams.toString();
+    const path = queryString
+      ? `/api/logs-auditoria?${queryString}`
+      : '/api/logs-auditoria';
+    return apiClient.get<{ data: LogAuditoria[]; pagination: any }>(path);
+  },
+};
+
+export const ubicacionesApi = {
+  getOficinas: async (): Promise<any[]> => {
+    return apiClient.get<any[]>('/api/ubicaciones/oficinas');
+  },
+
+  getEstantes: async (sedeId?: string): Promise<any[]> => {
+    const path = sedeId
+      ? `/api/ubicaciones/estantes?sedeId=${sedeId}`
+      : '/api/ubicaciones/estantes';
+    return apiClient.get<any[]>(path);
+  },
+};
+
+export interface Categoria {
+  id: string;
+  nombre: string;
+  tipo_rastreo: 'MOVIL' | 'FIJO';
+}
+
+export const categoriasApi = {
+  getAll: async (): Promise<Categoria[]> => {
+    return apiClient.get<Categoria[]>('/api/activos/categorias/list');
+  },
+};
+
+export const usuariosApi = {
+  getAll: async (): Promise<any[]> => {
+    return apiClient.get<any[]>('/api/usuarios');
+  },
+};
+
+export const estadosApi = {
+  getAll: async (): Promise<any[]> => {
+    return apiClient.get<any[]>('/api/activos/estados/list');
+  },
+};
+
+export const departamentosApi = {
+  getAll: async (): Promise<any[]> => {
+    return apiClient.get<any[]>('/api/departamentos');
+  },
 };
 
 /**
@@ -274,5 +376,56 @@ export const apiClient = {
       method: "DELETE",
     });
     return handleResponse(response);
+  },
+};
+
+export const auditoriasProgramadasApi = {
+  getAll: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>("/api/auditorias-programadas");
+    return Array.isArray(data) ? data : [];
+  },
+  getById: async (id: string): Promise<any | null> => {
+    if (!id) return null;
+    try {
+      const data = await apiClient.get<any>(
+        `/api/auditorias-programadas/${id}`,
+      );
+      return data ?? null;
+    } catch {
+      return null;
+    }
+  },
+  getAllStates: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/estados",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllAuditores: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/auditores",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllEdificios: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/edificios",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+  getAllSedes: async (): Promise<any[]> => {
+    const data = await apiClient.get<any[]>(
+      "/api/auditorias-programadas/filtros/sedes",
+    );
+    return Array.isArray(data) ? data : [];
+  },
+};
+
+export const depreciacionApi = {
+  getSummary: async (): Promise<any> => {
+    return apiClient.get<any>('/api/depreciacion/summary');
+  },
+  getDetalleKpi: async (tipo: string): Promise<any> => {
+    return apiClient.get<any>(`/api/depreciacion/detalle/${tipo}`);
   },
 };

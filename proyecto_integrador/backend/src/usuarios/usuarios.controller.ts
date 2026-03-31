@@ -66,8 +66,14 @@ export class UsuariosController {
 
   @Get()
   @Roles(Role.ADMIN, Role.AUDITOR)
-  findAll(@Query('order') order: 'asc' | 'desc' = 'desc') {
-    return this.usuariosService.findAll(order);
+  findAll(
+    @Query('order') order: 'asc' | 'desc' = 'desc',
+    @Query('departamento_id') departamentoId?: string,
+    @Query('activo') activo?: string,
+  ) {
+    const depId = departamentoId ? parseInt(departamentoId, 10) : undefined;
+    const isActivo = activo ? activo === 'true' : undefined;
+    return this.usuariosService.findAll(order, depId, isActivo);
   }
 
   @Get(':id')

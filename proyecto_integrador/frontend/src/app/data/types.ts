@@ -10,46 +10,40 @@
 export enum RolUsuario {
   ADMIN = 1,
   AUDITOR = 2,
-  EMPLEADO = 3
+  EMPLEADO = 3,
 }
 
 export enum EstadoActivo {
   NUEVO = 1,
   BUENO = 2,
   MALO = 3,
-  BAJA = 4
+  BAJA = 4,
 }
 
 export enum EstadoAuditoria {
   BUENO = 1,
   DANADO = 2,
-  NO_ENCONTRADO = 3
+  NO_ENCONTRADO = 3,
 }
 
 export enum TipoRastreo {
-  FIJO = 'FIJO',
-  MOVIL = 'MOVIL'
-}
-
-export enum TipoAlerta {
-  VENCIMIENTO_GARANTIA = 'VENCIMIENTO_GARANTIA',
-  MANTENIMIENTO_PREVENTIVO = 'MANTENIMIENTO_PREVENTIVO',
-  DEPRECIACION_CERO = 'DEPRECIACION_CERO'
+  FIJO = "FIJO",
+  MOVIL = "MOVIL",
 }
 
 export enum EstadoTicket {
-  ABIERTO = 'ABIERTO',
-  EN_PROGRESO = 'EN_PROGRESO',
-  RESUELTO = 'RESUELTO',
-  CANCELADO = 'CANCELADO'
+  ABIERTO = "ABIERTO",
+  EN_PROGRESO = "EN_PROGRESO",
+  RESUELTO = "RESUELTO",
+  CANCELADO = "CANCELADO",
 }
 
 export enum MotivoBaja {
-  OBSOLESCENCIA = 'OBSOLESCENCIA',
-  DAÑO_IRREPARABLE = 'DAÑO_IRREPARABLE',
-  ROBO_EXTRAVIO = 'ROBO_EXTRAVIO',
-  VENTA = 'VENTA',
-  DONACION = 'DONACION'
+  OBSOLESCENCIA = "OBSOLESCENCIA",
+  DAÑO_IRREPARABLE = "DAÑO_IRREPARABLE",
+  ROBO_EXTRAVIO = "ROBO_EXTRAVIO",
+  VENTA = "VENTA",
+  DONACION = "DONACION",
 }
 
 // ==============================================================================
@@ -204,14 +198,14 @@ export interface Activo {
   foto_principal_url?: string;
   created_at: string;
   updated_at: string;
-  
+
   // Relaciones pobladas (para UI)
   categoria?: Categoria;
   custodio_actual?: Usuario;
   oficina?: Oficina;
   estante?: Estante;
   datos_financieros?: DatosFinancieros;
-  
+
   // Campos adicionales para UI
   nombre?: string; // Derivado de especificaciones
   valor_libro?: number; // Derivado de datos_financieros
@@ -225,7 +219,7 @@ export interface DatosFinancieros {
   valor_libro_actual: number;
   fecha_compra: string; // ISO date
   fin_garantia?: string; // ISO date
-  
+
   // Relaciones
   proveedor?: Proveedor;
 }
@@ -241,7 +235,7 @@ export interface LogAuditoria {
   };
   estado_reportado_id: EstadoAuditoria;
   comentarios?: string;
-  
+
   // Relaciones
   activo?: Activo;
   auditor?: Usuario;
@@ -257,7 +251,7 @@ export interface MovimientoActivo {
   oficina_nueva_id?: string;
   estante_nuevo_id?: string;
   fecha_movimiento: string;
-  
+
   // Relaciones
   activo?: Activo;
   custodio_anterior?: Usuario;
@@ -276,24 +270,9 @@ export interface LogDepreciacion {
   monto_depreciado: number;
   valor_nuevo: number;
   metodo_usado: string;
-  
-  // Relaciones
-  activo?: Activo;
-}
 
-export interface AlertaSistema {
-  id: string;
-  activo_id?: string;
-  tipo_alerta: TipoAlerta;
-  mensaje: string;
-  fecha_disparo: string;
-  leida: boolean;
-  usuario_destino_id?: string;
-  created_at: string;
-  
   // Relaciones
   activo?: Activo;
-  usuario_destino?: Usuario;
 }
 
 export interface Mantenimiento {
@@ -306,7 +285,7 @@ export interface Mantenimiento {
   estado_ticket: EstadoTicket;
   fecha_solicitud: string;
   fecha_resolucion?: string;
-  
+
   // Relaciones
   activo?: Activo;
   solicitante?: Usuario;
@@ -321,7 +300,7 @@ export interface BajaActivo {
   documento_respaldo_url?: string;
   comentarios?: string;
   created_at: string;
-  
+
   // Relaciones
   activo?: Activo;
   usuario_autoriza?: Usuario;
@@ -332,7 +311,7 @@ export interface BajaActivo {
 // ==============================================================================
 
 export interface UbicacionCompleta {
-  tipo: 'oficina' | 'estante';
+  tipo: "oficina" | "estante";
   // Para oficinas
   sede?: string;
   edificio?: string;
@@ -377,12 +356,12 @@ export interface CrearActivoForm {
   especificaciones: Record<string, any>;
   estado_operativo_id: EstadoActivo;
   foto_principal_url?: string;
-  
+
   // Ubicación (solo una)
-  ubicacion_tipo: 'oficina' | 'estante';
+  ubicacion_tipo: "oficina" | "estante";
   oficina_id?: string;
   estante_id?: string;
-  
+
   // Datos financieros
   proveedor_id?: string;
   costo_adquisicion: number;
@@ -402,7 +381,7 @@ export interface RegistrarAuditoriaForm {
 
 export interface TransferenciaActivoForm {
   activo_id: string;
-  ubicacion_tipo: 'oficina' | 'estante';
+  ubicacion_tipo: "oficina" | "estante";
   oficina_id?: string;
   estante_id?: string;
   custodio_nuevo_id?: string;
@@ -413,12 +392,4 @@ export interface CrearMantenimientoForm {
   activo_id: string;
   descripcion_falla: string;
   tecnico_asignado?: string;
-}
-
-export interface CrearAlertaForm {
-  activo_id?: string;
-  tipo_alerta: TipoAlerta;
-  mensaje: string;
-  fecha_disparo: string;
-  usuario_destino_id?: string;
 }
