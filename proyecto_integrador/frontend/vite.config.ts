@@ -21,6 +21,8 @@ export default defineConfig({
   assetsInclude: ["**/*.svg", "**/*.csv"],
 
   server: {
+    port: 5173,
+    strictPort: false, // si 5173 está ocupado, usa el siguiente disponible (pero con proxy siempre funciona)
     // SPA fallback: serve index.html for all unknown paths (e.g. /reset-password)
     historyApiFallback: true,
     proxy: {

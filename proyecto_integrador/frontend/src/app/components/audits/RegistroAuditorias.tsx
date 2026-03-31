@@ -18,6 +18,7 @@ import {
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { logsAuditoriaApi, LogAuditoria } from "../../../services/api";
 import { AuditDetailFullView } from "./AuditDetailFullView";
+import { useAuth } from "../../../contexts/AuthContext";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const getEstadoConfig = (nombre: string | null) => {
@@ -114,7 +115,7 @@ const LogSkeleton = () => (
 );
 
 // ─── CSV export ───────────────────────────────────────────────────────────────
-function exportarCSV(logs: LogAuditoria[], periodo: string) {
+function exportarCSV(logs: LogAuditoria[], periodo: string, generadoPor: string) {
   const e = (v: string | null | undefined) => {
     const s = v ?? "";
     return s.includes(",") || s.includes('"') || s.includes("\n")
@@ -123,7 +124,8 @@ function exportarCSV(logs: LogAuditoria[], periodo: string) {
   };
   const meta = [
     `"LOGS DE AUDITORÍA"`,
-    `"Generado:","${formatFecha(new Date().toISOString())}"`,
+    `"Generado por:","${generadoPor}"`,
+    `"Fecha de generación:","${formatFecha(new Date().toISOString())}"`,
     `"Período:","${periodo}"`,
     `"Total registros:","${logs.length}"`,
     "",
@@ -160,7 +162,7 @@ function exportarCSV(logs: LogAuditoria[], periodo: string) {
 }
 
 // ─── Excel SpreadsheetML ──────────────────────────────────────────────────────
-function exportarExcel(logs: LogAuditoria[], periodo: string) {
+function exportarExcel(logs: LogAuditoria[], periodo: string, generadoPor: string) {
   const cell = (val: string, styleId: string) =>
     `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${esc(val)}</Data></Cell>`;
 
@@ -229,7 +231,8 @@ function exportarExcel(logs: LogAuditoria[], periodo: string) {
         <Cell ss:StyleID="Title"><Data ss:Type="String">LOGS DE AUDITORÍA</Data></Cell>
       </Row>
       <Row>
-        <Cell ss:StyleID="Meta"><Data ss:Type="String">Generado: ${formatFecha(new Date().toISOString())}</Data></Cell>
+        <Cell ss:StyleID="Meta"><Data ss:Type="String">Generado por: ${esc(generadoPor)}</Data></Cell>
+        <Cell ss:StyleID="Meta"><Data ss:Type="String">Fecha de generación: ${formatFecha(new Date().toISOString())}</Data></Cell>
         <Cell ss:StyleID="Meta"><Data ss:Type="String">Período: ${periodo}</Data></Cell>
         <Cell ss:StyleID="Meta"><Data ss:Type="String">Total: ${logs.length} registros</Data></Cell>
       </Row>
@@ -257,51 +260,134 @@ function exportarExcel(logs: LogAuditoria[], periodo: string) {
 }
 
 // ─── PDF via ventana de impresión ─────────────────────────────────────────────
-function exportarPDF(logs: LogAuditoria[], periodo: string) {
+function exportarPDF(logs: LogAuditoria[], periodo: string, generadoPor: string) {
+  const estadoBadge = (estado: string | null) => {
+    const n = (estado ?? "").toUpperCase();
+    let bg = "#F3F4F6"; let color = "#374151"; let border = "#D1D5DB";
+    if (n.includes("BUENO") || n.includes("NUEVO"))  { bg="#DCFCE7"; color="#166534"; border="#86EFAC"; }
+    else if (n.includes("DA") || n.includes("MALO") || n.includes("DETERIORADO")) { bg="#FEF3C7"; color="#92400E"; border="#FCD34D"; }
+    else if (n.includes("BAJA") || n.includes("NO")) { bg="#FEE2E2"; color="#991B1B"; border="#FCA5A5"; }
+    return `<span style="background:${bg};color:${color};border:1px solid ${border};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap">${esc(estado ?? "—")}</span>`;
+  };
+
+  const metodoBadge = (metodo: string | null) => {
+    const m = metodo ?? "MANUAL";
+    const isQR = m.toUpperCase() === "QR";
+    const bg = isQR ? "#EDE9FE" : "#DBEAFE";
+    const color = isQR ? "#5B21B6" : "#1D4ED8";
+    const border = isQR ? "#C4B5FD" : "#93C5FD";
+    return `<span style="background:${bg};color:${color};border:1px solid ${border};padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:.5px">${esc(m)}</span>`;
+  };
+
   const filas = logs
     .map(
       (l, i) => `
     <tr class="${i % 2 === 0 ? "even" : ""}">
-      <td>${esc(l.activo?.codigo_etiqueta)}</td>
-      <td>${esc(l.activo?.nombre)}</td>
-      <td>${esc(l.ubicacion)}</td>
-      <td>${esc(l.metodo_auditoria ?? "MANUAL")}</td>
-      <td>${esc(l.auditor)}</td>
-      <td>${esc(l.plan_auditoria ?? "N/A")}</td>
-      <td>${esc(formatFecha(l.fecha_hora))}</td>
-      <td>${esc(l.estado_reportado)}</td>
+      <td><code style="font-size:10px;background:#F1F5F9;padding:1px 5px;border-radius:3px;color:#334155">${esc(l.activo?.codigo_etiqueta ?? "—")}</code></td>
+      <td style="font-weight:600">${esc(l.activo?.nombre ?? "—")}</td>
+      <td style="color:#4B5563">${esc(l.ubicacion ?? "—")}</td>
+      <td>${metodoBadge(l.metodo_auditoria)}</td>
+      <td>${esc(l.auditor ?? "—")}</td>
+      <td style="color:#2563EB;font-size:10px">${esc(l.plan_auditoria ?? "—")}</td>
+      <td style="color:#6B7280;white-space:nowrap">${esc(formatFecha(l.fecha_hora))}</td>
+      <td>${estadoBadge(l.estado_reportado)}</td>
     </tr>`,
     )
     .join("");
 
-  const ventana = window.open("", "_blank", "width=1100,height=750");
+  const nowStr = formatFecha(new Date().toISOString());
+  const ventana = window.open("", "_blank", "width=1200,height=800");
   if (!ventana) return;
   ventana.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Logs de Auditoría</title>
+<html lang="es"><head><meta charset="UTF-8">
+<title>Logs de Auditoría — ROMDEAU</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Arial,sans-serif;padding:28px;color:#111}
-  h1{font-size:22px;color:#1E3A5F;margin-bottom:4px}
-  .meta{font-size:11px;color:#666;margin-bottom:20px}
-  table{width:100%;border-collapse:collapse;font-size:11px;margin-top:12px}
-  thead tr{background:#1E3A5F;color:#fff}
-  th{padding:9px 10px;text-align:left;font-weight:600;border-right:1px solid #0F2447}
-  td{padding:7px 10px;border-bottom:1px solid #dce8f5;border-right:1px solid #dce8f5}
-  tr.even td{background:#EBF2FB}
-  .footer{margin-top:16px;font-size:10px;color:#999;text-align:right}
-  @media print{@page{margin:14mm;size:A4 landscape}body{padding:0}}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#F8FAFC;color:#111827}
+
+  /* ===== HEADER ===== */
+  .header{background:linear-gradient(135deg,#1E3A5F 0%,#2563EB 100%);color:#fff;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;border-radius:0 0 12px 12px;margin-bottom:20px}
+  .header-left h1{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:3px}
+  .header-left p{font-size:11px;opacity:.75;font-weight:400}
+  .header-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:8px 16px;text-align:right}
+  .header-badge .count{font-size:28px;font-weight:900;line-height:1}
+  .header-badge .count-label{font-size:10px;opacity:.8;margin-top:1px}
+
+  /* ===== META CARDS ===== */
+  .meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;padding:0 2px}
+  .meta-card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .meta-card .label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94A3B8;margin-bottom:4px}
+  .meta-card .value{font-size:12px;font-weight:600;color:#1E293B}
+  .meta-card.accent{border-left:4px solid #2563EB}
+
+  /* ===== TABLE ===== */
+  .table-wrap{background:#fff;border-radius:12px;border:1px solid #E2E8F0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  thead tr{background:linear-gradient(90deg,#1E3A5F,#1D4ED8)}
+  th{padding:10px 11px;text-align:left;font-weight:700;color:#fff;border-right:1px solid rgba(255,255,255,.12);white-space:nowrap;font-size:10px;letter-spacing:.2px}
+  td{padding:8px 11px;border-bottom:1px solid #F1F5F9;border-right:1px solid #F1F5F9;vertical-align:middle}
+  tr.even td{background:#F8FAFC}
+  tr:hover td{background:#EFF6FF}
+
+  /* ===== FOOTER ===== */
+  .footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center;padding:10px 4px}
+  .footer-brand{font-size:10px;font-weight:700;color:#1E3A5F;letter-spacing:.5px}
+  .footer-info{font-size:9px;color:#94A3B8}
+
+  @media print{
+    body{background:#fff}
+    @page{margin:10mm 12mm;size:A4 landscape}
+    .header{border-radius:0;margin-bottom:14px}
+    tr:hover td{background:inherit}
+  }
 </style></head>
 <body>
-  <h1>Logs de Auditoría</h1>
-  <p class="meta">Período: ${periodo} &nbsp;·&nbsp; Generado: ${formatFecha(new Date().toISOString())} &nbsp;·&nbsp; ${logs.length} registros</p>
-  <table>
-    <thead><tr>
-      <th>Código</th><th>Activo</th><th>Ubicación</th><th>Método</th>
-      <th>Auditor</th><th>Plan / Auditoría</th><th>Fecha y Hora</th><th>Estado</th>
-    </tr></thead>
-    <tbody>${filas}</tbody>
-  </table>
-  <p class="footer">Sistema ROMDEAU — Logs de Auditoría</p>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Logs de Auditoría</h1>
+      <p>Sistema de Gestión de Activos ROMDEAU — Reporte oficial</p>
+    </div>
+    <div class="header-badge">
+      <div class="count">${logs.length}</div>
+      <div class="count-label">registros</div>
+    </div>
+  </div>
+
+  <!-- META CARDS -->
+  <div class="meta-grid">
+    <div class="meta-card accent">
+      <div class="label">Generado por</div>
+      <div class="value">${esc(generadoPor)}</div>
+    </div>
+    <div class="meta-card accent">
+      <div class="label">Fecha de generación</div>
+      <div class="value">${nowStr}</div>
+    </div>
+    <div class="meta-card accent">
+      <div class="label">Período analizado</div>
+      <div class="value">${periodo}</div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Código</th><th>Activo</th><th>Ubicación</th><th>Método</th>
+        <th>Auditor</th><th>Plan / Auditoría</th><th>Fecha y Hora</th><th>Estado</th>
+      </tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span class="footer-brand">SISTEMA ROMDEAU</span>
+    <span class="footer-info">Generado el ${nowStr} — Documento confidencial</span>
+  </div>
+
   <script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}<\/script>
 </body></html>`);
   ventana.document.close();
@@ -386,9 +472,10 @@ const periodoOpciones: { value: Periodo; label: string; desc: string }[] = [
 interface ExportModalProps {
   logs: LogAuditoria[];
   onClose: () => void;
+  generadoPor: string;
 }
 
-function ExportModal({ logs, onClose }: ExportModalProps) {
+function ExportModal({ logs, onClose, generadoPor }: ExportModalProps) {
   const [formato, setFormato] = useState<FormatoExport>("EXCEL");
   const [periodo, setPeriodo] = useState<Periodo>("month");
   const [fechaInicio, setFechaInicio] = useState("");
@@ -431,9 +518,9 @@ function ExportModal({ logs, onClose }: ExportModalProps) {
       setExporting(true);
       setExportError(null);
       await new Promise((r) => setTimeout(r, 250));
-      if (formato === "CSV") exportarCSV(logsExport, etiquetaPeriodo);
-      if (formato === "EXCEL") exportarExcel(logsExport, etiquetaPeriodo);
-      if (formato === "PDF") exportarPDF(logsExport, etiquetaPeriodo);
+      if (formato === "CSV") exportarCSV(logsExport, etiquetaPeriodo, generadoPor);
+      if (formato === "EXCEL") exportarExcel(logsExport, etiquetaPeriodo, generadoPor);
+      if (formato === "PDF") exportarPDF(logsExport, etiquetaPeriodo, generadoPor);
       onClose();
     } catch {
       setExportError("Error al generar el archivo. Intenta de nuevo.");
@@ -669,6 +756,7 @@ function ExportModal({ logs, onClose }: ExportModalProps) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export function RegistroAuditorias() {
+  const { user } = useAuth();
   const [logs, setLogs] = useState<LogAuditoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -678,6 +766,11 @@ export function RegistroAuditorias() {
   const [auditorFilter, setAuditorFilter] = useState<string>("all");
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
+
+  // Nombre completo del usuario para los reportes
+  const nombreUsuario = user
+    ? [user.nombres, user.apellido_paterno].filter(Boolean).join(" ") || user.email
+    : "Sistema";
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -1083,6 +1176,7 @@ export function RegistroAuditorias() {
         <ExportModal
           logs={filteredLogs}
           onClose={() => setIsExportModalOpen(false)}
+          generadoPor={nombreUsuario}
         />
       )}
     </main>

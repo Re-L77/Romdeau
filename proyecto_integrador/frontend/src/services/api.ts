@@ -1,6 +1,9 @@
 import { classifyError, ExtendedApiError } from "../utils/errors";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+// En desarrollo, usamos rutas relativas para que el proxy de Vite (/api → localhost:3000)
+// maneje las peticiones y evite problemas de CORS.
+// En producción, VITE_API_URL debe apuntar al backend real.
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export interface LoginResponse {
   access_token: string;
