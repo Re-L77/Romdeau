@@ -10,6 +10,7 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 import { DepartamentosModule } from './departamentos/departamentos.module';
 import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
 import { RolesGuard } from './auth/roles/roles.guard';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 function validateEnv(config: Record<string, unknown>) {
   const requiredVars = [
@@ -53,6 +54,7 @@ function validateEnv(config: Record<string, unknown>) {
     ActivosModule,
     UsuariosModule,
     DepartamentosModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [
@@ -67,4 +69,4 @@ function validateEnv(config: Record<string, unknown>) {
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

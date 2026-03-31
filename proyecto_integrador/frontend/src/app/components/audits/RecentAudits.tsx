@@ -1,44 +1,10 @@
 import { motion } from 'motion/react';
 import { Clock, CheckCircle, AlertCircle, MapPin, Calendar, QrCode } from 'lucide-react';
+import { AuditoriaRecienteDto } from '../../../hooks/useDashboard';
 
-const audits = [
-  {
-    id: 1,
-    auditor: 'Carlos Mendoza',
-    avatar: 'CM',
-    avatarColor: 'bg-blue-500',
-    date: '2026-02-23 14:30',
-    location: 'Oficina Central - Piso 3',
-    gps: 'GPS: 19.4326, -99.1332',
-    qrScanned: '12/12',
-    timeSaved: '-45 min',
-    status: 'completed',
-  },
-  {
-    id: 2,
-    auditor: 'Ana Gutiérrez',
-    avatar: 'AG',
-    avatarColor: 'bg-purple-500',
-    date: '2026-02-23 11:15',
-    location: 'Oficina Central - Piso 2',
-    gps: 'GPS: 19.4328, -99.1330',
-    qrScanned: '8/8',
-    timeSaved: '-30 min',
-    status: 'completed',
-  },
-  {
-    id: 3,
-    auditor: 'Jorge Pérez',
-    avatar: 'JP',
-    avatarColor: 'bg-pink-500',
-    date: '2026-02-22 16:45',
-    location: 'Data Center',
-    gps: 'GPS: 19.4320, -99.1335',
-    qrScanned: '15/15',
-    timeSaved: '-60 min',
-    status: 'completed',
-  },
-];
+interface RecentAuditsProps {
+  auditorias: AuditoriaRecienteDto[];
+}
 
 const getStatusIcon = (status: string) => {
   if (status === 'completed') return CheckCircle;
@@ -52,7 +18,27 @@ const getStatusColor = (status: string) => {
   return 'text-blue-500';
 };
 
-export function RecentAudits() {
+const getInitials = (name: string) => {
+  const parts = name.split(' ');
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+};
+
+const getColorClass = (index: number) => {
+  const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-emerald-500', 'bg-amber-500'];
+  return colors[index % colors.length];
+};
+
+export function RecentAudits({ auditorias }: RecentAuditsProps) {
+  if (!auditorias || auditorias.length === 0) {
+    return (
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl p-8 mb-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+        <h2 className="text-2xl font-bold dark:text-white mb-4">Auditorías Recientes</h2>
+        <p className="text-gray-500 dark:text-gray-400">No hay auditorías recientes registradas.</p>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -63,19 +49,7 @@ export function RecentAudits() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold dark:text-white">Auditorías Recientes</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Últimas verificaciones por QR</p>
-        </div>
-      </div>
-
-      <div className="mb-8 p-5 bg-emerald-50 dark:bg-emerald-500/20 border-2 border-emerald-200 dark:border-emerald-700/30 rounded-2xl flex items-center gap-3">
-        <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
-          <CheckCircle className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="font-bold text-gray-900 dark:text-white">Automatización Activa</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Ahorro total: <span className="font-bold text-emerald-600 dark:text-emerald-400">145 minutos</span> vs. auditoría manual
-          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Últimas verificaciones en el sistema</p>
         </div>
       </div>
 
@@ -83,9 +57,15 @@ export function RecentAudits() {
         <div className="absolute left-[29px] top-8 bottom-8 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
 
         <div className="space-y-6">
-          {audits.map((audit, index) => {
-            const StatusIcon = getStatusIcon(audit.status);
-            
+          {auditorias.map((audit, index) => {
+            // Assuming default completed status for logs successfully generated
+            const StatusIcon = getStatusIcon('completed');
+            const avatarColor = getColorClass(index);
+            const formattedDate = new Date(audit.fecha).toLocaleString('es-MX', {
+              dateStyle: 'short',
+              timeStyle: 'short'
+            });
+
             return (
               <motion.div
                 key={audit.id}
@@ -94,20 +74,20 @@ export function RecentAudits() {
                 transition={{ delay: 0.4 + index * 0.1 }}
                 className="relative flex gap-5"
               >
-                <div className={`w-14 h-14 ${audit.avatarColor} rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 relative`}>
-                  {audit.avatar}
+                <div className={`w-14 h-14 ${avatarColor} rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 relative`}>
+                  {getInitials(audit.usuario)}
                 </div>
 
                 <div className="flex-1 bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-gray-700">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">{audit.auditor}</h4>
+                      <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">{audit.usuario}</h4>
                       <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                         <Calendar className="w-4 h-4" />
-                        <span>{audit.date}</span>
+                        <span>{formattedDate}</span>
                       </div>
                     </div>
-                    <div className={`w-8 h-8 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center ${getStatusColor(audit.status)}`}>
+                    <div className={`w-8 h-8 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center ${getStatusColor('completed')}`}>
                       <StatusIcon className="w-5 h-5" />
                     </div>
                   </div>
@@ -116,8 +96,7 @@ export function RecentAudits() {
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="font-semibold text-gray-900 dark:text-white">{audit.location}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">{audit.gps}</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{audit.ubicacion}</p>
                       </div>
                     </div>
                   </div>
@@ -125,10 +104,7 @@ export function RecentAudits() {
                   <div className="flex items-center gap-3 flex-wrap">
                     <div className="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-900 rounded-full border border-gray-200 dark:border-gray-700">
                       <QrCode className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{audit.qrScanned} QR escaneados</span>
-                    </div>
-                    <div className="px-3 py-2 bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-full">
-                      <span className="text-sm font-bold">{audit.timeSaved}</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{audit.actividad}</span>
                     </div>
                   </div>
                 </div>

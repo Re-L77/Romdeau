@@ -264,7 +264,7 @@ function AppContent() {
         />
 
         {/* View 2: Dashboard */}
-        {currentView === "dashboard" && <Dashboard />}
+        {currentView === "dashboard" && <Dashboard onNavigate={handleNavigate} />}
 
         {/* View 3: Módulo de Inventario */}
         {currentView === "inventario" && (
