@@ -8,6 +8,7 @@ import {
   Linking,
   Alert,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -25,6 +26,7 @@ import {
 } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
+import { auditoriasApi } from "@/api/auditorias";
 
 interface AuditDetailScreenProps {
   auditId: string;
@@ -33,8 +35,9 @@ interface AuditDetailScreenProps {
 export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   const router = useRouter();
   const { colors } = useTheme();
-  const { auditorias } = useAuditorias();
+  const { auditorias, refresh } = useAuditorias();
   const [audit, setAudit] = useState<any>(null);
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     const foundAudit = auditorias.find((a) => a.id === auditId);
@@ -100,9 +103,20 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
     minute: "2-digit",
   });
 
-  const handleStartAudit = () => {
+  const handleStartAudit = async () => {
     if (audit.estado_id === 2) {
-      router.push(`/scanner`);
+      // Auditoría en progreso - navegar al scanner
+      setIsStarting(true);
+      try {
+        // Refrescar datos antes de ir al scanner
+        await refresh();
+        router.push(`/scanner?auditId=${audit.id}`);
+      } catch (error) {
+        console.error("Error actualizando auditoría:", error);
+        Alert.alert("Error", "No se pudo actualizar la auditoría");
+      } finally {
+        setIsStarting(false);
+      }
     } else if (audit.estado_id === 1) {
       Alert.alert(
         "Auditoría aún no iniciada",
@@ -271,6 +285,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                 onPress={handleStartAudit}
                 activeOpacity={audit.estado_id === 2 ? 0.8 : 1}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                disabled={isStarting}
               >
                 <LinearGradient
                   colors={
@@ -280,11 +295,18 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                   }
                   style={styles.cardButtonGradient}
                 >
-                  <Play
-                    size={22}
-                    color={audit.estado_id === 2 ? "#fff" : "#64748b"}
-                    strokeWidth={2.5}
-                  />
+                  {isStarting ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={audit.estado_id === 2 ? "#fff" : "#64748b"}
+                    />
+                  ) : (
+                    <Play
+                      size={22}
+                      color={audit.estado_id === 2 ? "#fff" : "#64748b"}
+                      strokeWidth={2.5}
+                    />
+                  )}
                   <View style={{ flex: 1 }}>
                     <Text
                       style={[
@@ -294,9 +316,11 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                         },
                       ]}
                     >
-                      {audit.estado_id === 2
-                        ? "Continuar Auditoría"
-                        : "Auditoría Programada"}
+                      {isStarting
+                        ? "Actualizando..."
+                        : audit.estado_id === 2
+                          ? "Continuar Auditoría"
+                          : "Auditoría Programada"}
                     </Text>
                   </View>
                 </LinearGradient>
