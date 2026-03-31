@@ -23,5 +23,11 @@ export default defineConfig({
   server: {
     // SPA fallback: serve index.html for all unknown paths (e.g. /reset-password)
     historyApiFallback: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
   },
 });

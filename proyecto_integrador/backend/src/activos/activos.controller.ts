@@ -16,6 +16,7 @@ interface FindActivosQuery {
   estanteId?: string;
   sinCustodio?: string;
   tipoRastreo?: string;
+  proveedorId?: string;
 }
 
 @Controller('api/activos')
@@ -76,37 +77,6 @@ export class ActivosController {
       custodioId: query.custodioId,
       estanteId: query.estanteId,
       sinCustodio,
-      tipoRastreo: query.tipoRastreo,
     });
-  }
-
-  @Get(':id/trazabilidad')
-  getTrazabilidad(@Param('id') id: string) {
-    return this.activosService.getTrazabilidad(id);
-  }
-
-  @Get('debug/seed-trazabilidad')
-  async seedTrazabilidad() {
-    return this.activosService.seedTestData();
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateActivoDto: any) {
-    return this.activosService.update(id, updateActivoDto);
-  }
-
-  @Post()
-  create(@Body() createActivoDto: any) {
-    return this.activosService.create(createActivoDto);
-  }
-
-  @Get('categorias/list')
-  getCategorias() {
-    return this.activosService.getCategorias();
-  }
-
-  @Get('estados/list')
-  getEstados() {
-    return this.activosService.getEstados();
   }
 }

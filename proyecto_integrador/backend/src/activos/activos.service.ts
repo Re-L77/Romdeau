@@ -17,6 +17,7 @@ type FindActivosParams = {
   estanteId?: string;
   sinCustodio?: boolean;
   tipoRastreo?: string;
+  proveedorId?: string;
 };
 
 @Injectable()
@@ -38,6 +39,7 @@ export class ActivosService {
     estanteId,
     sinCustodio,
     tipoRastreo,
+    proveedorId,
   }: FindActivosParams) {
     const take = Math.min(limit, 100);
     const skip = (page - 1) * take;
@@ -93,6 +95,7 @@ export class ActivosService {
       ...(custodioId ? { custodio_actual_id: custodioId } : {}),
       ...(estanteId ? { estante_id: estanteId } : {}),
       ...(sinCustodio === true ? { custodio_actual_id: null } : {}),
+      ...(proveedorId ? { datos_financieros: { proveedor_id: proveedorId } } : {}),
     };
 
     const [activos, total] = await this.prisma.$transaction([
@@ -141,6 +144,7 @@ export class ActivosService {
         estanteId: estanteId ?? null,
         sinCustodio: sinCustodio ?? null,
         tipoRastreo: tipoRastreo ?? null,
+        proveedorId: proveedorId ?? null,
       },
     };
   }
