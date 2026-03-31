@@ -249,6 +249,7 @@ export interface LogAuditoria {
   metodo_auditoria: string | null;
   estado_reportado: string | null;
   estado_reportado_id: number;
+  auditoria_id: string | null;
 }
 
 export const logsAuditoriaApi = {
@@ -281,6 +282,16 @@ export const logsAuditoriaApi = {
       ? `/api/logs-auditoria?${queryString}`
       : '/api/logs-auditoria';
     return apiClient.get<{ data: LogAuditoria[]; pagination: any }>(path);
+  },
+};
+
+export const auditoriasApi = {
+  getById: async (id: string): Promise<any | null> => {
+    try {
+      return await apiClient.get<any>(`/api/auditorias/${id}`);
+    } catch {
+      return null;
+    }
   },
 };
 

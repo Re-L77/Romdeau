@@ -13,7 +13,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { activosApi, auditoriasProgramadasApi } from "../../../services/api";
+import { activosApi, auditoriasProgramadasApi, auditoriasApi } from "../../../services/api";
 import { Skeleton } from "../ui/skeleton";
 
 interface AuditDetailProps {
@@ -52,14 +52,16 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
     useState(false);
 
   useEffect(() => {
-    if (!isScheduled || !auditId) return;
+    if (!auditId) return;
 
     let ignore = false;
 
-    const loadScheduledAudit = async () => {
+    const loadAudit = async () => {
       try {
         setIsLoadingScheduledAudit(true);
-        const result = await auditoriasProgramadasApi.getById(auditId);
+        const result = isScheduled
+          ? await auditoriasProgramadasApi.getById(auditId)
+          : await auditoriasApi.getById(auditId);
         if (!ignore && result) {
           setScheduledAudit(result);
         }
@@ -70,7 +72,7 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
       }
     };
 
-    loadScheduledAudit();
+    loadAudit();
 
     return () => {
       ignore = true;
@@ -78,7 +80,64 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
   }, [auditId, isScheduled]);
 
   const scheduledData: any = scheduledAudit ?? {};
-  const data: any = isScheduled ? scheduledData : {};
+
+  // Normalización de datos para modo completado (logs) vs programado
+  const data: any = isScheduled
+    ? scheduledData
+    : {
+        ...scheduledData,
+        id: scheduledData?.id,
+        titulo:
+          scheduledData?.auditorias_programadas?.titulo ??
+          "Registro de Auditoría Individual",
+
+        // Activo
+        activo_codigo: scheduledData?.activos?.codigo_etiqueta,
+        activo_nombre: scheduledData?.activos?.nombre,
+
+        // Estado
+        estado_reportado: scheduledData?.estados_auditoria?.nombre,
+
+        // Auditor
+        auditor: scheduledData?.usuarios?.nombre_completo,
+        auditor_email: scheduledData?.usuarios?.email,
+
+        // Ubicación Jerárquica (Lógica robusta)
+        campus:
+          scheduledData?.activos?.oficinas?.pisos?.edificios?.sedes?.nombre ??
+          scheduledData?.activos?.estantes?.pasillos?.almacenes?.sedes?.nombre ??
+          "—",
+        edificio:
+          scheduledData?.activos?.oficinas?.pisos?.edificios?.nombre ??
+          scheduledData?.activos?.estantes?.pasillos?.almacenes?.nombre ??
+          "—",
+        piso:
+          scheduledData?.activos?.oficinas?.pisos?.nombre ??
+          scheduledData?.activos?.estantes?.pasillos?.nombre ??
+          "—",
+        salon:
+          scheduledData?.activos?.oficinas?.nombre ??
+          scheduledData?.activos?.estantes?.nombre ??
+          "—",
+
+        // Metadatos
+        created_at: scheduledData?.fecha_hora,
+        updated_at:
+          scheduledData?.updated_at ??
+          scheduledData?.auditorias_programadas?.updated_at,
+        fecha_inicio:
+          scheduledData?.fecha_inicio ??
+          scheduledData?.auditorias_programadas?.fecha_inicio,
+        fecha_fin:
+          scheduledData?.fecha_fin ??
+          scheduledData?.auditorias_programadas?.fecha_fin,
+
+        // Posicionamiento
+        lat: scheduledData?.lat,
+        lng: scheduledData?.lng,
+        coincidencia_ubicacion: scheduledData?.coincidencia_ubicacion ?? true,
+      };
+
   const formatDateTime = (value: string | null | undefined) => {
     if (!value) return "—";
     return new Date(value).toLocaleString("es-MX", {
@@ -142,7 +201,7 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
   const scheduledLocation = getScheduledLocation();
 
   useEffect(() => {
-    if (!isScheduled) return;
+    if (!auditId) return;
 
     const oficinaId = scheduledData.oficina_id;
     const estanteId = scheduledData.estante_id;
