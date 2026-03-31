@@ -1,87 +1,79 @@
 import { motion } from 'motion/react';
-import { Mail, Phone, Building2, Shield, Plus, FileText, PhoneCall, Filter, Search } from 'lucide-react';
-import { useState } from 'react';
+import { Mail, Building2, Shield, Plus, FileText, PhoneCall, Filter, Search, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { AgregarProveedor, ProveedorFormData } from './AgregarProveedor';
-
-const providers = [
-  {
-    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    razon_social: 'Apple Inc.',
-    rfc_tax_id: 'APL920813-7X8',
-    logo: 'AP',
-    contacto_soporte: 'enterprise@apple.com',
-    telefono_emergencia: '+1 (800) 692-7753',
-    garantias_activas: 12,
-    categoria: 'Equipos de Cómputo',
-    color: 'from-gray-400 to-gray-600',
-  },
-  {
-    id: 'b2c3d4e5-f6g7-8901-bcde-f12345678901',
-    razon_social: 'Dell Technologies',
-    rfc_tax_id: 'DEL840625-3Y9',
-    logo: 'DL',
-    contacto_soporte: 'sales@dell.com',
-    telefono_emergencia: '+1 (800) 289-3355',
-    garantias_activas: 8,
-    categoria: 'Servidores y Networking',
-    color: 'from-blue-400 to-blue-600',
-  },
-  {
-    id: 'c3d4e5f6-g7h8-9012-cdef-234567890123',
-    razon_social: 'HP Inc.',
-    rfc_tax_id: 'HPI391201-5Z1',
-    logo: 'HP',
-    contacto_soporte: 'enterprise@hp.com',
-    telefono_emergencia: '+1 (800) 752-0900',
-    garantias_activas: 15,
-    categoria: 'Impresoras y Periféricos',
-    color: 'from-cyan-400 to-cyan-600',
-  },
-  {
-    id: 'd4e5f6g7-h8i9-0123-defg-345678901234',
-    razon_social: 'Lenovo Group Limited',
-    rfc_tax_id: 'LEN841118-2W4',
-    logo: 'LN',
-    contacto_soporte: 'business@lenovo.com',
-    telefono_emergencia: '+1 (855) 253-6686',
-    garantias_activas: 6,
-    categoria: 'Equipos de Cómputo',
-    color: 'from-red-400 to-red-600',
-  },
-  {
-    id: 'e5f6g7h8-i9j0-1234-efgh-456789012345',
-    razon_social: 'Microsoft Corporation',
-    rfc_tax_id: 'MIC750418-9Q6',
-    logo: 'MS',
-    contacto_soporte: 'enterprise@microsoft.com',
-    telefono_emergencia: '+1 (800) 642-7676',
-    garantias_activas: 4,
-    categoria: 'Software y Dispositivos',
-    color: 'from-emerald-400 to-emerald-600',
-  },
-  {
-    id: 'f6g7h8i9-j0k1-2345-fghi-567890123456',
-    razon_social: 'Cisco Systems Inc.',
-    rfc_tax_id: 'CIS841209-7V3',
-    logo: 'CS',
-    contacto_soporte: 'sales@cisco.com',
-    telefono_emergencia: '+1 (800) 553-6387',
-    garantias_activas: 9,
-    categoria: 'Networking',
-    color: 'from-purple-400 to-purple-600',
-  },
-];
+import { apiClient } from '../../../services/api';
+import { toast } from 'sonner';
 
 interface DirectorioProveedoresProps {
   onProveedorClick: (proveedorId: string) => void;
 }
 
+interface Proveedor {
+  id: string;
+  razon_social: string;
+  rfc_tax_id?: string | null;
+  contacto_soporte?: string | null;
+  sitio_web?: string | null;
+  is_active?: boolean | null;
+  nombre_comercial?: string | null;
+  telefono?: string | null;
+  contacto_nombre?: string | null;
+  categoria?: string | null;
+  datos_financieros?: Array<{ fin_garantia: string | null }>;
+  logo?: string;
+  color?: string;
+  garantias_activas?: number;
+  telefono_emergencia?: string;
+}
+
+const colorMapProveedores: Record<string, string> = {
+  'Apple': 'from-gray-400 to-gray-600',
+  'Dell': 'from-blue-400 to-blue-600',
+  'HP': 'from-cyan-400 to-cyan-600',
+  'Lenovo': 'from-red-400 to-red-600',
+  'Microsoft': 'from-emerald-400 to-emerald-600',
+  'Cisco': 'from-purple-400 to-purple-600',
+};
+
 export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedoresProps) {
   const [isAddingProvider, setIsAddingProvider] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [providers, setProviders] = useState<Proveedor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cargar proveedores desde el backend
+  useEffect(() => {
+    const fetchProveedores = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data: Proveedor[] = await apiClient.get('/api/proveedores');
+        
+        // Mapear datos del backend a formato compatible con la UI
+        const mappedData = data.map(p => ({
+          ...p,
+          logo: (p.nombre_comercial || p.razon_social)?.substring(0, 2).toUpperCase() || 'PR',
+          color: colorMapProveedores[(p.nombre_comercial || p.razon_social)?.split(' ')[0] || ''] || 'from-gray-400 to-gray-600',
+          garantias_activas: (p.datos_financieros || []).filter(df => df.fin_garantia && new Date(df.fin_garantia) > new Date()).length,
+          telefono_emergencia: p.telefono || p.contacto_soporte || '',
+        }));
+        
+        setProviders(mappedData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error al cargar proveedores');
+        console.error('Error fetching proveedores:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProveedores();
+  }, []);
 
   const filteredProviders = providers.filter(p => {
-    if (searchTerm && !p.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) && !p.categoria.toLowerCase().includes(searchTerm.toLowerCase()) && !p.rfc_tax_id.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (searchTerm && !p.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) && !p.categoria?.toLowerCase().includes(searchTerm.toLowerCase()) && !p.rfc_tax_id?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     return true;
   });
 
@@ -93,43 +85,48 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
     setIsAddingProvider(false);
   };
 
-  const handleSaveProvider = (data: ProveedorFormData) => {
-    console.log('Nuevo proveedor registrado:', data);
-    
-    // Generar siglas para el logo
-    const palabras = data.nombre_empresa.split(' ');
-    const logo = palabras.length >= 2 
-      ? palabras[0][0] + palabras[1][0] 
-      : data.nombre_empresa.substring(0, 2);
-    
-    // Determinar color basado en la categoría
-    const colorMap: Record<string, string> = {
-      'TECNOLOGIA': 'from-blue-400 to-blue-600',
-      'MOBILIARIO': 'from-amber-400 to-amber-600',
-      'MANTENIMIENTO': 'from-orange-400 to-orange-600',
-      'SOFTWARE': 'from-purple-400 to-purple-600',
-      'CONSTRUCCION': 'from-gray-400 to-gray-600',
-      'PAPELERIA': 'from-emerald-400 to-emerald-600',
-      'LIMPIEZA': 'from-cyan-400 to-cyan-600',
-      'SEGURIDAD': 'from-red-400 to-red-600',
-      'OTROS': 'from-indigo-400 to-indigo-600',
-    };
-    
-    const categoriaLabel: Record<string, string> = {
-      'TECNOLOGIA': 'Tecnología y Electrónica',
-      'MOBILIARIO': 'Mobiliario y Equipo de Oficina',
-      'MANTENIMIENTO': 'Servicios de Mantenimiento',
-      'SOFTWARE': 'Software y Licencias',
-      'CONSTRUCCION': 'Construcción y Obra',
-      'PAPELERIA': 'Papelería y Suministros',
-      'LIMPIEZA': 'Servicios de Limpieza',
-      'SEGURIDAD': 'Seguridad y Vigilancia',
-      'OTROS': 'Otros Servicios',
-    };
-    
-    alert(`✅ Proveedor registrado exitosamente\n\n🏢 Empresa: ${data.nombre_empresa}\n📋 RFC: ${data.rfc}\n📧 Email: ${data.email}\n📞 Teléfono: ${data.telefono}\n👤 Contacto: ${data.contacto_principal} (${data.puesto_contacto})\n📍 Ubicación: ${data.direccion_ciudad}, ${data.direccion_estado}\n⭐ Calificación inicial: ${data.calificacion_inicial}/10\n\nEl proveedor ha sido agregado al directorio.`);
-    
-    setIsAddingProvider(false);
+  const handleSaveProvider = async (data: ProveedorFormData) => {
+    try {
+      const direccion =
+        data.direccion_fiscal ||
+        [data.direccion_calle, data.direccion_colonia, data.direccion_ciudad, data.direccion_estado, data.direccion_cp]
+          .filter(Boolean)
+          .join(', ') ||
+        undefined;
+
+      await apiClient.post('/api/proveedores', {
+        razon_social: data.razon_social || data.nombre_empresa,
+        rfc_tax_id: data.rfc || undefined,
+        contacto_soporte: data.email || undefined,
+        sitio_web: data.sitio_web || undefined,
+        direccion_fiscal: direccion,
+        nombre_comercial: data.nombre_empresa || undefined,
+        telefono: data.telefono || undefined,
+        telefono_alternativo: data.telefono_alternativo || undefined,
+        contacto_nombre: data.contacto_principal || undefined,
+        contacto_puesto: data.puesto_contacto || undefined,
+        categoria: data.categoria || undefined,
+        descripcion_servicios: data.tipo_productos_servicios || undefined,
+        calificacion: data.calificacion_inicial ? String(data.calificacion_inicial) : undefined,
+        notas: data.notas || undefined,
+      });
+
+      // Recargar lista de proveedores
+      const updated: Proveedor[] = await apiClient.get('/api/proveedores');
+      const mappedUpdated = updated.map(p => ({
+        ...p,
+        logo: (p.nombre_comercial || p.razon_social)?.substring(0, 2).toUpperCase() || 'PR',
+        color: colorMapProveedores[(p.nombre_comercial || p.razon_social)?.split(' ')[0] || ''] || 'from-gray-400 to-gray-600',
+        garantias_activas: (p.datos_financieros || []).filter((df: { fin_garantia: string | null }) => df.fin_garantia && new Date(df.fin_garantia) > new Date()).length,
+        telefono_emergencia: p.telefono || p.contacto_soporte || '',
+      }));
+      setProviders(mappedUpdated);
+      setIsAddingProvider(false);
+      toast.success('Proveedor registrado correctamente');
+    } catch (err) {
+      console.error('Error al guardar proveedor:', err);
+      toast.error('Error al guardar el proveedor. Verifica los datos e intenta de nuevo.');
+    }
   };
 
   return (
@@ -185,6 +182,25 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
           />
         )}
 
+        {/* Estado de Carga */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">Cargando proveedores...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-2xl">
+            <p className="text-red-700 dark:text-red-400 text-sm">Error: {error}</p>
+          </div>
+        )}
+
+        {/* Grid de Proveedores */}
+        {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProviders.map((provider, index) => (
             <motion.div
@@ -202,8 +218,21 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
                 >
                   {provider.logo}
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-1 dark:text-white">{provider.razon_social}</h3>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="font-bold text-lg dark:text-white leading-tight">{provider.razon_social}</h3>
+                    {provider.is_active ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold rounded-full border border-emerald-200 dark:border-emerald-500/30 flex-shrink-0">
+                        <span className="w-1.5 h-1.5 bg-emerald-500 dark:bg-emerald-400 rounded-full"></span>
+                        Activo
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-xs font-semibold rounded-full border border-red-200 dark:border-red-500/30 flex-shrink-0">
+                        <span className="w-1.5 h-1.5 bg-red-500 dark:bg-red-400 rounded-full"></span>
+                        Inactivo
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500 dark:text-gray-500">{provider.categoria}</p>
                 </div>
               </div>
@@ -245,6 +274,14 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
             </motion.div>
           ))}
         </div>
+        )}
+
+        {/* Mensaje sin resultados */}
+        {!loading && filteredProviders.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">No se encontraron proveedores</p>
+          </div>
+        )}
 
         {/* Stats Summary */}
         <div className="mt-12">
@@ -264,7 +301,7 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Garantías Activas Totales</p>
               <p className="text-3xl font-bold dark:text-white">
-                {providers.reduce((acc, p) => acc + p.garantias_activas, 0)}
+                {providers.reduce((acc, p) => acc + (p.garantias_activas ?? 0), 0)}
               </p>
             </div>
 
@@ -272,9 +309,9 @@ export function DirectorioProveedores({ onProveedorClick }: DirectorioProveedore
               <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center mb-4">
                 <FileText className="w-6 h-6 text-white" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Promedio por Proveedor</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Proveedores Activos</p>
               <p className="text-3xl font-bold dark:text-white">
-                {Math.round(providers.reduce((acc, p) => acc + p.garantias_activas, 0) / providers.length)}
+                {providers.filter(p => p.is_active !== false).length}
               </p>
             </div>
           </div>

@@ -9,6 +9,7 @@ import { ActivosModule } from './activos/activos.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { DepartamentosModule } from './departamentos/departamentos.module';
 import { LogsAuditoriaModule } from './logs-auditoria/logs-auditoria.module';
+import { ProveedoresModule } from './proveedores/proveedores.module';
 import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
 import { RolesGuard } from './auth/roles/roles.guard';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -66,6 +67,7 @@ function validateEnv(config: Record<string, unknown>) {
     AuditoriasprogramadasModule,
     AuditoriasModule,
     DepreciacionModule,
+    ProveedoresModule,
     NotificacionesModule,
   ],
   controllers: [AppController],
