@@ -10,6 +10,8 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 import { DepartamentosModule } from './departamentos/departamentos.module';
 import { LogsAuditoriaModule } from './logs-auditoria/logs-auditoria.module';
 import { ProveedoresModule } from './proveedores/proveedores.module';
+// Route registration check - March 31
+// Standardized route prefixing applied
 import { SupabaseAuthGuard } from './auth/supabase-auth/supabase-auth.guard';
 import { RolesGuard } from './auth/roles/roles.guard';
 import { DashboardModule } from './dashboard/dashboard.module';

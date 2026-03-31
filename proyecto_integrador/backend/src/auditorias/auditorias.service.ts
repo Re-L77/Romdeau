@@ -238,6 +238,7 @@ export class AuditoriasService {
   }
 
   async findOne(id: string) {
+    console.log(`[DEBUG] AuditoriasService.findOne called for ID: ${id}`);
     const record = await this.prisma.logs_auditoria.findUnique({
       where: { id },
       include: {

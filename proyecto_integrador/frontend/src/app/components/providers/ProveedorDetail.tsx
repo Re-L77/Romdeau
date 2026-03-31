@@ -95,9 +95,6 @@ export function ProveedorDetail({ proveedorId, onBack }: ProveedorDetailProps) {
   if (loading) {
     return (
       <main className="pl-6 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
-        <div className="max-w-[1400px] mx-auto">
-          <p className="text-gray-600 dark:text-gray-400">Proveedor no encontrado</p>
-      <main className="pl-6 lg:pl-80 pt-6 lg:pt-8 pb-12 px-6 pr-6 lg:pr-12">
         <div className="max-w-[1400px] mx-auto flex items-center justify-center py-12">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-gray-400 dark:text-gray-500 mx-auto mb-4" />

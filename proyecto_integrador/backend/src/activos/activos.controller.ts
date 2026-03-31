@@ -77,6 +77,7 @@ export class ActivosController {
       custodioId: query.custodioId,
       estanteId: query.estanteId,
       sinCustodio,
+      proveedorId: query.proveedorId,
     });
   }
 }

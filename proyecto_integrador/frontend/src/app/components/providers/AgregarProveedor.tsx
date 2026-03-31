@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react'; 
 import { X, Building2, Mail, Phone, Globe, MapPin, FileText, User, Shield, CheckCircle, AlertCircle, Loader2, ClipboardList, Star } from 'lucide-react';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet';

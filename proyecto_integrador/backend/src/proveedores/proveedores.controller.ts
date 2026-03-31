@@ -5,6 +5,12 @@ import { Role } from '../auth/roles/roles.enum';
 
 @Controller('api/proveedores')
 export class ProveedoresController {
+  // Probe route to force registration
+  @Get('ping')
+  ping() {
+    return { status: 'ok', module: 'proveedores' };
+  }
+
   constructor(private readonly proveedoresService: ProveedoresService) {}
 
   @Get()
@@ -29,6 +35,15 @@ export class ProveedoresController {
       contacto_soporte?: string;
       direccion_fiscal?: string;
       sitio_web?: string;
+      nombre_comercial?: string;
+      telefono?: string;
+      telefono_alternativo?: string;
+      contacto_nombre?: string;
+      contacto_puesto?: string;
+      categoria?: string;
+      descripcion_servicios?: string;
+      calificacion?: string;
+      notas?: string;
     },
   ) {
     return this.proveedoresService.create(body);
@@ -46,6 +61,15 @@ export class ProveedoresController {
       direccion_fiscal?: string;
       sitio_web?: string;
       is_active?: boolean;
+      nombre_comercial?: string;
+      telefono?: string;
+      telefono_alternativo?: string;
+      contacto_nombre?: string;
+      contacto_puesto?: string;
+      categoria?: string;
+      descripcion_servicios?: string;
+      calificacion?: string;
+      notas?: string;
     },
   ) {
     return this.proveedoresService.update(id, body);
