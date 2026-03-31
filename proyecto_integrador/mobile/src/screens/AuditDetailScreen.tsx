@@ -131,169 +131,30 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalle de Auditoría</Text>
+        <Text style={styles.headerTitle}>Auditoría</Text>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Estado Card */}
-        <View style={[styles.card, { backgroundColor: config.bgColor }]}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+      >
+        {/* Estado Card - Top Priority */}
+        <View style={[styles.heroCard, { backgroundColor: config.bgColor }]}>
           <View style={styles.estadoHeader}>
-            <IconComp size={24} color={config.color} />
-            <Text style={[styles.estadoLabel, { color: config.color }]}>
-              {config.label}
-            </Text>
-          </View>
-          <Text style={[styles.auditTitle, { color: config.textColor }]}>
-            {audit.titulo}
-          </Text>
-          <Text style={[styles.auditId, { color: config.color }]}>
-            ID: #{audit.id}
-          </Text>
-        </View>
-
-        {/* Ubicación Jerárquica */}
-        {(audit.oficinas || audit.estantes) && (
-          <View style={[styles.card, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>
-              Ubicación Jerárquica
-            </Text>
-
-            {audit.oficinas && (
-              <>
-                <View style={styles.hierarchyItem}>
-                  <Text
-                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
-                  >
-                    Sede:
-                  </Text>
-                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
-                    {audit.oficinas.pisos.edificios.sedes.nombre}
-                  </Text>
-                </View>
-                <View style={styles.hierarchyItem}>
-                  <Text
-                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
-                  >
-                    Edificio:
-                  </Text>
-                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
-                    {audit.oficinas.pisos.edificios.nombre}
-                  </Text>
-                </View>
-                <View style={styles.hierarchyItem}>
-                  <Text
-                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
-                  >
-                    Piso:
-                  </Text>
-                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
-                    {audit.oficinas.pisos.nombre}
-                  </Text>
-                </View>
-                <View style={styles.hierarchyItem}>
-                  <Text
-                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
-                  >
-                    Oficina:
-                  </Text>
-                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
-                    {audit.oficinas.nombre}
-                  </Text>
-                </View>
-              </>
-            )}
-
-            {audit.estantes && !audit.oficinas && (
-              <>
-                <View style={styles.hierarchyItem}>
-                  <Text
-                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
-                  >
-                    Sede:
-                  </Text>
-                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
-                    {audit.estantes.pasillos.almacenes.sedes.nombre}
-                  </Text>
-                </View>
-                <View style={styles.hierarchyItem}>
-                  <Text
-                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
-                  >
-                    Almacén:
-                  </Text>
-                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
-                    {audit.estantes.pasillos.almacenes.nombre}
-                  </Text>
-                </View>
-                <View style={styles.hierarchyItem}>
-                  <Text
-                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
-                  >
-                    Pasillo:
-                  </Text>
-                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
-                    {audit.estantes.pasillos.nombre}
-                  </Text>
-                </View>
-                <View style={styles.hierarchyItem}>
-                  <Text
-                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
-                  >
-                    Estante:
-                  </Text>
-                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
-                    {audit.estantes.nombre}
-                  </Text>
-                </View>
-              </>
-            )}
-          </View>
-        )}
-
-        {/* Información Principal */}
-        <View style={[styles.card, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Información General
-          </Text>
-
-          <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
-              <Calendar size={20} color={colors.primary} />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-                Fecha Programada
+            <IconComp size={32} color={config.color} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.estadoLabel, { color: config.color }]}>
+                {config.label}
               </Text>
-              <Text style={[styles.infoValue, { color: colors.text }]}>
-                {fechaFormato}
-              </Text>
-              <Text style={[styles.infoSubValue, { color: colors.textMuted }]}>
-                {horaFormato}
+              <Text style={[styles.auditTitle, { color: config.textColor }]}>
+                {audit.titulo}
               </Text>
             </View>
           </View>
-
-          {audit.descripcion && (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <FileText size={20} color={colors.primary} />
-                </View>
-                <View style={styles.infoContent}>
-                  <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-                    Descripción
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>
-                    {audit.descripcion}
-                  </Text>
-                </View>
-              </View>
-            </>
-          )}
         </View>
 
-        {/* Información del Auditor */}
+        {/* Auditor Card */}
         {audit.usuarios && (
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
             <Text style={[styles.cardTitle, { color: colors.text }]}>
@@ -308,7 +169,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                 />
               ) : (
                 <View style={styles.auditoreIcon}>
-                  <User size={24} color="#fff" />
+                  <User size={28} color="#fff" />
                 </View>
               )}
               <View style={styles.auditoreContent}>
@@ -346,10 +207,207 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
           </View>
         )}
 
-        {/* Fechas Importantes */}
+        {/* Información General */}
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Registros del Sistema
+            Información
+          </Text>
+
+          <View style={styles.infoGrid}>
+            <View style={styles.infoGridItem}>
+              <View style={styles.infoIcon}>
+                <Calendar size={20} color={colors.primary} />
+              </View>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
+                Fecha
+              </Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
+                {fechaFormato}
+              </Text>
+            </View>
+
+            <View style={styles.infoGridItem}>
+              <View style={styles.infoIcon}>
+                <Clock size={20} color={colors.primary} />
+              </View>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
+                Hora
+              </Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
+                {horaFormato}
+              </Text>
+            </View>
+          </View>
+
+          {audit.descripcion && (
+            <>
+              <View style={styles.divider} />
+              <Text
+                style={[
+                  styles.infoLabel,
+                  { color: colors.textMuted, marginBottom: 8 },
+                ]}
+              >
+                Descripción
+              </Text>
+              <Text style={[styles.descriptionText, { color: colors.text }]}>
+                {audit.descripcion}
+              </Text>
+            </>
+          )}
+
+          {/* Action Button */}
+          {(audit.estado_id === 1 || audit.estado_id === 2) && (
+            <>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={[
+                  styles.cardActionButton,
+                  {
+                    backgroundColor:
+                      audit.estado_id === 2 ? colors.primary : "#cbd5e1",
+                  },
+                ]}
+                onPress={handleStartAudit}
+                activeOpacity={audit.estado_id === 2 ? 0.8 : 1}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <LinearGradient
+                  colors={
+                    audit.estado_id === 2
+                      ? [colors.primary, colors.primary]
+                      : ["#cbd5e1", "#cbd5e1"]
+                  }
+                  style={styles.cardButtonGradient}
+                >
+                  <Play
+                    size={22}
+                    color={audit.estado_id === 2 ? "#fff" : "#64748b"}
+                    strokeWidth={2.5}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.cardButtonText,
+                        {
+                          color: audit.estado_id === 2 ? "#fff" : "#64748b",
+                        },
+                      ]}
+                    >
+                      {audit.estado_id === 2
+                        ? "Continuar Auditoría"
+                        : "Auditoría Programada"}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        {/* Ubicación */}
+        {(audit.oficinas || audit.estantes) && (
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              <MapPin size={16} color={colors.primary} /> Ubicación
+            </Text>
+
+            {audit.oficinas && (
+              <View style={styles.hierarchyContainer}>
+                <View style={styles.hierarchyLevel}>
+                  <Text
+                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
+                  >
+                    Sede
+                  </Text>
+                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
+                    {audit.oficinas.pisos.edificios.sedes.nombre}
+                  </Text>
+                </View>
+                <View style={styles.hierarchyLevel}>
+                  <Text
+                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
+                  >
+                    Edificio
+                  </Text>
+                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
+                    {audit.oficinas.pisos.edificios.nombre}
+                  </Text>
+                </View>
+                <View style={styles.hierarchyLevel}>
+                  <Text
+                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
+                  >
+                    Piso
+                  </Text>
+                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
+                    {audit.oficinas.pisos.nombre}
+                  </Text>
+                </View>
+                <View style={styles.hierarchyLevel}>
+                  <Text
+                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
+                  >
+                    Oficina
+                  </Text>
+                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
+                    {audit.oficinas.nombre}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {audit.estantes && !audit.oficinas && (
+              <View style={styles.hierarchyContainer}>
+                <View style={styles.hierarchyLevel}>
+                  <Text
+                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
+                  >
+                    Sede
+                  </Text>
+                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
+                    {audit.estantes.pasillos.almacenes.sedes.nombre}
+                  </Text>
+                </View>
+                <View style={styles.hierarchyLevel}>
+                  <Text
+                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
+                  >
+                    Almacén
+                  </Text>
+                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
+                    {audit.estantes.pasillos.almacenes.nombre}
+                  </Text>
+                </View>
+                <View style={styles.hierarchyLevel}>
+                  <Text
+                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
+                  >
+                    Pasillo
+                  </Text>
+                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
+                    {audit.estantes.pasillos.nombre}
+                  </Text>
+                </View>
+                <View style={styles.hierarchyLevel}>
+                  <Text
+                    style={[styles.hierarchyLabel, { color: colors.textMuted }]}
+                  >
+                    Estante
+                  </Text>
+                  <Text style={[styles.hierarchyValue, { color: colors.text }]}>
+                    {audit.estantes.nombre}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Timeline */}
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>
+            Historial
           </Text>
 
           <View style={styles.timelineItem}>
@@ -364,7 +422,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                 {audit.created_at
                   ? new Date(audit.created_at).toLocaleDateString("es-MX", {
                       year: "numeric",
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
@@ -393,7 +451,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                   <Text style={[styles.timelineValue, { color: colors.text }]}>
                     {new Date(audit.updated_at).toLocaleDateString("es-MX", {
                       year: "numeric",
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
@@ -409,10 +467,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
               <View style={styles.timelineDivider} />
               <View style={styles.timelineItem}>
                 <View
-                  style={[
-                    styles.timelineDot,
-                    { backgroundColor: colors.primary },
-                  ]}
+                  style={[styles.timelineDot, { backgroundColor: "#f59e0b" }]}
                 />
                 <View style={styles.timelineContent}>
                   <Text
@@ -423,7 +478,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                   <Text style={[styles.timelineValue, { color: colors.text }]}>
                     {new Date(audit.fecha_inicio).toLocaleDateString("es-MX", {
                       year: "numeric",
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
@@ -439,10 +494,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
               <View style={styles.timelineDivider} />
               <View style={styles.timelineItem}>
                 <View
-                  style={[
-                    styles.timelineDot,
-                    { backgroundColor: colors.primary },
-                  ]}
+                  style={[styles.timelineDot, { backgroundColor: "#10b981" }]}
                 />
                 <View style={styles.timelineContent}>
                   <Text
@@ -453,7 +505,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                   <Text style={[styles.timelineValue, { color: colors.text }]}>
                     {new Date(audit.fecha_fin).toLocaleDateString("es-MX", {
                       year: "numeric",
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
@@ -464,38 +516,6 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
             </>
           )}
         </View>
-
-        {/* Action Button */}
-        {(audit.estado_id === 1 || audit.estado_id === 2) && (
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              {
-                backgroundColor:
-                  audit.estado_id === 2 ? colors.primary : "#cbd5e1",
-              },
-            ]}
-            onPress={handleStartAudit}
-            activeOpacity={audit.estado_id === 2 ? 0.7 : 1}
-          >
-            <Play
-              size={20}
-              color={audit.estado_id === 2 ? "#fff" : "#64748b"}
-            />
-            <Text
-              style={[
-                styles.actionButtonText,
-                {
-                  color: audit.estado_id === 2 ? "#fff" : "#64748b",
-                },
-              ]}
-            >
-              {audit.estado_id === 2
-                ? "Continuar Auditoría"
-                : "Auditoría Programada"}
-            </Text>
-          </TouchableOpacity>
-        )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -528,46 +548,63 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  card: {
-    borderRadius: 16,
-    padding: 16,
+  heroCard: {
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 16,
-    elevation: 2,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   estadoHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
+    gap: 16,
   },
   estadoLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
   },
   auditTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    marginBottom: 4,
+    fontSize: 20,
+    fontWeight: "900",
+    marginTop: 4,
+    lineHeight: 26,
   },
   auditId: {
     fontSize: 12,
   },
+  card: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     marginBottom: 16,
+    letterSpacing: 0.3,
   },
-  infoRow: {
+  infoGrid: {
     flexDirection: "row",
-    alignItems: "flex-start",
     gap: 12,
+  },
+  infoGridItem: {
+    flex: 1,
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.02)",
   },
   infoIcon: {
     width: 40,
@@ -575,70 +612,119 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 2,
-  },
-  infoContent: {
-    flex: 1,
+    marginBottom: 8,
   },
   infoLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     marginBottom: 4,
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    lineHeight: 20,
+    textAlign: "center",
   },
   divider: {
     height: 1,
-    backgroundColor: "rgba(0,0,0,0.1)",
+    backgroundColor: "rgba(0,0,0,0.08)",
     marginVertical: 12,
   },
-  technicalLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  technicalValue: {
-    fontSize: 13,
-    fontWeight: "600",
-    flex: 1,
-    textAlign: "right",
-  },
-  hierarchyItem: {
-    marginBottom: 12,
-  },
-  hierarchyLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  hierarchyValue: {
+  descriptionText: {
     fontSize: 14,
     fontWeight: "500",
-    marginLeft: 8,
+    lineHeight: 20,
   },
-  infoSubValue: {
+  hierarchyContainer: {
+    gap: 10,
+  },
+  hierarchyLevel: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderLeftWidth: 2,
+    borderLeftColor: "#3b82f6",
+    backgroundColor: "rgba(59, 130, 246, 0.05)",
+    borderRadius: 6,
+  },
+  hierarchyLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 3,
+  },
+  hierarchyValue: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  primaryActionButton: {
+    borderRadius: 16,
+    marginHorizontal: 0,
+    marginBottom: 16,
+    overflow: "hidden",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    minHeight: 70,
+  },
+  buttonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    gap: 14,
+    minHeight: 70,
+    justifyContent: "flex-start",
+  },
+  primaryButtonText: {
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  primaryButtonSubtext: {
     fontSize: 12,
-    marginTop: 2,
+    fontWeight: "500",
+    marginTop: 4,
+  },
+  cardActionButton: {
+    borderRadius: 12,
+    marginTop: 8,
+    overflow: "hidden",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    minHeight: 56,
+  },
+  cardButtonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+    minHeight: 56,
+    justifyContent: "flex-start",
+  },
+  cardButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
   },
   auditoreRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
   },
   auditoreIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "#3b82f6",
     justifyContent: "center",
     alignItems: "center",
   },
   auditorePhoto: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   auditoreContent: {
     flex: 1,
@@ -662,19 +748,21 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginTop: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginTop: 5,
   },
   timelineContent: {
     flex: 1,
     paddingBottom: 12,
   },
   timelineLabel: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "700",
     marginBottom: 2,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   timelineValue: {
     fontSize: 13,
@@ -683,23 +771,8 @@ const styles = StyleSheet.create({
   timelineDivider: {
     width: 1,
     backgroundColor: "rgba(0,0,0,0.1)",
-    marginLeft: 5,
+    marginLeft: 7,
     marginVertical: 8,
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-    borderRadius: 12,
-    gap: 8,
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  actionButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
   },
   emptyContainer: {
     flex: 1,
