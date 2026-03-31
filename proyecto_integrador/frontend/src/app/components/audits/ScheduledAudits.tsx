@@ -1,7 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { CalendarDays, X, MapPin, User, Clock, CheckCircle, Loader2 } from 'lucide-react';
-import { apiClient } from '../../../services/api';
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  CalendarDays,
+  X,
+  MapPin,
+  User,
+  Clock,
+  CheckCircle,
+  Loader2,
+  XCircle,
+  AlertTriangle,
+} from "lucide-react";
+import { apiClient } from "../../../services/api";
 
 // ─── DTO (mirrors backend AuditoriaProgramadaDto) ───────────────────────────
 interface AuditoriaProgramadaDto {
@@ -21,41 +31,69 @@ function getEstadoStyle(estadoId: number): {
   text: string;
   Icon: React.ElementType;
 } {
-  // estadoId 1 = Pendiente, 2 = En proceso, 3 = Completada (adjust if DB differs)
+  // estadoId 1 = Programada, 2 = En Progreso, 3 = Cancelada, 4 = Completada, 5 = Vencida
   switch (estadoId) {
     case 2:
       return {
-        dot: 'bg-blue-500',
-        badge: 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300',
-        text: 'text-blue-600 dark:text-blue-400',
+        dot: "bg-amber-500",
+        badge:
+          "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300",
+        text: "text-amber-600 dark:text-amber-400",
         Icon: Loader2,
       };
     case 3:
       return {
-        dot: 'bg-emerald-500',
-        badge: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300',
-        text: 'text-emerald-600 dark:text-emerald-400',
+        dot: "bg-red-500",
+        badge:
+          "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-700 dark:text-red-300",
+        text: "text-red-600 dark:text-red-400",
+        Icon: XCircle,
+      };
+    case 4:
+      return {
+        dot: "bg-emerald-500",
+        badge:
+          "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300",
+        text: "text-emerald-600 dark:text-emerald-400",
         Icon: CheckCircle,
       };
-    default: // 1 = Pendiente
+    case 5:
       return {
-        dot: 'bg-amber-400',
-        badge: 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300',
-        text: 'text-amber-600 dark:text-amber-400',
+        dot: "bg-orange-500",
+        badge:
+          "bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-300",
+        text: "text-orange-600 dark:text-orange-400",
+        Icon: AlertTriangle,
+      };
+    default: // 1 = Programada
+      return {
+        dot: "bg-blue-400",
+        badge:
+          "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300",
+        text: "text-blue-600 dark:text-blue-400",
         Icon: Clock,
       };
   }
 }
 
 // ─── Audit Item ───────────────────────────────────────────────────────────────
-function AuditItem({ audit, index }: { audit: AuditoriaProgramadaDto; index: number }) {
+function AuditItem({
+  audit,
+  index,
+}: {
+  audit: AuditoriaProgramadaDto;
+  index: number;
+}) {
   const style = getEstadoStyle(audit.estadoId);
   const { Icon } = style;
 
-  const formattedDate = new Date(audit.fechaProgramada).toLocaleString('es-MX', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  const formattedDate = new Date(audit.fechaProgramada).toLocaleString(
+    "es-MX",
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    },
+  );
 
   return (
     <motion.div
@@ -69,7 +107,9 @@ function AuditItem({ audit, index }: { audit: AuditoriaProgramadaDto; index: num
         <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug line-clamp-2">
           {audit.titulo}
         </p>
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border flex-shrink-0 ${style.badge}`}>
+        <span
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border flex-shrink-0 ${style.badge}`}
+        >
           <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
           {audit.estado}
         </span>
@@ -104,10 +144,12 @@ function ScheduledAuditsDrawer({ onClose }: { onClose: () => void }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiClient.get<AuditoriaProgramadaDto[]>('/api/dashboard/auditorias-programadas');
+      const data = await apiClient.get<AuditoriaProgramadaDto[]>(
+        "/api/dashboard/auditorias-programadas",
+      );
       setAudits(data);
     } catch (err: any) {
-      setError(err?.message || 'Error al cargar auditorías programadas');
+      setError(err?.message || "Error al cargar auditorías programadas");
     } finally {
       setLoading(false);
     }
@@ -120,10 +162,10 @@ function ScheduledAuditsDrawer({ onClose }: { onClose: () => void }) {
   // Close on Escape key
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
   return (
@@ -142,10 +184,10 @@ function ScheduledAuditsDrawer({ onClose }: { onClose: () => void }) {
       {/* Drawer panel */}
       <motion.div
         key="drawer-panel"
-        initial={{ x: '100%' }}
+        initial={{ x: "100%" }}
         animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 280 }}
         className="fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[420px] lg:w-[38%] max-w-[520px] bg-white dark:bg-[#131313] shadow-2xl flex flex-col"
       >
         {/* Header */}
@@ -155,7 +197,7 @@ function ScheduledAuditsDrawer({ onClose }: { onClose: () => void }) {
               Auditorías Programadas
             </h2>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              {loading ? 'Cargando...' : `${audits.length} auditorías`}
+              {loading ? "Cargando..." : `${audits.length} auditorías`}
             </p>
           </div>
           <button
@@ -202,13 +244,20 @@ function ScheduledAuditsDrawer({ onClose }: { onClose: () => void }) {
         <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex-shrink-0">
           <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400" /> Pendiente
+              <span className="w-2 h-2 rounded-full bg-blue-400" /> Programada
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500" /> En proceso
+              <span className="w-2 h-2 rounded-full bg-amber-500" /> En Progreso
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" /> Completada
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />{" "}
+              Completada
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-500" /> Cancelada
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-orange-500" /> Vencida
             </span>
           </div>
         </div>

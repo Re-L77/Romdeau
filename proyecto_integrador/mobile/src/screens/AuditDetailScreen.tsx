@@ -87,6 +87,13 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
       textColor: "#991b1b",
       icon: AlertCircle,
     },
+    5: {
+      label: "Vencida",
+      color: "#ea580c",
+      bgColor: "#fff7ed",
+      textColor: "#9a3412",
+      icon: AlertCircle,
+    },
   };
 
   const config = estadoConfig[audit.estado_id as keyof typeof estadoConfig];

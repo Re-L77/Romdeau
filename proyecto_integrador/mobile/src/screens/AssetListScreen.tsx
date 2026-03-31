@@ -19,7 +19,7 @@ import {
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
 
-type FilterType = "ALL" | 1 | 2 | 3 | 4;
+type FilterType = "ALL" | 1 | 2 | 3 | 4 | 5;
 
 export default function AssetListScreen() {
   const router = useRouter();
@@ -44,6 +44,7 @@ export default function AssetListScreen() {
     enProgreso: auditorias.filter((a) => a.estado_id === 2).length,
     completada: auditorias.filter((a) => a.estado_id === 4).length,
     cancelada: auditorias.filter((a) => a.estado_id === 3).length,
+    vencida: auditorias.filter((a) => a.estado_id === 5).length,
     total: auditorias.length,
   };
 
@@ -75,6 +76,13 @@ export default function AssetListScreen() {
           label: "Cancelada",
           bgColor: "#fee2e2",
           textColor: "#b91c1c",
+          Icon: AlertCircle,
+        };
+      case 5:
+        return {
+          label: "Vencida",
+          bgColor: "#fff7ed",
+          textColor: "#ea580c",
           Icon: AlertCircle,
         };
       default:
@@ -122,6 +130,12 @@ export default function AssetListScreen() {
       label: "Canceladas",
       count: stats.cancelada,
       activeColor: "#ef4444",
+    },
+    {
+      key: 5,
+      label: "Vencidas",
+      count: stats.vencida,
+      activeColor: "#ea580c",
     },
   ];
 

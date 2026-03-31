@@ -271,7 +271,9 @@ export default function HomeScreen() {
                     ? "#f59e0b"
                     : audit.estado_id === 4
                       ? "#10b981"
-                      : "#6b7280";
+                      : audit.estado_id === 5
+                        ? "#ea580c"
+                        : "#6b7280";
 
               const estadoLabel =
                 audit.estado_id === 1
@@ -280,7 +282,9 @@ export default function HomeScreen() {
                     ? "En Progreso"
                     : audit.estado_id === 4
                       ? "Completada"
-                      : "Cancelada";
+                      : audit.estado_id === 5
+                        ? "Vencida"
+                        : "Cancelada";
 
               const fecha = new Date(audit.fecha_programada).toLocaleDateString(
                 "es-MX",
