@@ -127,9 +127,9 @@ export function ProveedorDetail({ proveedorId, onBack }: ProveedorDetailProps) {
   const formatDate = (dateString: string | Date | undefined) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-MX', { 
-      year: 'numeric', 
-      month: 'long', 
+    return date.toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'long',
       day: 'numeric'
     });
   };
@@ -480,71 +480,71 @@ export function ProveedorDetail({ proveedorId, onBack }: ProveedorDetailProps) {
         // Parsear direccion_fiscal en partes individuales para pre-llenar el formulario
         const dir = proveedor.direccion_fiscal || '';
         const parts = dir.split(', ');
-        const parsedCalle   = parts[0] || '';
+        const parsedCalle = parts[0] || '';
         const parsedColonia = parts[1] || '';
-        const parsedCiudad  = parts[2] || '';
-        const parsedEstado  = parts[3] || '';
-        const parsedCp      = parts[4] || '';
+        const parsedCiudad = parts[2] || '';
+        const parsedEstado = parts[3] || '';
+        const parsedCp = parts[4] || '';
 
         return (
-        <AgregarProveedor
-          onClose={() => setIsEditing(false)}
-          onSave={async (updated: ProveedorFormData) => {
-            try {
-              // Reconstruir direccion_fiscal desde los campos individuales
-              const direccion =
-                [updated.direccion_calle, updated.direccion_colonia, updated.direccion_ciudad, updated.direccion_estado, updated.direccion_cp]
-                  .filter(Boolean)
-                  .join(', ') ||
-                updated.direccion_fiscal ||
-                undefined;
+          <AgregarProveedor
+            onClose={() => setIsEditing(false)}
+            onSave={async (updated: ProveedorFormData) => {
+              try {
+                // Reconstruir direccion_fiscal desde los campos individuales
+                const direccion =
+                  [updated.direccion_calle, updated.direccion_colonia, updated.direccion_ciudad, updated.direccion_estado, updated.direccion_cp]
+                    .filter(Boolean)
+                    .join(', ') ||
+                  updated.direccion_fiscal ||
+                  undefined;
 
-              const result = await apiClient.patch(`/api/proveedores/${proveedor.id}`, {
-                razon_social: updated.razon_social || updated.nombre_empresa,
-                rfc_tax_id: updated.rfc || undefined,
-                contacto_soporte: updated.email || undefined,
-                sitio_web: updated.sitio_web || undefined,
-                direccion_fiscal: direccion,
-                nombre_comercial: updated.nombre_empresa || undefined,
-                telefono: updated.telefono || undefined,
-                telefono_alternativo: updated.telefono_alternativo || undefined,
-                contacto_nombre: updated.contacto_principal || undefined,
-                contacto_puesto: updated.puesto_contacto || undefined,
-                categoria: updated.categoria || undefined,
-                descripcion_servicios: updated.tipo_productos_servicios || undefined,
-                calificacion: updated.calificacion_inicial ? String(updated.calificacion_inicial) : undefined,
-                notas: updated.notas || undefined,
-              });
-              setProveedor(prev => prev ? { ...prev, ...result } : prev);
-              setIsEditing(false);
-              toast.success('Proveedor actualizado correctamente');
-            } catch (err) {
-              console.error('Error al actualizar proveedor:', err);
-              toast.error('Error al guardar los cambios. Intenta de nuevo.');
-            }
-          }}
-          initialData={{
-            nombre_empresa: proveedor.nombre_comercial || proveedor.razon_social,
-            razon_social: proveedor.razon_social,
-            rfc: proveedor.rfc_tax_id || '',
-            categoria: proveedor.categoria || '',
-            email: proveedor.contacto_soporte || '',
-            telefono: proveedor.telefono || '',
-            telefono_alternativo: proveedor.telefono_alternativo || '',
-            sitio_web: proveedor.sitio_web || '',
-            contacto_principal: proveedor.contacto_nombre || '',
-            puesto_contacto: proveedor.contacto_puesto || '',
-            tipo_productos_servicios: proveedor.descripcion_servicios || '',
-            calificacion_inicial: proveedor.calificacion ? parseFloat(proveedor.calificacion) || 5 : 5,
-            notas: proveedor.notas || '',
-            direccion_fiscal: proveedor.direccion_fiscal || '',
-            direccion_calle:   parsedCalle,
-            direccion_colonia: parsedColonia,
-            direccion_ciudad:  parsedCiudad,
-            direccion_estado:  parsedEstado,
-            direccion_cp:      parsedCp,
-          }}
-        />
+                const result = await apiClient.patch(`/api/proveedores/${proveedor.id}`, {
+                  razon_social: updated.razon_social || updated.nombre_empresa,
+                  rfc_tax_id: updated.rfc || undefined,
+                  contacto_soporte: updated.email || undefined,
+                  sitio_web: updated.sitio_web || undefined,
+                  direccion_fiscal: direccion,
+                  nombre_comercial: updated.nombre_empresa || undefined,
+                  telefono: updated.telefono || undefined,
+                  telefono_alternativo: updated.telefono_alternativo || undefined,
+                  contacto_nombre: updated.contacto_principal || undefined,
+                  contacto_puesto: updated.puesto_contacto || undefined,
+                  categoria: updated.categoria || undefined,
+                  descripcion_servicios: updated.tipo_productos_servicios || undefined,
+                  calificacion: updated.calificacion_inicial ? String(updated.calificacion_inicial) : undefined,
+                  notas: updated.notas || undefined,
+                });
+                setProveedor(prev => prev ? { ...prev, ...result } : prev);
+                setIsEditing(false);
+                toast.success('Proveedor actualizado correctamente');
+              } catch (err) {
+                console.error('Error al actualizar proveedor:', err);
+                toast.error('Error al guardar los cambios. Intenta de nuevo.');
+              }
+            }}
+            initialData={{
+              nombre_empresa: proveedor.nombre_comercial || proveedor.razon_social,
+              razon_social: proveedor.razon_social,
+              rfc: proveedor.rfc_tax_id || '',
+              categoria: proveedor.categoria || '',
+              email: proveedor.contacto_soporte || '',
+              telefono: proveedor.telefono || '',
+              telefono_alternativo: proveedor.telefono_alternativo || '',
+              sitio_web: proveedor.sitio_web || '',
+              contacto_principal: proveedor.contacto_nombre || '',
+              puesto_contacto: proveedor.contacto_puesto || '',
+              tipo_productos_servicios: proveedor.descripcion_servicios || '',
+              calificacion_inicial: proveedor.calificacion ? parseFloat(proveedor.calificacion) || 5 : 5,
+              notas: proveedor.notas || '',
+              direccion_fiscal: proveedor.direccion_fiscal || '',
+              direccion_calle: parsedCalle,
+              direccion_colonia: parsedColonia,
+              direccion_ciudad: parsedCiudad,
+              direccion_estado: parsedEstado,
+              direccion_cp: parsedCp,
+            }}
+          />
         );
       })()}
 

@@ -91,6 +91,7 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [cpLoading, setCpLoading] = useState(false);
   const [cpStatus, setCpStatus] = useState<string>('');
@@ -118,7 +119,7 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
     fetch('/cp_mexico.json')
       .then(r => r.json())
       .then((data: Record<string, { estado: string; colonias: string[] }>) => setCpData(data))
-      .catch(() => {/* fall back to Nominatim only */});
+      .catch(() => {/* fall back to Nominatim only */ });
   }, []);
 
   // Geocode CP via Nominatim – map coordinates + ciudad.
@@ -171,7 +172,7 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
     if (cp.length === 5 && cpData[cp]) {
       applyCP(cp);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cpData]);
 
   // Apply a selected CP: fill estado + colonias from local JSON, map via Nominatim
@@ -221,10 +222,18 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
       newErrors.nombre_empresa = 'El nombre de la empresa es obligatorio';
     }
 
-    if (!formData.rfc.trim()) {
-      newErrors.rfc = 'El RFC es obligatorio';
-    } else if (!validateRFC(formData.rfc)) {
-      newErrors.rfc = 'RFC inválido (formato: ABC123456XYZ)';
+    if (!isEditMode) {
+      // Creación: RFC obligatorio y con formato válido
+      if (!formData.rfc.trim()) {
+        newErrors.rfc = 'El RFC es obligatorio';
+      } else if (!validateRFC(formData.rfc)) {
+        newErrors.rfc = 'RFC inválido (formato: ABC123456XYZ)';
+      }
+    } else {
+      // Edición: solo valida formato si el usuario escribió algo
+      if (formData.rfc.trim() && !validateRFC(formData.rfc)) {
+        newErrors.rfc = 'RFC inválido (formato: ABC123456XYZ)';
+      }
     }
 
     if (!formData.razon_social.trim()) {
@@ -242,27 +251,44 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'El email es obligatorio';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Email inválido';
+    if (!isEditMode) {
+      // Creación: email obligatorio
+      if (!formData.email.trim()) {
+        newErrors.email = 'El email es obligatorio';
+      } else if (!validateEmail(formData.email)) {
+        newErrors.email = 'Email inválido';
+      }
+    } else {
+      // Edición: solo valida formato si hay contenido
+      if (formData.email.trim() && !validateEmail(formData.email)) {
+        newErrors.email = 'Email inválido';
+      }
     }
 
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = 'El teléfono es obligatorio';
-    } else if (!validatePhone(formData.telefono)) {
-      newErrors.telefono = 'Teléfono inválido (10 dígitos)';
+    if (!isEditMode) {
+      // Creación: teléfono obligatorio
+      if (!formData.telefono.trim()) {
+        newErrors.telefono = 'El teléfono es obligatorio';
+      } else if (!validatePhone(formData.telefono)) {
+        newErrors.telefono = 'Teléfono inválido (10 dígitos)';
+      }
+    } else {
+      // Edición: solo valida formato si hay contenido
+      if (formData.telefono.trim() && !validatePhone(formData.telefono)) {
+        newErrors.telefono = 'Teléfono inválido (10 dígitos)';
+      }
     }
 
     if (formData.telefono_alternativo && !validatePhone(formData.telefono_alternativo)) {
       newErrors.telefono_alternativo = 'Teléfono alternativo inválido';
     }
 
-    if (!formData.contacto_principal.trim()) {
+    // En edición estos campos no son obligatorios
+    if (!isEditMode && !formData.contacto_principal.trim()) {
       newErrors.contacto_principal = 'El nombre del contacto es obligatorio';
     }
 
-    if (!formData.puesto_contacto.trim()) {
+    if (!isEditMode && !formData.puesto_contacto.trim()) {
       newErrors.puesto_contacto = 'El puesto del contacto es obligatorio';
     }
 
@@ -327,7 +353,7 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
     }
   };
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     const parts = [
       formData.direccion_calle,
       formData.direccion_colonia,
@@ -336,7 +362,12 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
     ].filter(Boolean);
     // Si el usuario no tocó los campos individuales pero hay una dirección_fiscal preexistente, conservarla
     const direccion_fiscal = parts.length > 0 ? parts.join(', ') : (formData.direccion_fiscal || '');
-    onSave({ ...formData, direccion_fiscal });
+    setIsSaving(true);
+    try {
+      await onSave({ ...formData, direccion_fiscal });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateField = useCallback((field: keyof ProveedorFormData, value: string | number) => {
@@ -401,36 +432,32 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         type="button"
                         onClick={() => navigateToStep(step.number)}
                         disabled={!isCompleted}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                          isCompleted
+                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted
                             ? 'bg-emerald-500 border-emerald-500 cursor-pointer hover:bg-emerald-600'
                             : isActive
                               ? 'bg-black dark:bg-white border-black dark:border-white cursor-default'
                               : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed'
-                        }`}
+                          }`}
                       >
                         {isCompleted ? (
                           <CheckCircle className="w-4 h-4 text-white" />
                         ) : (
-                          <StepIcon className={`w-4 h-4 ${
-                            isActive ? 'text-white dark:text-black' : 'text-gray-400 dark:text-gray-500'
-                          }`} />
+                          <StepIcon className={`w-4 h-4 ${isActive ? 'text-white dark:text-black' : 'text-gray-400 dark:text-gray-500'
+                            }`} />
                         )}
                       </button>
-                      <p className={`text-xs mt-1.5 font-medium whitespace-nowrap ${
-                        isActive
+                      <p className={`text-xs mt-1.5 font-medium whitespace-nowrap ${isActive
                           ? 'text-black dark:text-white'
                           : isCompleted
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-gray-400 dark:text-gray-500'
-                      }`}>
+                        }`}>
                         {step.title}
                       </p>
                     </div>
                     {index < steps.length - 1 && (
-                      <div className={`flex-1 h-0.5 mx-3 mb-5 ${
-                        isCompleted ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'
-                      }`} />
+                      <div className={`flex-1 h-0.5 mx-3 mb-5 ${isCompleted ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'
+                        }`} />
                     )}
                   </React.Fragment>
                 );
@@ -460,11 +487,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         value={formData.nombre_empresa}
                         onChange={(e) => updateField('nombre_empresa', e.target.value)}
                         placeholder="Ej: Tech Solutions México S.A. de C.V."
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          errors.nombre_empresa 
-                            ? 'border-red-500 focus:ring-red-500' 
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.nombre_empresa
+                            ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
                       {errors.nombre_empresa && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -486,11 +512,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         onChange={(e) => updateField('rfc', e.target.value.toUpperCase())}
                         placeholder="ABC123456XYZ"
                         maxLength={13}
-                        className={`w-full px-4 py-3 rounded-xl border uppercase ${
-                          errors.rfc 
-                            ? 'border-red-500 focus:ring-red-500' 
+                        className={`w-full px-4 py-3 rounded-xl border uppercase ${errors.rfc
+                            ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
                       {errors.rfc && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -511,11 +536,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         value={formData.razon_social}
                         onChange={(e) => updateField('razon_social', e.target.value)}
                         placeholder="Razón social completa"
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          errors.razon_social 
-                            ? 'border-red-500 focus:ring-red-500' 
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.razon_social
+                            ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
                       {errors.razon_social && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -538,11 +562,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                               key={option.value}
                               type="button"
                               onClick={() => updateField('categoria', option.value)}
-                              className={`p-3 rounded-xl border-2 text-left transition-all ${
-                                isSelected
+                              className={`p-3 rounded-xl border-2 text-left transition-all ${isSelected
                                   ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
                                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-600'
-                              }`}
+                                }`}
                             >
                               <div className="text-2xl mb-1">{option.icon}</div>
                               <p className="text-xs font-medium">{option.label}</p>
@@ -580,11 +603,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         value={formData.email}
                         onChange={(e) => updateField('email', e.target.value)}
                         placeholder="contacto@empresa.com"
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          errors.email 
-                            ? 'border-red-500 focus:ring-red-500' 
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.email
+                            ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
                       {errors.email && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -621,11 +643,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         onChange={(e) => updateField('telefono', e.target.value)}
                         placeholder="5512345678"
                         maxLength={10}
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          errors.telefono 
-                            ? 'border-red-500 focus:ring-red-500' 
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.telefono
+                            ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
                       {errors.telefono && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -662,11 +683,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         value={formData.contacto_principal}
                         onChange={(e) => updateField('contacto_principal', e.target.value)}
                         placeholder="Juan Pérez González"
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          errors.contacto_principal 
-                            ? 'border-red-500 focus:ring-red-500' 
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.contacto_principal
+                            ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
                       {errors.contacto_principal && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -686,11 +706,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         value={formData.puesto_contacto}
                         onChange={(e) => updateField('puesto_contacto', e.target.value)}
                         placeholder="Gerente de Ventas"
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          errors.puesto_contacto 
-                            ? 'border-red-500 focus:ring-red-500' 
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.puesto_contacto
+                            ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
                       {errors.puesto_contacto && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -724,11 +743,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                             placeholder="03100"
                             maxLength={5}
                             autoComplete="off"
-                            className={`w-full px-4 py-3 rounded-xl border ${
-                              errors.direccion_cp
+                            className={`w-full px-4 py-3 rounded-xl border ${errors.direccion_cp
                                 ? 'border-red-500 focus:ring-red-500'
                                 : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                            } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent pr-10`}
+                              } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent pr-10`}
                           />
                           {cpLoading && (
                             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
@@ -770,11 +788,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         <select
                           value={formData.direccion_estado}
                           onChange={(e) => updateField('direccion_estado', e.target.value)}
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            errors.direccion_estado
+                          className={`w-full px-4 py-3 rounded-xl border ${errors.direccion_estado
                               ? 'border-red-500 focus:ring-red-500'
                               : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                            } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                         >
                           <option value="">Selecciona un estado</option>
                           {estadosMexico.map(estado => (
@@ -799,11 +816,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                           value={formData.direccion_ciudad}
                           onChange={(e) => updateField('direccion_ciudad', e.target.value)}
                           placeholder="Ciudad de México"
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            errors.direccion_ciudad
+                          className={`w-full px-4 py-3 rounded-xl border ${errors.direccion_ciudad
                               ? 'border-red-500 focus:ring-red-500'
                               : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                            } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                         />
                         {errors.direccion_ciudad && (
                           <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -864,11 +880,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                           value={formData.direccion_calle}
                           onChange={(e) => updateField('direccion_calle', e.target.value)}
                           placeholder="Av. Insurgentes Sur 1234"
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            errors.direccion_calle
+                          className={`w-full px-4 py-3 rounded-xl border ${errors.direccion_calle
                               ? 'border-red-500 focus:ring-red-500'
                               : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                            } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                         />
                         {errors.direccion_calle && (
                           <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -928,11 +943,10 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                         onChange={(e) => updateField('tipo_productos_servicios', e.target.value)}
                         placeholder="Ej: Venta de equipos de cómputo, laptops, servidores, accesorios..."
                         rows={3}
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          errors.tipo_productos_servicios
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.tipo_productos_servicios
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 dark:border-gray-700 focus:ring-black dark:focus:ring-white'
-                        } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
+                          } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent`}
                       />
                       {errors.tipo_productos_servicios && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -1211,10 +1225,15 @@ export function AgregarProveedor({ onClose, onSave, initialData }: AgregarProvee
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    className="px-6 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full font-medium hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center gap-2"
+                    disabled={isSaving}
+                    className="px-6 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full font-medium hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <CheckCircle className="w-4 h-4" />
-                    {isEditMode ? 'Guardar Cambios' : 'Registrar Proveedor'}
+                    {isSaving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4" />
+                    )}
+                    {isSaving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Registrar Proveedor')}
                   </button>
                 )}
               </div>

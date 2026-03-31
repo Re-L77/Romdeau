@@ -5,7 +5,13 @@ import { Role } from '../auth/roles/roles.enum';
 
 @Controller('api/proveedores')
 export class ProveedoresController {
-  constructor(private readonly proveedoresService: ProveedoresService) {}
+  // Probe route to force registration
+  @Get('ping')
+  ping() {
+    return { status: 'ok', module: 'proveedores' };
+  }
+
+  constructor(private readonly proveedoresService: ProveedoresService) { }
 
   @Get()
   @Roles(Role.ADMIN, Role.AUDITOR)

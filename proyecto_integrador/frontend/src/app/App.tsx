@@ -54,6 +54,8 @@ function AppContent() {
   const [selectedProveedorId, setSelectedProveedorId] = useState<string | null>(
     null,
   );
+  // Incrementar este contador fuerza remount de DirectorioProveedores tras editar
+  const [proveedoresRefreshKey, setProveedoresRefreshKey] = useState(0);
 
   const handleLogin = () => {
     setCurrentView("dashboard");
@@ -223,6 +225,8 @@ function AppContent() {
   const handleBackToProveedores = () => {
     setCurrentView("proveedores");
     setSelectedProveedorId(null);
+    // Fuerza remount -> nuevo fetch con datos actualizados
+    setProveedoresRefreshKey((k) => k + 1);
   };
 
   // View 1: Login Screen
@@ -287,7 +291,10 @@ function AppContent() {
 
         {/* View 6: Directorio de Proveedores */}
         {currentView === "proveedores" && (
-          <DirectorioProveedores onProveedorClick={handleProveedorClick} />
+          <DirectorioProveedores
+            key={proveedoresRefreshKey}
+            onProveedorClick={handleProveedorClick}
+          />
         )}
 
         {/* View 7: Gestión de Usuarios */}

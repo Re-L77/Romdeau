@@ -212,7 +212,6 @@ model logs_auditoria {
   auditorias_programadas auditorias_programadas?   @relation(fields: [auditoria], references: [id], onDelete: NoAction, onUpdate: NoAction)
   estados_auditoria      estados_auditoria         @relation(fields: [estado_reportado_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
-
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model logs_depreciacion {
   id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
@@ -374,7 +373,7 @@ model usuarios {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model notificaciones {
-  id         String   @id @db.Uuid
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   usuario_id String   @db.Uuid
   tipo       String
   titulo     String
