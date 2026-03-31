@@ -11,13 +11,50 @@ export interface AuditoriaProgramada {
   estado_id: number;
   oficina_id?: string;
   estante_id?: string;
+  created_at?: string;
+  updated_at?: string;
   usuarios: {
     id: string;
     nombre_completo: string;
+    email?: string;
+    telefono?: string;
+    foto_perfil_url?: string;
   };
   estados_auditoria_programada: {
     id: number;
     nombre: string;
+  };
+  oficinas?: {
+    id: string;
+    nombre: string;
+    pisos: {
+      id: string;
+      nombre: string;
+      edificios: {
+        id: string;
+        nombre: string;
+        sedes: {
+          id: string;
+          nombre: string;
+        };
+      };
+    };
+  };
+  estantes?: {
+    id: string;
+    nombre: string;
+    pasillos: {
+      id: string;
+      nombre: string;
+      almacenes: {
+        id: string;
+        nombre: string;
+        sedes: {
+          id: string;
+          nombre: string;
+        };
+      };
+    };
   };
 }
 

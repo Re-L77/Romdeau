@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from "expo-router";
-import AssetAuditScreen from "../../screens/AssetAuditScreen";
+import AuditDetailScreen from "../../screens/AuditDetailScreen";
 
 export default function AuditScreen() {
   const { assetId } = useLocalSearchParams<{ assetId: string }>();
 
-  return <AssetAuditScreen assetId={assetId || ""} />;
+  return <AuditDetailScreen auditId={assetId || ""} />;
 }
