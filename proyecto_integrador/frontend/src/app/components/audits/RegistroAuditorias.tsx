@@ -395,8 +395,8 @@ function ExportModal({ logs, onClose }: ExportModalProps) {
                     type="button"
                     onClick={() => setPeriodo(value)}
                     className={`p-3 rounded-xl border-2 text-left transition-all ${activo
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                   >
                     <div className="flex items-center justify-between">
@@ -449,8 +449,8 @@ function ExportModal({ logs, onClose }: ExportModalProps) {
                     type="button"
                     onClick={() => setFormato(value)}
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${activo
-                        ? 'border-black dark:border-white bg-black dark:bg-white'
-                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
+                      ? 'border-black dark:border-white bg-black dark:bg-white'
+                      : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
                       }`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${activo ? 'bg-white/20 dark:bg-black/20' : 'bg-white dark:bg-gray-700'}`}>
@@ -684,8 +684,8 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
                       <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Método</p>
                       <div className="flex items-center gap-1.5">
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${log.metodo_auditoria === 'QR'
-                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-700/30'
-                            : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30'
+                          ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-700/30'
+                          : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30'
                           }`}>
                           {log.metodo_auditoria || 'MANUAL'}
                         </span>
