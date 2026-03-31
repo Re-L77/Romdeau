@@ -14,7 +14,6 @@ import {
   Sun,
   Bell,
   Lock,
-  Globe,
   HelpCircle,
   Info,
   LogOut,
@@ -95,12 +94,6 @@ export default function SettingsScreen() {
           isOn: notifications,
           onToggle: () => setNotifications(!notifications),
         },
-        {
-          label: "Idioma",
-          icon: Globe,
-          value: "Español",
-          onPress: () => Alert.alert("Idioma", "Español (México)"),
-        },
       ],
     },
     {
@@ -126,9 +119,13 @@ export default function SettingsScreen() {
       title: "Soporte",
       items: [
         {
-          label: "Centro de Ayuda",
+          label: "Centro de Administración",
           icon: HelpCircle,
-          onPress: () => Alert.alert("Ayuda", "Guía rápida de auditoría"),
+          onPress: () =>
+            Alert.alert(
+              "Correos de Administradores",
+              "Contacta al equipo administrativo:\n\nadmin@romdeau.com\nsupport@romdeau.com",
+            ),
         },
         {
           label: "Acerca de",

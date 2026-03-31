@@ -114,6 +114,43 @@ export class AuditoriasprogramadasService {
     });
   }
 
+  async findByAuditor(auditorId: string) {
+    return await this.prisma.auditorias_programadas.findMany({
+      where: { auditor_id: auditorId },
+      include: {
+        usuarios: true,
+        estados_auditoria_programada: true,
+        oficinas: {
+          include: {
+            pisos: {
+              include: {
+                edificios: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        estantes: {
+          include: {
+            pasillos: {
+              include: {
+                almacenes: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { fecha_programada: 'asc' },
+    });
+  }
+
   async findOne(id: string) {
     const auditoria = await this.prisma.auditorias_programadas.findUnique({
       where: { id },

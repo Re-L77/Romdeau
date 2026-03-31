@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Req,
 } from '@nestjs/common';
 import { AuditoriasprogramadasService } from './auditorias-programadas.service';
 import { CreateAuditoriaProgramadaDto } from './dto/create-auditoria-programada.dto';
@@ -30,6 +31,13 @@ export class AuditoriasprogramadasController {
   @Roles(Role.ADMIN, Role.AUDITOR)
   findAll() {
     return this.auditoriasService.findAll();
+  }
+
+  @Get('mias')
+  @Roles(Role.AUDITOR)
+  findMine(@Req() req: any) {
+    const auditorId = req.user?.id;
+    return this.auditoriasService.findByAuditor(auditorId);
   }
 
   @Get('por-estado/:estado_id')

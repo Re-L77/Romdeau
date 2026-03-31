@@ -4,6 +4,7 @@ import { useColorScheme, ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { NotificacionesProvider } from "../contexts/NotificacionesContext";
+import { AuditoriasProvider } from "../contexts/AuditoriasContext";
 
 function RootLayoutNav() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -95,8 +96,10 @@ export default function RootLayout() {
     <ThemeProvider>
       <AuthProvider>
         <NotificacionesProvider>
-          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-          <RootLayoutNav />
+          <AuditoriasProvider>
+            <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+            <RootLayoutNav />
+          </AuditoriasProvider>
         </NotificacionesProvider>
       </AuthProvider>
     </ThemeProvider>

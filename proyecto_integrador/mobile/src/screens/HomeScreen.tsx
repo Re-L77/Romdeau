@@ -22,6 +22,8 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNotificaciones } from "../contexts/NotificacionesContext";
+import { useAuditorias } from "../contexts/AuditoriasContext";
+import { Alert } from "react-native";
 
 interface AuditStats {
   pending: number;
@@ -34,18 +36,34 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, logout, validateSession } = useAuth();
   const { colors, isDark } = useTheme();
-  const { noLeidasCount } = useNotificaciones();
+  const { noLeidasCount, notificaciones } = useNotificaciones();
+  const { auditorias, refresh: refreshAuditorias } = useAuditorias();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [lastNotificationCount, setLastNotificationCount] = useState(0);
   const notifications = noLeidasCount;
 
   const stats: AuditStats = {
-    pending: 47,
-    completed: 123,
-    notFound: 8,
-    total: 178,
+    pending: auditorias.filter((a) => a.estado_id === 1).length,
+    completed: auditorias.filter((a) => a.estado_id === 4).length,
+    notFound: 0,
+    total: auditorias.length,
   };
 
-  const completionRate = Math.round((stats.completed / stats.total) * 100);
+  const completionRate =
+    stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+
+  // Detectar cuando llega una nueva notificación de auditoría asignada
+  useEffect(() => {
+    if (noLeidasCount > lastNotificationCount) {
+      const nuevaNotif = notificaciones[0];
+      if (nuevaNotif?.tipo === "AUDITORIA_ASIGNADA") {
+        Alert.alert("📋 Nueva Auditoría", nuevaNotif.mensaje, [
+          { text: "OK", onPress: refreshAuditorias },
+        ]);
+      }
+      setLastNotificationCount(noLeidasCount);
+    }
+  }, [noLeidasCount]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -139,28 +157,33 @@ export default function HomeScreen() {
         {/* Progress Card */}
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Progreso del Día</Text>
-            <Text style={styles.progressPercent}>{completionRate}%</Text>
+            <Text style={styles.progressTitle}>Auditorías Asignadas</Text>
+            <Text style={styles.progressPercent}>
+              {stats.total > 0 ? completionRate : 0}%
+            </Text>
           </View>
           <View style={styles.progressBarBg}>
             <View
-              style={[styles.progressBarFill, { width: `${completionRate}%` }]}
+              style={[
+                styles.progressBarFill,
+                { width: `${stats.total > 0 ? completionRate : 0}%` },
+              ]}
             />
           </View>
           <View style={styles.progressStats}>
             <View style={styles.progressStat}>
               <Text style={styles.statValue}>{stats.completed}</Text>
-              <Text style={styles.statLabel}>Auditados</Text>
+              <Text style={styles.statLabel}>Completadas</Text>
             </View>
             <View style={styles.progressStat}>
               <Text style={styles.statValue}>{stats.pending}</Text>
               <Text style={styles.statLabel}>Pendientes</Text>
             </View>
             <View style={styles.progressStat}>
-              <Text style={[styles.statValue, { color: "#ef4444" }]}>
-                {stats.notFound}
+              <Text style={[styles.statValue, { color: "#2563eb" }]}>
+                {stats.total}
               </Text>
-              <Text style={styles.statLabel}>No Localizados</Text>
+              <Text style={styles.statLabel}>Total</Text>
             </View>
           </View>
         </View>
@@ -203,6 +226,101 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Auditorías Asignadas */}
+        {auditorias.length > 0 && (
+          <View style={styles.auditoriasSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Auditorías Asignadas
+              </Text>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>
+                {auditorias.length}
+              </Text>
+            </View>
+
+            {auditorias.map((audit) => {
+              const estadoColor =
+                audit.estado_id === 1
+                  ? "#2563eb"
+                  : audit.estado_id === 2
+                    ? "#f59e0b"
+                    : audit.estado_id === 4
+                      ? "#10b981"
+                      : "#6b7280";
+
+              const estadoLabel =
+                audit.estado_id === 1
+                  ? "Programada"
+                  : audit.estado_id === 2
+                    ? "En Progreso"
+                    : audit.estado_id === 4
+                      ? "Completada"
+                      : "Cancelada";
+
+              const fecha = new Date(audit.fecha_programada).toLocaleDateString(
+                "es-MX",
+                { month: "short", day: "numeric" },
+              );
+
+              return (
+                <TouchableOpacity
+                  key={audit.id}
+                  style={[
+                    styles.auditoryCard,
+                    { backgroundColor: colors.surface },
+                  ]}
+                  activeOpacity={0.7}
+                  onPress={() =>
+                    audit.estado_id === 1
+                      ? router.push("/scanner")
+                      : router.push(`/audit/${audit.id}`)
+                  }
+                >
+                  <View
+                    style={[
+                      styles.auditStateIndicator,
+                      { backgroundColor: estadoColor },
+                    ]}
+                  />
+                  <View style={styles.auditContent}>
+                    <Text
+                      style={[styles.auditTitle, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {audit.titulo}
+                    </Text>
+                    <Text style={[styles.auditState, { color: estadoColor }]}>
+                      {estadoLabel}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.auditDate,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {fecha}
+                    </Text>
+                  </View>
+                  {audit.estado_id === 1 && (
+                    <TouchableOpacity
+                      style={[
+                        styles.auditButton,
+                        { backgroundColor: estadoColor },
+                      ]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        router.push("/scanner");
+                      }}
+                    >
+                      <Zap size={16} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
         {/* Recent Activity */}
         <View style={styles.recentSection}>
@@ -513,5 +631,45 @@ const styles = StyleSheet.create({
     fontSize: 13,
     flex: 1,
     textAlign: "right",
+  },
+  auditoriasSection: {
+    marginBottom: 24,
+  },
+  auditoryCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    gap: 12,
+    elevation: 2,
+  },
+  auditStateIndicator: {
+    width: 5,
+    height: 60,
+    borderRadius: 3,
+  },
+  auditContent: {
+    flex: 1,
+  },
+  auditTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  auditState: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  auditDate: {
+    fontSize: 12,
+  },
+  auditButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
