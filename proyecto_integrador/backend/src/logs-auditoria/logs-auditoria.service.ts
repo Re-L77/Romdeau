@@ -86,6 +86,7 @@ export class LogsAuditoriaService {
         },
         ubicacion,
         auditor: log.usuarios?.nombre_completo ?? null,
+        auditoria_id: log.auditoria ?? null,
         plan_auditoria: log.auditorias_programadas?.titulo ?? null,
         estado_reportado: log.estados_auditoria?.nombre ?? null,
         estado_reportado_id: log.estado_reportado_id,

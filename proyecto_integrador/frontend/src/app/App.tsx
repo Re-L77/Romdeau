@@ -90,7 +90,7 @@ function AppContent() {
 
   const handleAuditClick = (auditId: string) => {
     setSelectedAuditId(auditId);
-    setAuditType("completed"); // Las auditorías clickeables son completadas
+    setAuditType("completed"); // Las auditorías clickeables son completadas (logs)
     setCurrentView("auditDetail");
   };
 

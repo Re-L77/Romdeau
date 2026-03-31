@@ -13,7 +13,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { activosApi, auditoriasProgramadasApi } from "../../../services/api";
+import { activosApi, auditoriasProgramadasApi, auditoriasApi } from "../../../services/api";
 import { Skeleton } from "../ui/skeleton";
 
 interface AuditDetailProps {
@@ -52,25 +52,41 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
     useState(false);
 
   useEffect(() => {
-    if (!isScheduled || !auditId) return;
+    if (!auditId) return;
 
     let ignore = false;
 
-    const loadScheduledAudit = async () => {
-      try {
-        setIsLoadingScheduledAudit(true);
-        const result = await auditoriasProgramadasApi.getById(auditId);
-        if (!ignore && result) {
-          setScheduledAudit(result);
+    if (isScheduled) {
+      const loadScheduledAudit = async () => {
+        try {
+          setIsLoadingScheduledAudit(true);
+          const result = await auditoriasProgramadasApi.getById(auditId);
+          if (!ignore && result) {
+            setScheduledAudit(result);
+          }
+        } finally {
+          if (!ignore) {
+            setIsLoadingScheduledAudit(false);
+          }
         }
-      } finally {
-        if (!ignore) {
-          setIsLoadingScheduledAudit(false);
+      };
+      loadScheduledAudit();
+    } else {
+      const loadCompletedAudit = async () => {
+        try {
+          setIsLoadingScheduledAudit(true);
+          const result = await auditoriasApi.getById(auditId);
+          if (!ignore && result) {
+            setScheduledAudit(result);
+          }
+        } finally {
+          if (!ignore) {
+            setIsLoadingScheduledAudit(false);
+          }
         }
-      }
-    };
-
-    loadScheduledAudit();
+      };
+      loadCompletedAudit();
+    }
 
     return () => {
       ignore = true;
@@ -78,7 +94,65 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
   }, [auditId, isScheduled]);
 
   const scheduledData: any = scheduledAudit ?? {};
-  const data: any = isScheduled ? scheduledData : {};
+  
+  // Normalización de datos para modo completado (logs) vs programado
+  const data: any = isScheduled
+    ? scheduledData
+    : {
+        ...scheduledAudit,
+        id: scheduledAudit?.id,
+        titulo:
+          scheduledAudit?.auditorias_programadas?.titulo ??
+          "Registro de Auditoría Individual",
+
+        // Activo
+        activo_codigo: scheduledAudit?.activos?.codigo_etiqueta,
+        activo_nombre: scheduledAudit?.activos?.nombre,
+
+        // Estado
+        estado_reportado: scheduledAudit?.estados_auditoria?.nombre,
+
+        // Auditor
+        auditor: scheduledAudit?.usuarios?.nombre_completo,
+        auditor_email: scheduledAudit?.usuarios?.email,
+
+        // Ubicación Jerárquica (Lógica robusta para cualquier tipo de activo)
+        campus:
+          scheduledAudit?.activos?.oficinas?.pisos?.edificios?.sedes?.nombre ??
+          scheduledAudit?.activos?.estantes?.pasillos?.almacenes?.sedes?.nombre ??
+          "—",
+        edificio:
+          scheduledAudit?.activos?.oficinas?.pisos?.edificios?.nombre ??
+          scheduledAudit?.activos?.estantes?.pasillos?.almacenes?.nombre ??
+          "—",
+        piso:
+          scheduledAudit?.activos?.oficinas?.pisos?.nombre ??
+          scheduledAudit?.activos?.estantes?.pasillos?.nombre ??
+          "—",
+        salon:
+          scheduledAudit?.activos?.oficinas?.nombre ??
+          scheduledAudit?.activos?.estantes?.nombre ??
+          "—",
+
+        // Metadatos de Sistema
+        created_at: scheduledAudit?.fecha_hora,
+        updated_at:
+          scheduledAudit?.updated_at ??
+          scheduledAudit?.auditorias_programadas?.updated_at,
+        fecha_inicio:
+          scheduledAudit?.fecha_inicio ??
+          scheduledAudit?.auditorias_programadas?.fecha_inicio,
+        fecha_fin:
+          scheduledAudit?.fecha_fin ??
+          scheduledAudit?.auditorias_programadas?.fecha_fin,
+
+        // Coordenadas (si existen)
+        lat: scheduledAudit?.lat,
+        lng: scheduledAudit?.lng,
+        coordenadas_gps: scheduledAudit?.coordenadas_gps,
+        coincidencia_ubicacion: scheduledAudit?.coincidencia_ubicacion ?? true,
+      };
+
   const formatDateTime = (value: string | null | undefined) => {
     if (!value) return "—";
     return new Date(value).toLocaleString("es-MX", {
@@ -97,7 +171,7 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
   const scheduledStatusLabel =
     scheduledData.estados_auditoria_programada?.nombre ?? "Pendiente";
   useEffect(() => {
-    if (!isScheduled) return;
+    if (!auditId) return;
 
     const oficinaId = scheduledData.oficina_id;
     const estanteId = scheduledData.estante_id;

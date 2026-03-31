@@ -661,7 +661,11 @@ export function RegistroAuditorias({ onAuditClick }: RegistroAuditoriasProps) {
               const IconComponent = estadoConfig.icon;
               return (
                 <motion.div key={log.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}
-                  onClick={() => onAuditClick(log.id)}
+                  onClick={() => {
+                    console.log('--- NAVEGACIÓN DESDE LOG ---');
+                    console.log('ID del Log:', log.id);
+                    onAuditClick(log.id);
+                  }}
                   className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all cursor-pointer">
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div>
