@@ -14,6 +14,7 @@ import { RolesGuard } from './auth/roles/roles.guard';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UbicacionesModule } from './ubicaciones/ubicaciones.module';
 import { AuditoriasprogramadasModule } from './auditorias-programadas/auditorias-programadas.module';
+import { AuditoriasModule } from './auditorias/auditorias.module';
 import { DepreciacionModule } from './depreciacion/depreciacion.module';
 
 function validateEnv(config: Record<string, unknown>) {
@@ -62,6 +63,7 @@ function validateEnv(config: Record<string, unknown>) {
     UbicacionesModule,
     LogsAuditoriaModule,
     AuditoriasprogramadasModule,
+    AuditoriasModule,
     DepreciacionModule,
   ],
   controllers: [AppController],

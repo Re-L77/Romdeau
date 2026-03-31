@@ -55,6 +55,7 @@ export class LogsAuditoriaService {
           },
           auditorias_programadas: {
             select: {
+              id: true,
               titulo: true,
             },
           },
@@ -89,6 +90,7 @@ export class LogsAuditoriaService {
         plan_auditoria: log.auditorias_programadas?.titulo ?? null,
         estado_reportado: log.estados_auditoria?.nombre ?? null,
         estado_reportado_id: log.estado_reportado_id,
+        auditoria_id: log.auditorias_programadas?.id ?? null,
       };
     });
 

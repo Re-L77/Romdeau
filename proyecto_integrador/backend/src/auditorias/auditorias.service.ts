@@ -244,7 +244,32 @@ export class AuditoriasService {
     const record = await this.prisma.logs_auditoria.findUnique({
       where: { id },
       include: {
-        activos: true,
+        activos: {
+          include: {
+            oficinas: {
+              include: {
+                pisos: {
+                  include: {
+                    edificios: {
+                      include: { sedes: true },
+                    },
+                  },
+                },
+              },
+            },
+            estantes: {
+              include: {
+                pasillos: {
+                  include: {
+                    almacenes: {
+                      include: { sedes: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         usuarios: {
           select: {
             id: true,
