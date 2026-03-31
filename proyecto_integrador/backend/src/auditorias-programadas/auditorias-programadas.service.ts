@@ -33,8 +33,32 @@ export class AuditoriasprogramadasService {
       include: {
         usuarios: true,
         estados_auditoria_programada: true,
-        oficinas: true,
-        estantes: true,
+        oficinas: {
+          include: {
+            pisos: {
+              include: {
+                edificios: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        estantes: {
+          include: {
+            pasillos: {
+              include: {
+                almacenes: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -44,8 +68,32 @@ export class AuditoriasprogramadasService {
       include: {
         usuarios: true,
         estados_auditoria_programada: true,
-        oficinas: true,
-        estantes: true,
+        oficinas: {
+          include: {
+            pisos: {
+              include: {
+                edificios: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        estantes: {
+          include: {
+            pasillos: {
+              include: {
+                almacenes: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { fecha_programada: 'asc' },
     });
@@ -57,8 +105,32 @@ export class AuditoriasprogramadasService {
       include: {
         usuarios: true,
         estados_auditoria_programada: true,
-        oficinas: true,
-        estantes: true,
+        oficinas: {
+          include: {
+            pisos: {
+              include: {
+                edificios: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        estantes: {
+          include: {
+            pasillos: {
+              include: {
+                almacenes: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         logs_auditoria: {
           include: {
             activos: {
@@ -92,8 +164,32 @@ export class AuditoriasprogramadasService {
       include: {
         usuarios: true,
         estados_auditoria_programada: true,
-        oficinas: true,
-        estantes: true,
+        oficinas: {
+          include: {
+            pisos: {
+              include: {
+                edificios: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        estantes: {
+          include: {
+            pasillos: {
+              include: {
+                almacenes: {
+                  include: {
+                    sedes: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { fecha_programada: 'asc' },
     });

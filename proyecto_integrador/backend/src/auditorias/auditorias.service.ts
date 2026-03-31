@@ -105,6 +105,62 @@ export class AuditoriasService {
             nombre: true,
             codigo_etiqueta: true,
             categoria_id: true,
+            oficina_id: true,
+            estante_id: true,
+            oficinas: {
+              select: {
+                id: true,
+                nombre: true,
+                piso_id: true,
+                pisos: {
+                  select: {
+                    id: true,
+                    nombre: true,
+                    edificio_id: true,
+                    edificios: {
+                      select: {
+                        id: true,
+                        nombre: true,
+                        sede_id: true,
+                        sedes: {
+                          select: {
+                            id: true,
+                            nombre: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            estantes: {
+              select: {
+                id: true,
+                nombre: true,
+                pasillo_id: true,
+                pasillos: {
+                  select: {
+                    id: true,
+                    nombre: true,
+                    almacen_id: true,
+                    almacenes: {
+                      select: {
+                        id: true,
+                        nombre: true,
+                        sede_id: true,
+                        sedes: {
+                          select: {
+                            id: true,
+                            nombre: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         usuarios: {
@@ -121,6 +177,62 @@ export class AuditoriasService {
             id: true,
             titulo: true,
             fecha_programada: true,
+            oficina_id: true,
+            estante_id: true,
+            oficinas: {
+              select: {
+                id: true,
+                nombre: true,
+                piso_id: true,
+                pisos: {
+                  select: {
+                    id: true,
+                    nombre: true,
+                    edificio_id: true,
+                    edificios: {
+                      select: {
+                        id: true,
+                        nombre: true,
+                        sede_id: true,
+                        sedes: {
+                          select: {
+                            id: true,
+                            nombre: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            estantes: {
+              select: {
+                id: true,
+                nombre: true,
+                pasillo_id: true,
+                pasillos: {
+                  select: {
+                    id: true,
+                    nombre: true,
+                    almacen_id: true,
+                    almacenes: {
+                      select: {
+                        id: true,
+                        nombre: true,
+                        sede_id: true,
+                        sedes: {
+                          select: {
+                            id: true,
+                            nombre: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },

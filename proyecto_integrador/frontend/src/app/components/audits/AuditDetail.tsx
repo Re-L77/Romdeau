@@ -96,6 +96,51 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
     : `${scheduledData.fecha ?? "—"} a las ${scheduledData.hora ?? "—"}`;
   const scheduledStatusLabel =
     scheduledData.estados_auditoria_programada?.nombre ?? "Pendiente";
+
+  // Extraer ubicación desde oficina o estante
+  const getScheduledLocation = () => {
+    const location = {
+      type: "unknown",
+      campus: "—",
+      level2: "—",
+      level3: "—",
+      level4: "—",
+      level2Label: "Edificio",
+      level3Label: "Piso",
+      level4Label: "Salón/Área",
+    };
+
+    if (scheduledData.oficinas?.pisos?.edificios?.sedes) {
+      location.type = "oficina";
+      location.level4 = scheduledData.oficinas.nombre ?? "—";
+      location.campus =
+        scheduledData.oficinas.pisos.edificios.sedes.nombre ?? "—";
+      location.level2 = scheduledData.oficinas.pisos.edificios.nombre ?? "—";
+      location.level3 = scheduledData.oficinas.pisos.nombre ?? "—";
+    } else if (scheduledData.estantes?.pasillos?.almacenes?.sedes) {
+      location.type = "estante";
+      location.level2Label = "Almacén";
+      location.level3Label = "Pasillo";
+      location.level4Label = "Estante";
+      location.level4 = scheduledData.estantes.nombre ?? "—";
+      location.campus =
+        scheduledData.estantes.pasillos.almacenes.sedes.nombre ?? "—";
+      location.level2 = scheduledData.estantes.pasillos.almacenes.nombre ?? "—";
+      location.level3 = scheduledData.estantes.pasillos.nombre ?? "—";
+    } else if (scheduledData.estante_id) {
+      location.type = "estante";
+      location.level2Label = "Almacén";
+      location.level3Label = "Pasillo";
+      location.level4Label = "Estante";
+    } else if (scheduledData.oficina_id) {
+      location.type = "oficina";
+    }
+
+    return location;
+  };
+
+  const scheduledLocation = getScheduledLocation();
+
   useEffect(() => {
     if (!isScheduled) return;
 
@@ -223,7 +268,7 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
         )}
 
         {(!isScheduled || !isLoadingScheduledAudit) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 auto-rows-max lg:auto-rows-auto">
             {/* Left Column */}
             <div className="space-y-6">
               {/* Main Info Card */}
@@ -234,12 +279,29 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
               >
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex-1">
-                    <p className="text-sm text-gray-500 dark:text-gray-500 mb-2">
-                      ID de Auditoría
-                    </p>
-                    <h2 className="text-2xl font-bold mb-4 dark:text-white">
-                      {data.id ? data.id.substring(0, 13) + "..." : "—"}
+                    <h2 className="text-3xl font-bold mb-2 dark:text-white">
+                      {isScheduled
+                        ? (scheduledData.titulo ?? "—")
+                        : (data.activo_nombre ?? "—")}
                     </h2>
+                    {isScheduled && scheduledData.descripcion && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        {scheduledData.descripcion}
+                      </p>
+                    )}
+                    {isScheduled && (
+                      <div className="flex flex-wrap gap-2">
+                        {scheduledData.oficinas ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                            Oficina: {scheduledData.oficinas.nombre}
+                          </span>
+                        ) : scheduledData.estantes ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400">
+                            Estante: {scheduledData.estantes.nombre}
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                   {isScheduled ? (
                     <div className="px-6 py-3 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-full font-semibold border-2 border-blue-200 dark:border-blue-700/30">
@@ -275,40 +337,43 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-gray-500 dark:text-gray-500 w-24">
-                        Campus:
+                        Sede:
                       </span>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {isScheduled ? scheduledLocation.campus : data.campus}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-500 w-24">
                         {isScheduled
-                          ? (scheduledData.campus ?? "—")
-                          : data.campus}
+                          ? `${scheduledLocation.level2Label}:`
+                          : "Edificio:"}
+                      </span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {isScheduled ? scheduledLocation.level2 : data.edificio}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-gray-500 dark:text-gray-500 w-24">
-                        Edificio:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
                         {isScheduled
-                          ? (scheduledData.edificio ?? "—")
-                          : data.edificio}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-500 w-24">
-                        Piso:
+                          ? `${scheduledLocation.level3Label}:`
+                          : "Piso:"}
                       </span>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {isScheduled ? (scheduledData.piso ?? "—") : data.piso}
+                        {isScheduled ? scheduledLocation.level3 : data.piso}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-gray-500 dark:text-gray-500 w-24">
-                        Salón/Área:
+                        {isScheduled
+                          ? `${scheduledLocation.level4Label}:`
+                          : "Salón/Área:"}
                       </span>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
                         {isScheduled
                           ? (scheduledData.oficinas?.nombre ??
                             scheduledData.estantes?.nombre ??
+                            scheduledLocation.level4 ??
                             scheduledData.salon ??
                             "—")
                           : data.salon}

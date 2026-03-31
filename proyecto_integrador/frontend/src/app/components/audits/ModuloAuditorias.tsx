@@ -74,7 +74,7 @@ export function ModuloAuditorias({
   const [estadoFilter, setEstadoFilter] = useState("all");
   const [auditorFilter, setAuditorFilter] = useState("all");
   const [edificioFilter, setEdificioFilter] = useState("all");
-  const [campusFilter, setCampusFilter] = useState("all");
+  const [sedeFilter, setSedeFilter] = useState("all");
 
   const [auditores, setAuditores] = useState<any[]>([]);
   const [edificios, setEdificios] = useState<any[]>([]);
@@ -151,7 +151,7 @@ export function ModuloAuditorias({
     setEstadoFilter("all");
     setAuditorFilter("all");
     setEdificioFilter("all");
-    setCampusFilter("all");
+    setSedeFilter("all");
   };
 
   const filteredAudits = scheduledAudits.filter((audit) => {
@@ -178,9 +178,9 @@ export function ModuloAuditorias({
       if (ubicacion.toLowerCase() !== edificioFilter) return false;
     }
 
-    if (campusFilter !== "all") {
+    if (sedeFilter !== "all") {
       const ubicacion = audit.oficinas?.nombre ?? audit.estantes?.nombre ?? "";
-      if (ubicacion.toLowerCase() !== campusFilter) return false;
+      if (ubicacion.toLowerCase() !== sedeFilter) return false;
     }
 
     return true;
@@ -272,11 +272,11 @@ export function ModuloAuditorias({
               ))}
             </select>
             <select
-              value={campusFilter}
-              onChange={(e) => setCampusFilter(e.target.value)}
+              value={sedeFilter}
+              onChange={(e) => setSedeFilter(e.target.value)}
               className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-colors appearance-none text-center"
             >
-              <option value="all">Campus: todos</option>
+              <option value="all">Sede: todas</option>
               {sedes.map((sede: any) => (
                 <option key={sede.id} value={sede.nombre.toLowerCase()}>
                   {sede.nombre}
