@@ -1,67 +1,90 @@
-import { memo, useMemo } from 'react';
-import { motion } from 'motion/react';
-<<<<<<< HEAD
-import { TrendingDown } from 'lucide-react';
+import { memo, useMemo } from "react";
+import { motion } from "motion/react";
+import { TrendingDown } from "lucide-react";
 import {
   ResponsiveContainer,
-  AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine,
-  BarChart, Bar, Cell, LabelList,
-  PieChart, Pie, Legend,
-} from 'recharts';
-import { FinancieroDto, GraficasDto } from '../../../hooks/useDashboard';
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ReferenceLine,
+  BarChart,
+  Bar,
+  Cell,
+  LabelList,
+  PieChart,
+  Pie,
+  Legend,
+} from "recharts";
+import { FinancieroDto, GraficasDto } from "../../../hooks/useDashboard";
 
 interface FinancialWidgetsProps {
   financiero: FinancieroDto | null;
   graficas: GraficasDto | null;
 }
-=======
-import { TrendingUp, TrendingDown, DollarSign, MapPin, ShieldCheck } from 'lucide-react';
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { useFinancialSummary } from '../../hooks/useFinancialSummary';
->>>>>>> sofia
 
 const ESTADO_COLORS: Record<string, string> = {
-  'Bueno': '#10b981',
-  'Activo': '#10b981',
-  'Operativo': '#10b981',
-  'Mantenimiento': '#f59e0b',
-  'En reparación': '#f59e0b',
-  'Baja': '#ef4444',
-  'Dado de baja': '#ef4444',
-  'Deteriorado': '#f97316',
+  Bueno: "#10b981",
+  Activo: "#10b981",
+  Operativo: "#10b981",
+  Mantenimiento: "#f59e0b",
+  "En reparación": "#f59e0b",
+  Baja: "#ef4444",
+  "Dado de baja": "#ef4444",
+  Deteriorado: "#f97316",
 };
-const FALLBACK_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#3b82f6'];
+const FALLBACK_COLORS = [
+  "#6366f1",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#f59e0b",
+  "#3b82f6",
+];
 
-<<<<<<< HEAD
-const BAR_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'];
+const BAR_COLORS = [
+  "#6366f1",
+  "#8b5cf6",
+  "#a78bfa",
+  "#c4b5fd",
+  "#ddd6fe",
+  "#ede9fe",
+];
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
-=======
-export function FinancialWidgets() {
-  const { data: summary, loading } = useFinancialSummary();
-
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
-
-  const today = new Date();
-  const currentMonth = today.toLocaleDateString('es-ES', { month: 'long' });
-  const currentYear = today.getFullYear();
-
-  if (loading || !summary) return <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-3xl animate-pulse" />;
->>>>>>> sofia
 
 // ─── Custom PieChart Label ───────────────────────────────────────────────────
 const RADIAN = Math.PI / 180;
-function PieCustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) {
+function PieCustomLabel({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  percent,
+}: any) {
   if (percent < 0.05) return null;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   return (
-<<<<<<< HEAD
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold">
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight="bold"
+    >
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
@@ -74,114 +97,6 @@ function AuditTooltip({ active, payload, label }: any) {
     <div className="bg-gray-900 border border-gray-700 rounded-xl p-3 shadow-xl text-white text-sm">
       <p className="font-semibold mb-1">{label}</p>
       <p className="text-indigo-300">{payload[0].value} auditorías</p>
-=======
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Depreciación Mensual / Inventario Total */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="lg:col-span-2 bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-gray-100 dark:border-white/5 p-6 md:p-8 relative overflow-hidden"
-      >
-        <div className="mb-6">
-          <h3 className="text-xl font-bold mb-1 dark:text-white">Inventario Financiero</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Actualizado a {currentMonth} {currentYear}</p>
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 opacity-10 dark:opacity-5 h-1/2">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#000000"
-                strokeWidth={3}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-4">
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Valor Inventario Total</p>
-              <h2 className="text-4xl md:text-5xl font-black dark:text-white tracking-tight">
-                {formatCurrency(summary.valorTotalAdquisicion)}
-              </h2>
-              <p className="text-sm text-blue-500 font-bold mt-2">
-                {summary.totalActivos} activos registrados en auditoría
-              </p>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-500/20 rounded-full border border-emerald-100 dark:border-emerald-500/30">
-              <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">MAESTRO OK</span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Depreciación Acumulada */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-gray-100 dark:border-white/5 p-6 md:p-8 flex flex-col justify-between"
-      >
-        <div>
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Depreciación Acumulada</p>
-              <h3 className="text-2xl md:text-3xl font-bold dark:text-white">{formatCurrency(summary.depreciacionAcumulada)}</h3>
-            </div>
-            <div className="w-12 h-12 bg-red-50 dark:bg-red-500/10 rounded-2xl flex items-center justify-center border border-red-100 dark:border-red-500/20">
-              <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2 mb-4">
-            <span className="text-2xl font-black text-red-500">{summary.porcentajeDepreciado}%</span>
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Desgaste</span>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-gray-100 dark:border-white/5">
-          <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-gray-400 uppercase tracking-wider">Valor en Libros</span>
-            <span className="text-emerald-500">{formatCurrency(summary.valorEnLibros)}</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Alerta de Garantías Críticas (Simulado) */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.35 }}
-        className="lg:col-span-3 bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-gray-100 dark:border-white/5 p-8 relative overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 p-12 opacity-5 dark:opacity-10">
-          <ShieldCheck className="w-32 h-32 text-gray-900 dark:text-white" />
-        </div>
-
-        <div className="relative z-10">
-          <h4 className="text-gray-900 dark:text-white font-bold text-xl mb-6">Estado de Cobertura Crítica</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-widest mb-2">Garantías Vigentes</p>
-              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{summary.garantias.vigentes}</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-widest mb-2">Vencimientos Hoy</p>
-              <p className="text-3xl font-black text-orange-600 dark:text-orange-400">{summary.garantias.criticas}</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-widest mb-2">Expiradas</p>
-              <p className="text-3xl font-black text-red-600 dark:text-red-500">{summary.garantias.vencidas}</p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
->>>>>>> sofia
     </div>
   );
 }
@@ -197,24 +112,43 @@ function DeptTooltip({ active, payload, label }: any) {
   );
 }
 
-export const FinancialWidgets = memo(function FinancialWidgets({ financiero, graficas }: FinancialWidgetsProps) {
+export const FinancialWidgets = memo(function FinancialWidgets({
+  financiero,
+  graficas,
+}: FinancialWidgetsProps) {
   const currentMonthIndex = new Date().getMonth();
-  const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const monthNames = [
+    "Ene",
+    "Feb",
+    "Mar",
+    "Abr",
+    "May",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dic",
+  ];
 
   // Sort dept data desc
-  const deptData = useMemo(() =>
-    [...(graficas?.activosPorDepartamento || [])].sort((a, b) => b.cantidad - a.cantidad),
-    [graficas?.activosPorDepartamento]
+  const deptData = useMemo(
+    () =>
+      [...(graficas?.activosPorDepartamento || [])].sort(
+        (a, b) => b.cantidad - a.cantidad,
+      ),
+    [graficas?.activosPorDepartamento],
   );
 
-  const estadoData = useMemo(() =>
-    graficas?.activosPorEstado || [],
-    [graficas?.activosPorEstado]
+  const estadoData = useMemo(
+    () => graficas?.activosPorEstado || [],
+    [graficas?.activosPorEstado],
   );
 
-  const auditData = useMemo(() =>
-    graficas?.auditoriasPorMes || [],
-    [graficas?.auditoriasPorMes]
+  const auditData = useMemo(
+    () => graficas?.auditoriasPorMes || [],
+    [graficas?.auditoriasPorMes],
   );
 
   const totalActivos = estadoData.reduce((s, e) => s + e.cantidad, 0);
@@ -235,8 +169,12 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
           className="lg:col-span-2 bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 md:p-8"
         >
           <div className="mb-6">
-            <h3 className="text-xl font-bold mb-1 dark:text-white">Auditorías por Mes</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Actividad de auditoría — año en curso</p>
+            <h3 className="text-xl font-bold mb-1 dark:text-white">
+              Auditorías por Mes
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Actividad de auditoría — año en curso
+            </p>
           </div>
           {auditData.length === 0 ? (
             <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-600 text-sm">
@@ -244,19 +182,41 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={auditData} margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
+              <AreaChart
+                data={auditData}
+                margin={{ top: 8, right: 16, left: -16, bottom: 0 }}
+              >
                 <defs>
                   <linearGradient id="auditGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" strokeOpacity={0.5} />
-                <XAxis dataKey="mes" tick={{ fill: '#9ca3af', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fill: '#9ca3af', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e5e7eb"
+                  strokeOpacity={0.5}
+                />
+                <XAxis
+                  dataKey="mes"
+                  tick={{ fill: "#9ca3af", fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fill: "#9ca3af", fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip content={<AuditTooltip />} />
                 {/* Highlight current month */}
-                <ReferenceLine x={monthNames[currentMonthIndex]} stroke="#6366f1" strokeDasharray="4 4" strokeOpacity={0.7} />
+                <ReferenceLine
+                  x={monthNames[currentMonthIndex]}
+                  stroke="#6366f1"
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.7}
+                />
                 <Area
                   type="monotone"
                   dataKey="cantidad"
@@ -268,15 +228,21 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
                     return (
                       <circle
                         key={props.key}
-                        cx={props.cx} cy={props.cy}
+                        cx={props.cx}
+                        cy={props.cy}
                         r={isCurrent ? 6 : 4}
-                        fill={isCurrent ? '#6366f1' : 'white'}
+                        fill={isCurrent ? "#6366f1" : "white"}
                         stroke="#6366f1"
                         strokeWidth={isCurrent ? 3 : 1.5}
                       />
                     );
                   }}
-                  activeDot={{ r: 7, fill: '#6366f1', stroke: 'white', strokeWidth: 2 }}
+                  activeDot={{
+                    r: 7,
+                    fill: "#6366f1",
+                    stroke: "white",
+                    strokeWidth: 2,
+                  }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -295,10 +261,16 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
               <div className="w-9 h-9 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
                 <TrendingDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </div>
-              <span className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 font-semibold">Depreciación</span>
+              <span className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 font-semibold">
+                Depreciación
+              </span>
             </div>
-            <h3 className="text-3xl font-bold dark:text-white mb-1 tabular-nums">{pctDep.toFixed(1)}%</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">del valor original depreciado</p>
+            <h3 className="text-3xl font-bold dark:text-white mb-1 tabular-nums">
+              {pctDep.toFixed(1)}%
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              del valor original depreciado
+            </p>
           </div>
           <div className="mt-6 space-y-3">
             {/* Progress bar */}
@@ -307,15 +279,19 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(pctDep, 100)}%` }}
                 transition={{ duration: 1, delay: 0.5 }}
-                className={`h-full rounded-full ${pctDep > 50 ? 'bg-red-500' : pctDep > 25 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                className={`h-full rounded-full ${pctDep > 50 ? "bg-red-500" : pctDep > 25 ? "bg-amber-500" : "bg-emerald-500"}`}
               />
             </div>
             <div className="flex justify-between text-xs text-gray-400">
-              <span>0%</span><span>50%</span><span>100%</span>
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
             </div>
             <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Estimado mensual</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  Estimado mensual
+                </span>
                 <span className="font-bold text-red-500 dark:text-red-400 tabular-nums">
                   -{formatCurrency(monthlyDep)}
                 </span>
@@ -335,8 +311,12 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
           className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 md:p-8"
         >
           <div className="mb-6">
-            <h3 className="text-xl font-bold mb-1 dark:text-white">Activos por Departamento</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Distribución de custodios — mayor a menor</p>
+            <h3 className="text-xl font-bold mb-1 dark:text-white">
+              Activos por Departamento
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Distribución de custodios — mayor a menor
+            </p>
           </div>
           {deptData.length === 0 ? (
             <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-600 text-sm">
@@ -344,16 +324,42 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={deptData} layout="vertical" margin={{ top: 0, right: 40, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" strokeOpacity={0.4} />
-                <XAxis type="number" allowDecimals={false} tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="departamento" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} width={90} />
+              <BarChart
+                data={deptData}
+                layout="vertical"
+                margin={{ top: 0, right: 40, left: 8, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={false}
+                  stroke="#e5e7eb"
+                  strokeOpacity={0.4}
+                />
+                <XAxis
+                  type="number"
+                  allowDecimals={false}
+                  tick={{ fill: "#9ca3af", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="departamento"
+                  tick={{ fill: "#6b7280", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={90}
+                />
                 <Tooltip content={<DeptTooltip />} />
                 <Bar dataKey="cantidad" radius={[0, 6, 6, 0]} maxBarSize={24}>
                   {deptData.map((_, i) => (
                     <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
                   ))}
-                  <LabelList dataKey="cantidad" position="right" style={{ fill: '#6b7280', fontSize: 11, fontWeight: 600 }} />
+                  <LabelList
+                    dataKey="cantidad"
+                    position="right"
+                    style={{ fill: "#6b7280", fontSize: 11, fontWeight: 600 }}
+                  />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -368,9 +374,15 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
           className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 md:p-8"
         >
           <div className="mb-4">
-            <h3 className="text-xl font-bold mb-1 dark:text-white">Activos por Estado</h3>
+            <h3 className="text-xl font-bold mb-1 dark:text-white">
+              Activos por Estado
+            </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Total: <span className="font-bold text-gray-800 dark:text-white">{totalActivos}</span> activos
+              Total:{" "}
+              <span className="font-bold text-gray-800 dark:text-white">
+                {totalActivos}
+              </span>{" "}
+              activos
             </p>
           </div>
           {estadoData.length === 0 ? (
@@ -394,21 +406,36 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
                   {estadoData.map((entry, i) => (
                     <Cell
                       key={entry.estado}
-                      fill={ESTADO_COLORS[entry.estado] || FALLBACK_COLORS[i % FALLBACK_COLORS.length]}
+                      fill={
+                        ESTADO_COLORS[entry.estado] ||
+                        FALLBACK_COLORS[i % FALLBACK_COLORS.length]
+                      }
                     />
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(val: number, name: string) => [`${val} (${((val / totalActivos) * 100).toFixed(1)}%)`, name]}
-                  contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: '12px', color: 'white', fontSize: '13px' }}
+                  formatter={(val: number, name: string) => [
+                    `${val} (${((val / totalActivos) * 100).toFixed(1)}%)`,
+                    name,
+                  ]}
+                  contentStyle={{
+                    background: "#111827",
+                    border: "1px solid #374151",
+                    borderRadius: "12px",
+                    color: "white",
+                    fontSize: "13px",
+                  }}
                 />
-                <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                <Legend
+                  iconType="circle"
+                  iconSize={10}
+                  wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
+                />
               </PieChart>
             </ResponsiveContainer>
           )}
         </motion.div>
       </div>
-
     </div>
   );
 });

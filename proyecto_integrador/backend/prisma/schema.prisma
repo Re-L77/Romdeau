@@ -316,6 +316,7 @@ model proveedores {
   categoria             String?
   descripcion_servicios String?
   calificacion          String?
+  notas                 String?
   datos_financieros     datos_financieros[]
 }
 
@@ -366,6 +367,7 @@ model usuarios {
   logs_auditoria                                                         logs_auditoria[]
   movimientos_activos_movimientos_activos_custodio_anterior_idTousuarios movimientos_activos[]    @relation("movimientos_activos_custodio_anterior_idTousuarios")
   movimientos_activos_movimientos_activos_custodio_nuevo_idTousuarios    movimientos_activos[]    @relation("movimientos_activos_custodio_nuevo_idTousuarios")
+  notificaciones                                                         notificaciones[]
   departamentos                                                          departamentos?           @relation(fields: [departamento_id], references: [id], onUpdate: NoAction)
   roles_usuario                                                          roles_usuario            @relation(fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
@@ -389,36 +391,4 @@ model departamentos {
   nombre      String     @unique @db.VarChar(100)
   descripcion String?
   usuarios    usuarios[]
-}
-
-model auditorias_programadas {
-  id                           String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  titulo                       String                       @db.VarChar(255)
-  descripcion                  String?
-  fecha_programada             DateTime                     @db.Timestamptz(6)
-  fecha_inicio                 DateTime?                    @db.Timestamptz(6)
-  fecha_fin                    DateTime?                    @db.Timestamptz(6)
-  estado_id                    Int                          @default(1) @db.SmallInt
-  auditor_id                   String                       @db.Uuid
-  oficina_id                   String?                      @db.Uuid
-  estante_id                   String?                      @db.Uuid
-  created_at                   DateTime?                    @default(now()) @db.Timestamptz(6)
-  updated_at                   DateTime?                    @default(now()) @db.Timestamptz(6)
-  estados_auditoria_programada estados_auditoria_programada @relation(fields: [estado_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estado")
-  estantes                     estantes?                    @relation(fields: [estante_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_estante")
-  oficinas                     oficinas?                    @relation(fields: [oficina_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_oficina")
-  usuarios                     usuarios                     @relation(fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aud_usuario")
-  logs_auditoria               logs_auditoria[]
-
-  @@index([auditor_id], map: "idx_auditorias_auditor")
-  @@index([estado_id], map: "idx_auditorias_estado")
-  @@index([estante_id], map: "idx_auditorias_estante")
-  @@index([oficina_id], map: "idx_auditorias_oficina")
-}
-
-model estados_auditoria_programada {
-  id                     Int                      @id @db.SmallInt
-  nombre                 String                   @unique @db.VarChar(50)
-  descripcion            String?
-  auditorias_programadas auditorias_programadas[]
 }

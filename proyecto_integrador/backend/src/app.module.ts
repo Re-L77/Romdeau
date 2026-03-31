@@ -58,14 +58,11 @@ function validateEnv(config: Record<string, unknown>) {
     ActivosModule,
     UsuariosModule,
     DepartamentosModule,
-<<<<<<< HEAD
     DashboardModule,
-=======
     UbicacionesModule,
     LogsAuditoriaModule,
     AuditoriasprogramadasModule,
     DepreciacionModule,
->>>>>>> sofia
   ],
   controllers: [AppController],
   providers: [
@@ -80,4 +77,4 @@ function validateEnv(config: Record<string, unknown>) {
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
