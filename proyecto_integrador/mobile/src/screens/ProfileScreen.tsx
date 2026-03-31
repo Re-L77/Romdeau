@@ -26,6 +26,15 @@ import {
   Camera,
   Save,
   X,
+  Moon,
+  Sun,
+  Bell,
+  Lock,
+  HelpCircle,
+  Info,
+  Shield,
+  Database,
+  ChevronRight,
 } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -46,7 +55,7 @@ const formatDate = (dateStr?: string | null) => {
 
 export default function ProfileScreen() {
   const { user, logout, validateSession } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark, setThemeMode, themeMode } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -54,6 +63,18 @@ export default function ProfileScreen() {
   const [apellidoPaterno, setApellidoPaterno] = useState("");
   const [apellidoMaterno, setApellidoMaterno] = useState("");
   const [telefono, setTelefono] = useState("");
+  const [notifications, setNotifications] = useState(true);
+
+  const toggleTheme = () => {
+    setThemeMode(isDark ? "light" : "dark");
+  };
+
+  const handleChangePassword = () => {
+    Alert.alert(
+      "Cambiar Contraseña",
+      "Esta funcionalidad estaría implementada en el backend",
+    );
+  };
 
   // Refrescar datos del usuario al abrir el perfil
   useEffect(() => {
@@ -427,6 +448,277 @@ export default function ProfileScreen() {
           )}
         </View>
 
+        {/* Configuración */}
+        <View style={styles.settingsContainer}>
+          {/* Preferencias */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              Preferencias
+            </Text>
+            <View
+              style={[
+                styles.sectionContent,
+                { backgroundColor: colors.surface },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.settingItem,
+                  { borderBottomWidth: 1, borderBottomColor: colors.border },
+                ]}
+                onPress={toggleTheme}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.settingIcon,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  {isDark ? (
+                    <Moon size={20} color={colors.primary} />
+                  ) : (
+                    <Sun size={20} color={colors.primary} />
+                  )}
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Modo Oscuro
+                  </Text>
+                  <Text
+                    style={[styles.settingValue, { color: colors.textMuted }]}
+                  >
+                    {isDark ? "Activado" : "Desactivado"}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.toggleSwitch,
+                    {
+                      backgroundColor: isDark ? colors.primary : colors.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleKnob,
+                      {
+                        transform: [{ translateX: isDark ? 20 : 0 }],
+                      },
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingItem]}
+                onPress={() => setNotifications(!notifications)}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.settingIcon,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  <Bell size={20} color={colors.primary} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Notificaciones
+                  </Text>
+                  <Text
+                    style={[styles.settingValue, { color: colors.textMuted }]}
+                  >
+                    {notifications ? "Activadas" : "Desactivadas"}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.toggleSwitch,
+                    {
+                      backgroundColor: notifications
+                        ? colors.primary
+                        : colors.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleKnob,
+                      {
+                        transform: [{ translateX: notifications ? 20 : 0 }],
+                      },
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Seguridad */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              Seguridad
+            </Text>
+            <View
+              style={[
+                styles.sectionContent,
+                { backgroundColor: colors.surface },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.settingItem,
+                  { borderBottomWidth: 1, borderBottomColor: colors.border },
+                ]}
+                onPress={handleChangePassword}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.settingIcon,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  <Lock size={20} color={colors.primary} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Cambiar Contraseña
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingItem]}
+                onPress={() =>
+                  Alert.alert(
+                    "Privacidad",
+                    "• Cifrado de extremo a extremo\n• Cumplimiento GDPR\n• Datos seguros en servidores",
+                  )
+                }
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.settingIcon,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  <Shield size={20} color={colors.primary} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Privacidad
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Soporte */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              Soporte
+            </Text>
+            <View
+              style={[
+                styles.sectionContent,
+                { backgroundColor: colors.surface },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.settingItem,
+                  { borderBottomWidth: 1, borderBottomColor: colors.border },
+                ]}
+                onPress={() =>
+                  Alert.alert(
+                    "Correos de Administradores",
+                    "Contacta al equipo administrativo:\n\nadmin@romdeau.com\nsupport@romdeau.com",
+                  )
+                }
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.settingIcon,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  <HelpCircle size={20} color={colors.primary} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Centro de Administración
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.settingItem,
+                  { borderBottomWidth: 1, borderBottomColor: colors.border },
+                ]}
+                onPress={() =>
+                  Alert.alert(
+                    "Romdeau Audit",
+                    "Versión 1.0.0\n\n© 2026 Romdeau",
+                  )
+                }
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.settingIcon,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  <Info size={20} color={colors.primary} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Acerca de
+                  </Text>
+                  <Text
+                    style={[styles.settingValue, { color: colors.textMuted }]}
+                  >
+                    v1.0.0
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingItem]}
+                onPress={() =>
+                  Alert.alert("Limpiar Caché", "¿Eliminar datos temporales?")
+                }
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.settingIcon,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  <Database size={20} color={colors.primary} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Limpiar Caché
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
         <TouchableOpacity
           style={[styles.logoutButton, { backgroundColor: "#fee2e2" }]}
           onPress={logout}
@@ -619,5 +911,63 @@ const styles = StyleSheet.create({
     color: "#b91c1c",
     fontSize: 16,
     fontWeight: "600",
+  },
+  settingsContainer: {
+    paddingHorizontal: 20,
+    marginVertical: 16,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  sectionContent: {
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  settingItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    gap: 12,
+  },
+  settingIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  settingInfo: {
+    flex: 1,
+  },
+  settingLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  settingValue: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  toggleSwitch: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  toggleKnob: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
 });
