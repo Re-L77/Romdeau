@@ -169,7 +169,14 @@ export class AuthService {
   }
 
   async resetPassword(password: string, refreshToken: string) {
-    const { error: sessionError } = await this.supabase.auth.refreshSession({
+    // Per-request client to avoid race conditions with shared instance
+    const client = createClient(
+      this.configService.get<string>('SUPABASE_URL')!,
+      this.configService.get<string>('SUPABASE_ANON_KEY')!,
+      { auth: { persistSession: false } },
+    );
+
+    const { error: sessionError } = await client.auth.refreshSession({
       refresh_token: refreshToken,
     });
     if (sessionError) {
@@ -178,7 +185,7 @@ export class AuthService {
       );
     }
 
-    const { error } = await this.supabase.auth.updateUser({ password });
+    const { error } = await client.auth.updateUser({ password });
     if (error) throw new BadRequestException(error.message);
 
     return { message: 'Contraseña actualizada exitosamente.' };
