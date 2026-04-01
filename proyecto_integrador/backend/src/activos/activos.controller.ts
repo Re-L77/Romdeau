@@ -62,9 +62,29 @@ export class ActivosController {
     throw new BadRequestException(`${fieldName} debe ser true o false`);
   }
 
+  @Get('categorias/list')
+  getCategorias() {
+    return this.activosService.getCategorias();
+  }
+
+  @Get('estados/list')
+  getEstados() {
+    return this.activosService.getEstados();
+  }
+
   @Get(':id/trazabilidad')
   getTrazabilidad(@Param('id') id: string) {
     return this.activosService.getTrazabilidad(id);
+  }
+
+  @Post()
+  create(@Body() data: any) {
+    return this.activosService.create(data);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.activosService.update(id, data);
   }
 
   @Get()
