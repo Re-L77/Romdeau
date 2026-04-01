@@ -31,7 +31,6 @@ export function AuditoriasProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!selectedAuditId) return;
@@ -63,20 +62,11 @@ export function AuditoriasProvider({ children }: { children: ReactNode }) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
-      }
       return;
     }
 
     // Cargar auditorías iniciales
     refresh();
-
-    // Polling de respaldo cada 2 min; realtime cubre cambios inmediatos.
-    pollingRef.current = setInterval(() => {
-      refresh();
-    }, 120000);
 
     // Refrescar al volver de background
     const appStateListener = AppState.addEventListener("change", (state) => {
@@ -105,10 +95,6 @@ export function AuditoriasProvider({ children }: { children: ReactNode }) {
     return () => {
       supabase.removeChannel(channel);
       channelRef.current = null;
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
-      }
       appStateListener.remove();
     };
   }, [isAuthenticated, user?.id, refresh]);

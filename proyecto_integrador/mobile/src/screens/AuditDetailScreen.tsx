@@ -30,6 +30,7 @@ import { useAuditorias } from "../contexts/AuditoriasContext";
 import { auditoriasApi } from "@/api/auditorias";
 import { activosApi, ActivoDetalle } from "@/api/activos";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "@/config/supabase";
 import {
   getAuditoriaStatusLabel,
   resolveAuditoriaStatus,
@@ -51,6 +52,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   const [isAssetsLoading, setIsAssetsLoading] = useState(false);
   const [assetsTotal, setAssetsTotal] = useState(0);
   const [auditedAssetIds, setAuditedAssetIds] = useState<string[]>([]);
+  const [logsRealtimeTick, setLogsRealtimeTick] = useState(0);
   const previousEstadoRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -64,12 +66,31 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
 
   useEffect(() => {
     refresh();
-    const pollId = setInterval(() => {
-      refresh();
-    }, 10000);
-
-    return () => clearInterval(pollId);
   }, [refresh]);
+
+  useEffect(() => {
+    if (!audit?.id) return;
+
+    const channel = supabase
+      .channel(`logs-auditoria-detail:auditoria=${audit.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "logs_auditoria",
+          filter: `auditoria=eq.${audit.id}`,
+        },
+        () => {
+          setLogsRealtimeTick((value) => value + 1);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [audit?.id]);
 
   useEffect(() => {
     if (!audit?.estado_id) return;
@@ -134,7 +155,14 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
     };
 
     loadAuditAssets();
-  }, [audit?.id, audit?.oficina_id, audit?.estante_id, audit?.auditor_id, user?.id]);
+  }, [
+    audit?.id,
+    audit?.oficina_id,
+    audit?.estante_id,
+    audit?.auditor_id,
+    user?.id,
+    logsRealtimeTick,
+  ]);
 
   if (!audit) {
     return (

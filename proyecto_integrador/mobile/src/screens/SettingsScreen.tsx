@@ -25,6 +25,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
 import { activosApi, ActivoDetalle } from "@/api/activos";
 import { auditoriasApi } from "@/api/auditorias";
+import { supabase } from "@/config/supabase";
 import { resolveAuditoriaStatus } from "../data/auditoriaStatus";
 
 type AuditProgressItem = {
@@ -47,6 +48,7 @@ export default function SettingsScreen() {
   const [items, setItems] = useState<AuditProgressItem[]>([]);
   const [expandedAuditIds, setExpandedAuditIds] = useState<string[]>([]);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [logsRealtimeTick, setLogsRealtimeTick] = useState(0);
 
   const activeAudits = useMemo(
     () =>
@@ -135,11 +137,35 @@ export default function SettingsScreen() {
     };
 
     loadProgress();
-  }, [activeAudits, user?.id, hasLoadedOnce]);
+  }, [activeAudits, user?.id, hasLoadedOnce, logsRealtimeTick]);
 
   useEffect(() => {
     setHasLoadedOnce(false);
     setItems([]);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`logs-auditoria-settings:auditor_id=${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "logs_auditoria",
+          filter: `auditor_id=eq.${user.id}`,
+        },
+        () => {
+          setLogsRealtimeTick((value) => value + 1);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   const toggleExpanded = (auditId: string) => {

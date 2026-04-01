@@ -23,6 +23,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useNotificaciones } from "../contexts/NotificacionesContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
 import { Alert } from "react-native";
+import { supabase } from "@/config/supabase";
 import {
   getAuditoriaStatusLabel,
   resolveAuditoriaStatus,
@@ -49,6 +50,7 @@ export default function HomeScreen() {
   const [userAssetsPending, setUserAssetsPending] = useState<number>(0);
   const [userAssetsAudited, setUserAssetsAudited] = useState<number>(0);
   const [userAssetsTotal, setUserAssetsTotal] = useState<number>(0);
+  const [logsRealtimeTick, setLogsRealtimeTick] = useState(0);
   const notifications = noLeidasCount;
   const headerGradient = isDark
     ? (["#0b1430", "#122452", "#1d3b82"] as const)
@@ -118,6 +120,30 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`logs-auditoria-home:auditor_id=${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "logs_auditoria",
+          filter: `auditor_id=eq.${user.id}`,
+        },
+        () => {
+          setLogsRealtimeTick((value) => value + 1);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     const loadUserProgress = async () => {
       if (!user?.id || activeAuditsForUser.length === 0) {
         setUserAssetsTotal(0);
@@ -184,7 +210,7 @@ export default function HomeScreen() {
     };
 
     loadUserProgress();
-  }, [activeAuditsForUser, user?.id]);
+  }, [activeAuditsForUser, user?.id, logsRealtimeTick]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
