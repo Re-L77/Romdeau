@@ -41,7 +41,7 @@ interface AuditStats {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, logout, validateSession } = useAuth();
+  const { user, validateSession } = useAuth();
   const { colors, isDark } = useTheme();
   const { noLeidasCount, notificaciones } = useNotificaciones();
   const { auditorias, refresh: refreshAuditorias } = useAuditorias();
@@ -155,7 +155,9 @@ export default function HomeScreen() {
         );
 
         const totalObjetivo = totalByScope.reduce((sum, n) => sum + n, 0);
-        const activeAuditIds = new Set(activeAuditsForUser.map((audit) => audit.id));
+        const activeAuditIds = new Set(
+          activeAuditsForUser.map((audit) => audit.id),
+        );
 
         const logs = await auditoriasApi.listarLogsPorAuditor(user.id);
         const activosAuditados = new Set(

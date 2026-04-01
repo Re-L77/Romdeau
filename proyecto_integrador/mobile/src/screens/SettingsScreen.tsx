@@ -6,15 +6,24 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { CheckCircle2, Clock3, ArrowRight, ClipboardList } from "lucide-react-native";
+import {
+  CheckCircle2,
+  Clock3,
+  ArrowRight,
+  ClipboardList,
+  ChevronDown,
+  ChevronUp,
+  Package,
+} from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
-import { activosApi } from "@/api/activos";
+import { activosApi, ActivoDetalle } from "@/api/activos";
 import { auditoriasApi } from "@/api/auditorias";
 import { resolveAuditoriaStatus } from "../data/auditoriaStatus";
 
@@ -25,6 +34,8 @@ type AuditProgressItem = {
   auditados: number;
   total: number;
   porcentaje: number;
+  activos: ActivoDetalle[];
+  activosAuditadosIds: string[];
 };
 
 export default function SettingsScreen() {
@@ -34,6 +45,7 @@ export default function SettingsScreen() {
   const { auditorias } = useAuditorias();
   const [isLoading, setIsLoading] = useState(false);
   const [items, setItems] = useState<AuditProgressItem[]>([]);
+  const [expandedAuditIds, setExpandedAuditIds] = useState<string[]>([]);
 
   const activeAudits = useMemo(
     () =>
@@ -70,6 +82,11 @@ export default function SettingsScreen() {
               oficinaId: audit.oficina_id,
               estanteId: audit.estante_id,
             });
+            const activos = await activosApi.listarPorUbicacion({
+              oficinaId: audit.oficina_id,
+              estanteId: audit.estante_id,
+              limit: 25,
+            });
 
             const auditadosSet = new Set(
               logs
@@ -91,6 +108,8 @@ export default function SettingsScreen() {
               auditados,
               total,
               porcentaje,
+              activos,
+              activosAuditadosIds: Array.from(auditadosSet),
             };
           }),
         );
@@ -106,6 +125,14 @@ export default function SettingsScreen() {
 
     loadProgress();
   }, [activeAudits, user?.id]);
+
+  const toggleExpanded = (auditId: string) => {
+    setExpandedAuditIds((current) =>
+      current.includes(auditId)
+        ? current.filter((id) => id !== auditId)
+        : [...current, auditId],
+    );
+  };
 
   return (
     <SafeAreaView
@@ -175,34 +202,120 @@ export default function SettingsScreen() {
           </View>
         ) : (
           items.map((item) => (
-            <TouchableOpacity
+            <View
               key={item.id}
               style={[styles.auditCard, { backgroundColor: colors.surface }]}
-              activeOpacity={0.85}
-              onPress={() => router.push(`/audit/${item.id}`)}
             >
-              <View style={styles.auditCardHeader}>
-                <Text style={[styles.auditTitle, { color: colors.text }]} numberOfLines={1}>
-                  {item.titulo}
-                </Text>
-                <ArrowRight size={16} color={colors.primary} />
-              </View>
-
-              <View
-                style={[
-                  styles.progressBarBg,
-                  { backgroundColor: colors.surfaceSecondary || "#e5e7eb" },
-                ]}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => toggleExpanded(item.id)}
               >
-                <View
-                  style={[styles.progressBarFill, { width: `${item.porcentaje}%` }]}
-                />
-              </View>
+                <View style={styles.auditCardHeader}>
+                  <Text style={[styles.auditTitle, { color: colors.text }]} numberOfLines={1}>
+                    {item.titulo}
+                  </Text>
+                  {expandedAuditIds.includes(item.id) ? (
+                    <ChevronUp size={18} color={colors.primary} />
+                  ) : (
+                    <ChevronDown size={18} color={colors.primary} />
+                  )}
+                </View>
 
-              <Text style={[styles.auditMeta, { color: colors.textSecondary }]}>
-                {item.auditados} auditados de {item.total} | {item.pendientes} por auditar
-              </Text>
-            </TouchableOpacity>
+                <View
+                  style={[
+                    styles.progressBarBg,
+                    { backgroundColor: colors.surfaceSecondary || "#e5e7eb" },
+                  ]}
+                >
+                  <View
+                    style={[styles.progressBarFill, { width: `${item.porcentaje}%` }]}
+                  />
+                </View>
+
+                <Text style={[styles.auditMeta, { color: colors.textSecondary }]}> 
+                  {item.auditados} auditados de {item.total} | {item.pendientes} por auditar
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.auditDetailButton}
+                activeOpacity={0.85}
+                onPress={() => router.push(`/audit/${item.id}`)}
+              >
+                <Text style={[styles.auditDetailButtonText, { color: colors.primary }]}> 
+                  Ver detalle de auditoria
+                </Text>
+                <ArrowRight size={14} color={colors.primary} />
+              </TouchableOpacity>
+
+              {expandedAuditIds.includes(item.id) && (
+                <View style={styles.assetsAccordionWrap}>
+                  {item.activos.length === 0 ? (
+                    <Text style={[styles.emptyAssetsText, { color: colors.textSecondary }]}> 
+                      No hay activos cargados para este alcance.
+                    </Text>
+                  ) : (
+                    item.activos.map((asset) => {
+                      const isAudited = item.activosAuditadosIds.includes(asset.id);
+                      const assetIdentifier = (asset.codigo_etiqueta || "").trim();
+
+                      return (
+                        <TouchableOpacity
+                          key={asset.id}
+                          style={[styles.assetRow, { backgroundColor: "rgba(59,130,246,0.06)" }]}
+                          activeOpacity={0.85}
+                          onPress={() => {
+                            if (!assetIdentifier) {
+                              Alert.alert(
+                                "Activo sin codigo",
+                                "Este activo no tiene codigo de etiqueta para abrir su vista detallada.",
+                              );
+                              return;
+                            }
+
+                            router.push(
+                              `/audit/${encodeURIComponent(assetIdentifier)}`,
+                            );
+                          }}
+                        >
+                          <View style={styles.assetIconWrap}>
+                            <Package
+                              size={16}
+                              color={isAudited ? "#10b981" : colors.primary}
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.assetTitle, { color: colors.text }]} numberOfLines={1}>
+                              {asset.nombre || "Activo sin nombre"}
+                            </Text>
+                            <Text style={[styles.assetMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+                              {asset.codigo_etiqueta || "Sin codigo"}
+                            </Text>
+                          </View>
+                          <View
+                            style={[
+                              styles.assetBadge,
+                              {
+                                backgroundColor: isAudited ? "#d1fae5" : "#fef3c7",
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.assetBadgeText,
+                                { color: isAudited ? "#065f46" : "#92400e" },
+                              ]}
+                            >
+                              {isAudited ? "Auditado" : "Pendiente"}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })
+                  )}
+                </View>
+              )}
+            </View>
           ))
         )}
 
@@ -320,6 +433,64 @@ const styles = StyleSheet.create({
   auditMeta: {
     fontSize: 12,
     fontWeight: "500",
+  },
+  auditDetailButton: {
+    marginTop: 10,
+    marginBottom: 2,
+    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  auditDetailButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  assetsAccordionWrap: {
+    gap: 8,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(59,130,246,0.14)",
+  },
+  emptyAssetsText: {
+    fontSize: 12,
+    fontWeight: "500",
+    paddingVertical: 4,
+  },
+  assetRow: {
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  assetIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.74)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  assetTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  assetMeta: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  assetBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  assetBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
   },
   loaderWrap: {
     alignItems: "center",

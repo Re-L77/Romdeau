@@ -12,15 +12,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { X, Search, Keyboard, ArrowRight } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuditorias } from "../contexts/AuditoriasContext";
+import { activosApi } from "@/api/activos";
+import { getMatchingActiveAuditId } from "../utils/auditScope";
 
 export default function ManualEntryScreen() {
   const router = useRouter();
   const { auditId } = useLocalSearchParams<{ auditId?: string }>();
   const { colors } = useTheme();
+  const { auditorias } = useAuditorias();
   const [assetId, setAssetId] = useState("");
   const [error, setError] = useState("");
+  const [isResolvingContext, setIsResolvingContext] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!assetId.trim()) {
       setError("Ingresa un ID de activo");
       return;
@@ -32,8 +37,28 @@ export default function ManualEntryScreen() {
     }
 
     console.log("⌨️ [LOG] ID ingresado manualmente:", assetId);
-    const query = auditId ? `?auditId=${encodeURIComponent(auditId)}` : "";
-    router.replace(`/audit/${assetId.trim().toUpperCase()}${query}`);
+    const normalized = assetId.trim().toUpperCase();
+
+    try {
+      setIsResolvingContext(true);
+      let resolvedAuditId: string | null = auditId || null;
+
+      if (!resolvedAuditId) {
+        const asset = await activosApi.obtenerPorIdentificador(normalized);
+        resolvedAuditId = getMatchingActiveAuditId(asset, auditorias);
+      }
+
+      const query = resolvedAuditId
+        ? `?auditId=${encodeURIComponent(resolvedAuditId)}`
+        : "";
+
+      router.replace(`/audit/${normalized}${query}`);
+    } catch (contextError) {
+      console.error("Error resolviendo contexto de auditoria manual:", contextError);
+      router.replace(`/audit/${normalized}`);
+    } finally {
+      setIsResolvingContext(false);
+    }
   };
 
   const recentIds = ["ACT-00045", "ACT-00044", "ACT-00043"];
@@ -116,26 +141,35 @@ export default function ManualEntryScreen() {
             style={[
               styles.submitButton,
               {
-                backgroundColor: assetId.trim()
+                backgroundColor: assetId.trim() && !isResolvingContext
                   ? colors.primary
                   : colors.border,
               },
             ]}
             onPress={handleSubmit}
-            disabled={!assetId.trim()}
+            disabled={!assetId.trim() || isResolvingContext}
             activeOpacity={0.8}
           >
             <Text
               style={[
                 styles.submitButtonText,
-                { color: assetId.trim() ? "#fff" : colors.textMuted },
+                {
+                  color:
+                    assetId.trim() && !isResolvingContext
+                      ? "#fff"
+                      : colors.textMuted,
+                },
               ]}
             >
-              Buscar Activo
+              {isResolvingContext ? "Verificando..." : "Buscar Activo"}
             </Text>
             <ArrowRight
               size={20}
-              color={assetId.trim() ? "#fff" : colors.textMuted}
+              color={
+                assetId.trim() && !isResolvingContext
+                  ? "#fff"
+                  : colors.textMuted
+              }
             />
           </TouchableOpacity>
 

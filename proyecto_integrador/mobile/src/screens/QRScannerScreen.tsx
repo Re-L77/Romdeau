@@ -23,11 +23,15 @@ import {
   Info,
 } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuditorias } from "../contexts/AuditoriasContext";
+import { activosApi } from "@/api/activos";
+import { getMatchingActiveAuditId } from "../utils/auditScope";
 
 export default function QRScannerScreen() {
   const router = useRouter();
   const { auditId } = useLocalSearchParams<{ auditId?: string }>();
   const { colors, isDark } = useTheme();
+  const { auditorias } = useAuditorias();
   const [permission, requestPermission] = useCameraPermissions();
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [scanned, setScanned] = useState(false);
@@ -39,7 +43,7 @@ export default function QRScannerScreen() {
     }
   }, [permission]);
 
-  const handleBarCodeScanned = (result: BarcodeScanningResult) => {
+  const handleBarCodeScanned = async (result: BarcodeScanningResult) => {
     if (scanned) return;
 
     setScanned(true);
@@ -61,8 +65,23 @@ export default function QRScannerScreen() {
     // Solo aceptar IDs de activo válidos (formato CORP-YY-0000000)
     const validFormat = /^CORP-\d{2}-\d{7}$/.test(codigoEtiqueta);
     if (validFormat) {
-      const query = auditId ? `?auditId=${encodeURIComponent(auditId)}` : "";
-      router.replace(`/audit/${codigoEtiqueta}${query}`);
+      try {
+        let resolvedAuditId: string | null = auditId || null;
+
+        if (!resolvedAuditId) {
+          const asset = await activosApi.obtenerPorIdentificador(codigoEtiqueta);
+          resolvedAuditId = getMatchingActiveAuditId(asset, auditorias);
+        }
+
+        const query = resolvedAuditId
+          ? `?auditId=${encodeURIComponent(resolvedAuditId)}`
+          : "";
+
+        router.replace(`/audit/${codigoEtiqueta}${query}`);
+      } catch (error) {
+        console.error("Error resolviendo contexto de auditoria:", error);
+        router.replace(`/audit/${codigoEtiqueta}`);
+      }
     } else {
       Alert.alert(
         "Código Inválido",
