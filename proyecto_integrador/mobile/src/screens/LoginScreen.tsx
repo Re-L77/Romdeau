@@ -138,7 +138,7 @@ export default function LoginScreen() {
             colors={["#334155", "#0f172a"]}
             style={styles.logoContainer}
           >
-            <Text style={styles.logoEmoji}>📦</Text>
+            <Text style={styles.logoEmoji}>RA</Text>
           </LinearGradient>
 
           <Text style={[styles.title, { color: colors.text }]}>

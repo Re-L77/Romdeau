@@ -573,7 +573,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                     activeOpacity={0.85}
                     onPress={() =>
                       router.push(
-                        `/audit/${encodeURIComponent(asset.codigo_etiqueta || asset.id)}?auditId=${audit.id}`,
+                        `/audit/${encodeURIComponent(asset.codigo_etiqueta || asset.id)}`,
                       )
                     }
                   >

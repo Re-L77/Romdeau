@@ -61,12 +61,14 @@ export default function AssetAuditScreen({
   auditoriaProgramadaId,
 }: AssetAuditScreenProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { colors } = useTheme();
 
   const [status, setStatus] = useState<AuditStatus>("ENCONTRADO");
   const [observaciones, setObservaciones] = useState("");
-  const [fotoEvidenciaLocalUri, setFotoEvidenciaLocalUri] = useState<string | null>(null);
+  const [fotoEvidenciaLocalUri, setFotoEvidenciaLocalUri] = useState<
+    string | null
+  >(null);
   const [fotoEvidenciaUrl, setFotoEvidenciaUrl] = useState<string | null>(null);
   const [gpsCoords, setGpsCoords] = useState<{
     lat: number;
@@ -77,9 +79,13 @@ export default function AssetAuditScreen({
   const [asset, setAsset] = useState<ActivoDetalle | null>(null);
   const [isAssetLoading, setIsAssetLoading] = useState(true);
   const [assetError, setAssetError] = useState<string | null>(null);
+  const [isAlreadyAuditedInAudit, setIsAlreadyAuditedInAudit] =
+    useState(false);
+  const [isCheckingDuplicateAudit, setIsCheckingDuplicateAudit] =
+    useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const isReadOnlyMode = !auditoriaProgramadaId;
+  const isReadOnlyMode = !auditoriaProgramadaId || isAlreadyAuditedInAudit;
 
   const statusToEstadoId: Record<AuditStatus, number> = {
     ENCONTRADO: 1,
@@ -90,6 +96,7 @@ export default function AssetAuditScreen({
   const loadAsset = async () => {
     setIsAssetLoading(true);
     setAssetError(null);
+    setIsAlreadyAuditedInAudit(false);
 
     try {
       const assetData = await activosApi.obtenerPorIdentificador(assetId);
@@ -110,6 +117,65 @@ export default function AssetAuditScreen({
   useEffect(() => {
     loadAsset();
   }, [assetId]);
+
+  useEffect(() => {
+    if (!auditoriaProgramadaId) {
+      setIsAlreadyAuditedInAudit(false);
+      setIsCheckingDuplicateAudit(false);
+      return;
+    }
+
+    if (!asset?.id) {
+      setIsCheckingDuplicateAudit(true);
+      return;
+    }
+
+    if (isAuthLoading) {
+      setIsCheckingDuplicateAudit(true);
+      return;
+    }
+
+    if (!user?.id) {
+      setIsAlreadyAuditedInAudit(false);
+      setIsCheckingDuplicateAudit(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const verifyDuplicate = async () => {
+      setIsCheckingDuplicateAudit(true);
+      try {
+        const logs = await auditoriasApi.listarLogsPorAuditor(user.id);
+        const alreadyAudited = logs.some((log) => {
+          const logAuditId = log.auditoria || log.auditorias_programadas?.id;
+          return (
+            log.activo_id === asset.id &&
+            !!logAuditId &&
+            logAuditId === auditoriaProgramadaId
+          );
+        });
+
+        if (!isCancelled) {
+          setIsAlreadyAuditedInAudit(alreadyAudited);
+        }
+      } catch {
+        if (!isCancelled) {
+          setIsAlreadyAuditedInAudit(false);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsCheckingDuplicateAudit(false);
+        }
+      }
+    };
+
+    verifyDuplicate();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [auditoriaProgramadaId, asset?.id, user?.id, isAuthLoading]);
 
   const moneyFormatter = new Intl.NumberFormat("es-MX", {
     style: "currency",
@@ -165,12 +231,12 @@ export default function AssetAuditScreen({
             lng: location.coords.longitude,
           });
           console.log(
-            "📍 [LOG] GPS capturado:",
+            "[LOG] GPS capturado:",
             location.coords.latitude,
             location.coords.longitude,
           );
         } catch (error) {
-          console.log("⚠️ [LOG] GPS no disponible");
+          console.log("[LOG] GPS no disponible");
         }
       }
     })();
@@ -182,16 +248,18 @@ export default function AssetAuditScreen({
 
     for (let i = 0; i < 8; i += 1) {
       const quality = Math.max(0.35, 0.8 - i * 0.07);
-      const actions = targetWidth
-        ? [{ resize: { width: targetWidth } }]
-        : [];
+      const actions = targetWidth ? [{ resize: { width: targetWidth } }] : [];
 
-      const result = await ImageManipulator.manipulateAsync(workingUri, actions, {
-        compress: quality,
-        format: ImageManipulator.SaveFormat.JPEG,
-      });
+      const result = await ImageManipulator.manipulateAsync(
+        workingUri,
+        actions,
+        {
+          compress: quality,
+          format: ImageManipulator.SaveFormat.JPEG,
+        },
+      );
 
-      const info = await FileSystem.getInfoAsync(result.uri, { size: true });
+      const info = await FileSystem.getInfoAsync(result.uri);
       const size = info.exists ? info.size || 0 : 0;
 
       if (size > 0 && size <= MAX_IMAGE_SIZE_BYTES) {
@@ -257,7 +325,7 @@ export default function AssetAuditScreen({
       setFotoEvidenciaUrl(null);
 
       Alert.alert(
-        "✅ Foto lista",
+        "Foto lista",
         "La evidencia quedó lista y se subirá al guardar la auditoría.",
       );
     } catch (error) {
@@ -266,19 +334,24 @@ export default function AssetAuditScreen({
         error instanceof Error
           ? error.message
           : "Error desconocido al subir evidencia.";
-      Alert.alert(
-        "Error",
-        `No se pudo subir la evidencia. ${message}`,
-      );
+      Alert.alert("Error", `No se pudo subir la evidencia. ${message}`);
     } finally {
       setIsUploadingPhoto(false);
     }
   };
 
   const handleSave = () => {
+    if (isAlreadyAuditedInAudit) {
+      Alert.alert(
+        "Activo ya auditado",
+        "Este activo ya fue auditado en esta auditoría y no puede registrarse nuevamente.",
+      );
+      return;
+    }
+
     if (status === "DAÑADO" && !fotoEvidenciaLocalUri) {
       Alert.alert(
-        "⚠️ Evidencia Obligatoria",
+        "Evidencia obligatoria",
         "Debes tomar una foto del activo dañado antes de guardar.",
       );
       return;
@@ -286,7 +359,7 @@ export default function AssetAuditScreen({
 
     if (!observaciones.trim() && status !== "ENCONTRADO") {
       Alert.alert(
-        "⚠️ Observaciones Requeridas",
+        "Observaciones requeridas",
         "Agregar observaciones para activos No Localizados o Dañados.",
       );
       return;
@@ -297,7 +370,10 @@ export default function AssetAuditScreen({
 
   const confirmSave = async () => {
     if (!asset?.id) {
-      Alert.alert("Error", "No se pudo identificar el activo para registrar la auditoría.");
+      Alert.alert(
+        "Error",
+        "No se pudo identificar el activo para registrar la auditoría.",
+      );
       return;
     }
 
@@ -318,12 +394,12 @@ export default function AssetAuditScreen({
       foto_evidencia: fotoEvidenciaUrl || undefined,
     };
 
-    console.log("💾 [LOG] Guardando auditoría:", auditData);
+    console.log("[LOG] Guardando auditoria:", auditData);
 
     const statusEmoji = {
-      ENCONTRADO: "✅",
-      NO_LOCALIZADO: "❌",
-      DAÑADO: "⚠️",
+      ENCONTRADO: "",
+      NO_LOCALIZADO: "",
+      DAÑADO: "",
     };
 
     try {
@@ -345,8 +421,8 @@ export default function AssetAuditScreen({
       setShowSaveConfirm(false);
 
       Alert.alert(
-        `${statusEmoji[status]} Auditoría Registrada`,
-        `Activo: ${assetId}\nEstado: ${status}\nAuditor: ${user?.nombre_completo || `${user?.nombres ?? ""} ${user?.apellido_paterno ?? ""}`.trim()}\n${gpsCoords ? `\n📍 GPS: ${gpsCoords.lat.toFixed(6)}, ${gpsCoords.lng.toFixed(6)}` : ""}`,
+        "Auditoria registrada",
+        `Activo: ${assetId}\nEstado: ${status}\nAuditor: ${user?.nombre_completo || `${user?.nombres ?? ""} ${user?.apellido_paterno ?? ""}`.trim()}\n${gpsCoords ? `\nGPS: ${gpsCoords.lat.toFixed(6)}, ${gpsCoords.lng.toFixed(6)}` : ""}`,
         [{ text: "OK", onPress: () => router.replace("/(tabs)") }],
       );
     } catch (error) {
@@ -436,7 +512,7 @@ export default function AssetAuditScreen({
       )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {isAssetLoading ? (
+        {isAssetLoading || isCheckingDuplicateAudit ? (
           <View
             style={[
               styles.assetCard,
@@ -446,7 +522,9 @@ export default function AssetAuditScreen({
           >
             <ActivityIndicator color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              Cargando información del activo...
+              {isCheckingDuplicateAudit
+                ? "Verificando estado de auditoría..."
+                : "Cargando información del activo..."}
             </Text>
           </View>
         ) : assetError ? (
@@ -506,107 +584,127 @@ export default function AssetAuditScreen({
               </View>
             </View>
 
-            {/* Identificación */}
-            <View
-              style={[
-                styles.infoSection,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.infoSectionTitle, { color: colors.text }]}>
-                Identificación
-              </Text>
-              <InfoRow
-                label="ID"
-                value={toText(asset?.id || assetId)}
-                colors={colors}
-              />
-              <InfoRow
-                label="Código Etiqueta"
-                value={toText(asset?.codigo_etiqueta)}
-                colors={colors}
-              />
-              <InfoRow
-                label="Categoría"
-                value={toText(asset?.categorias?.nombre)}
-                colors={colors}
-              />
-              <InfoRow
-                label="Estado"
-                value={toText(asset?.estados_activo?.nombre)}
-                colors={colors}
-              />
-            </View>
+            {isReadOnlyMode && (
+              <>
+                {/* Identificación */}
+                <View
+                  style={[
+                    styles.infoSection,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.infoSectionTitle, { color: colors.text }]}> 
+                    Identificación
+                  </Text>
+                  <InfoRow
+                    label="ID"
+                    value={toText(asset?.id || assetId)}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    label="Código Etiqueta"
+                    value={toText(asset?.codigo_etiqueta)}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    label="Categoría"
+                    value={toText(asset?.categorias?.nombre)}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    label="Estado"
+                    value={toText(asset?.estados_activo?.nombre)}
+                    colors={colors}
+                  />
+                </View>
 
-            {/* Especificaciones */}
-            <View
-              style={[
-                styles.infoSection,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.infoSectionTitle, { color: colors.text }]}>
-                Especificaciones
-              </Text>
-              <InfoRow label="Marca" value={marca} colors={colors} />
-              <InfoRow label="Modelo" value={modelo} colors={colors} />
-              <InfoRow label="No. Serie" value={serie} colors={colors} />
-            </View>
+                {/* Especificaciones */}
+                <View
+                  style={[
+                    styles.infoSection,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.infoSectionTitle, { color: colors.text }]}> 
+                    Especificaciones
+                  </Text>
+                  <InfoRow label="Marca" value={marca} colors={colors} />
+                  <InfoRow label="Modelo" value={modelo} colors={colors} />
+                  <InfoRow label="No. Serie" value={serie} colors={colors} />
+                </View>
 
-            {/* Ubicación y custodio */}
-            <View
-              style={[
-                styles.infoSection,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.infoSectionTitle, { color: colors.text }]}>
-                Ubicación y Custodia
-              </Text>
-              <InfoRow
-                label="Oficina"
-                value={toText(asset?.oficinas?.nombre)}
-                colors={colors}
-              />
-              <InfoRow
-                label="Estante"
-                value={toText(asset?.estantes?.nombre)}
-                colors={colors}
-              />
-              <InfoRow label="Custodio" value={custodioTexto} colors={colors} />
-            </View>
+                {/* Ubicación y custodio */}
+                <View
+                  style={[
+                    styles.infoSection,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.infoSectionTitle, { color: colors.text }]}> 
+                    Ubicación y Custodia
+                  </Text>
+                  <InfoRow
+                    label="Oficina"
+                    value={toText(asset?.oficinas?.nombre)}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    label="Estante"
+                    value={toText(asset?.estantes?.nombre)}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    label="Custodio"
+                    value={custodioTexto}
+                    colors={colors}
+                  />
+                </View>
 
-            {/* Información financiera */}
-            <View
-              style={[
-                styles.infoSection,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.infoSectionTitle, { color: colors.text }]}>
-                Información Financiera
-              </Text>
-              <InfoRow
-                label="Costo de Adquisición"
-                value={valorAdquisicion}
-                colors={colors}
-              />
-              <InfoRow
-                label="Valor en Libros"
-                value={valorLibro}
-                colors={colors}
-              />
-              <InfoRow
-                label="Fecha de Compra"
-                value={fechaCompra}
-                colors={colors}
-              />
-              <InfoRow
-                label="Proveedor"
-                value={toText(asset?.datos_financieros?.proveedores?.nombre)}
-                colors={colors}
-              />
-            </View>
+                {/* Información financiera */}
+                <View
+                  style={[
+                    styles.infoSection,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.infoSectionTitle, { color: colors.text }]}> 
+                    Información Financiera
+                  </Text>
+                  <InfoRow
+                    label="Costo de Adquisición"
+                    value={valorAdquisicion}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    label="Valor en Libros"
+                    value={valorLibro}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    label="Fecha de Compra"
+                    value={fechaCompra}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    label="Proveedor"
+                    value={toText(asset?.datos_financieros?.proveedores?.nombre)}
+                    colors={colors}
+                  />
+                </View>
+              </>
+            )}
           </>
         )}
 
@@ -623,8 +721,9 @@ export default function AssetAuditScreen({
             <Text
               style={[styles.infoOnlyText, { color: colors.textSecondary }]}
             >
-              Este escaneo no está vinculado a una auditoría en progreso. Solo
-              se muestra la información del activo.
+              {isAlreadyAuditedInAudit
+                ? "Este activo ya fue auditado en esta auditoría. Solo se muestra su información."
+                : "Este escaneo no está vinculado a una auditoría en progreso. Solo se muestra la información del activo."}
             </Text>
           </View>
         )}
@@ -724,8 +823,12 @@ export default function AssetAuditScreen({
               style={[
                 styles.photoButton,
                 {
-                  backgroundColor: fotoEvidenciaLocalUri ? "#d1fae5" : colors.surface,
-                  borderColor: fotoEvidenciaLocalUri ? "#10b981" : colors.border,
+                  backgroundColor: fotoEvidenciaLocalUri
+                    ? "#d1fae5"
+                    : colors.surface,
+                  borderColor: fotoEvidenciaLocalUri
+                    ? "#10b981"
+                    : colors.border,
                 },
               ]}
               onPress={handleTakePhoto}

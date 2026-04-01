@@ -107,7 +107,7 @@ export default function HomeScreen() {
     if (noLeidasCount > lastNotificationCount) {
       const nuevaNotif = notificaciones[0];
       if (nuevaNotif?.tipo === "AUDITORIA_ASIGNADA") {
-        Alert.alert("📋 Nueva Auditoría", nuevaNotif.mensaje, [
+        Alert.alert("Nueva auditoria", nuevaNotif.mensaje, [
           { text: "OK", onPress: refreshAuditorias },
         ]);
       }

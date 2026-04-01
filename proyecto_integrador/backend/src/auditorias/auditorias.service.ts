@@ -549,15 +549,14 @@ export class AuditoriasService {
 
     return this.prisma.logs_auditoria.findMany({
       where: { auditor_id: auditorId },
-      include: {
-        activos: {
-          select: {
-            id: true,
-            nombre: true,
-            codigo_etiqueta: true,
-          },
-        },
-        estados_auditoria: true,
+      select: {
+        id: true,
+        activo_id: true,
+        auditoria: true,
+        fecha_hora: true,
+        estado_reportado_id: true,
+        comentarios: true,
+        url: true,
       },
       orderBy: { fecha_hora: 'desc' },
     });
