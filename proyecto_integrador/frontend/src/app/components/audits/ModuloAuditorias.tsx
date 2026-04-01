@@ -8,9 +8,13 @@ import {
   Filter,
   Search,
   RotateCcw,
+  Download,
+  FileText,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   CrearAuditoria,
   AuditFormData,
@@ -154,6 +158,68 @@ export function ModuloAuditorias({
     setSedeFilter("all");
   };
 
+  const exportCompletedAuditsToPDF = () => {
+    const completadas = scheduledAudits.filter(
+      (a) => a.estados_auditoria_programada?.nombre?.toLowerCase() === "completada"
+    );
+
+    if (completadas.length === 0) {
+      toast.error("No hay auditorías completadas para exportar");
+      return;
+    }
+
+    const doc = new jsPDF("landscape");
+    const primaryColor: [number, number, number] = [128, 0, 32];
+
+    doc.setFontSize(22);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text("Reporte de Auditorías Completadas", 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString("es-MX")} a las ${new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}`, 14, 30);
+    doc.text(`Total Registros: ${completadas.length}`, 14, 36);
+
+    const headers = ["N° Ref", "Título", "Auditor", "Ubicación", "Programada", "Inicio", "Fin"];
+    const rows = completadas.map((audit) => {
+      const auditorNombre = audit.usuarios?.nombre_completo ?? "—";
+      const ubicacion = audit.oficinas?.nombre ?? audit.estantes?.nombre ?? "—";
+      const fechaProg = audit.fecha_programada ? new Date(audit.fecha_programada).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : "—";
+      const fechaIni = audit.fecha_inicio ? new Date(audit.fecha_inicio).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : "—";
+      const fechaFin = audit.fecha_fin ? new Date(audit.fecha_fin).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : "—";
+      const shortId = audit.id.split('-')[0];
+
+      return [
+        shortId,
+        audit.titulo,
+        auditorNombre,
+        ubicacion,
+        fechaProg,
+        fechaIni,
+        fechaFin
+      ];
+    });
+
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 42,
+      theme: "grid",
+      headStyles: { fillColor: primaryColor, textColor: 255, halign: "center" },
+      styles: { fontSize: 9, cellPadding: 3, textColor: [50, 50, 50] },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
+      columnStyles: {
+        0: { fontStyle: "bold", halign: "center" },
+        4: { halign: "center" },
+        5: { halign: "center" },
+        6: { halign: "center", fontStyle: "bold", textColor: [22, 163, 74] },
+      },
+    });
+
+    doc.save(`auditorias_completadas_${new Date().toISOString().split("T")[0]}.pdf`);
+    toast.success("Reporte PDF generado correctamente");
+  };
+
   const filteredAudits = scheduledAudits.filter((audit) => {
     if (
       searchTerm &&
@@ -210,15 +276,27 @@ export function ModuloAuditorias({
                 Búsqueda y Filtros
               </h2>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
-              onClick={handleCreateAudit}
-            >
-              <Plus className="w-4 h-4" />
-              Crear Auditoría
-            </motion.button>
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+                onClick={exportCompletedAuditsToPDF}
+                title="Generar PDF de auditorías completadas"
+              >
+                <Download className="w-4 h-4" />
+                Exportar Reporte
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full font-medium flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+                onClick={handleCreateAudit}
+              >
+                <Plus className="w-4 h-4" />
+                Crear Auditoría
+              </motion.button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
