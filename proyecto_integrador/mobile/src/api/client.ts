@@ -29,7 +29,7 @@ class ApiClient {
   }> = [];
 
   constructor() {
-    console.log("🔧 Inicializando API Client con baseURL:", ApiClient.baseURL);
+    console.log("Inicializando API Client con baseURL:", ApiClient.baseURL);
     console.log("⏱️ Timeout de requests (ms):", ApiClient.REQUEST_TIMEOUT);
 
     this.client = axios.create({
@@ -48,7 +48,7 @@ class ApiClient {
     this.client.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
         const fullUrl = ApiClient.baseURL + config.url;
-        console.log(`📤 Request: ${config.method?.toUpperCase()} ${fullUrl}`);
+        console.log(`Request: ${config.method?.toUpperCase()} ${fullUrl}`);
 
         const requestUrl = config.url || "";
         const isPublicAuthRequest = ApiClient.AUTH_PUBLIC_ENDPOINTS.some(
@@ -65,7 +65,7 @@ class ApiClient {
             config.headers.Authorization = `Bearer ${token}`;
           }
         } catch (error) {
-          console.warn("⚠️ Error getting access token:", error);
+          console.warn("Error getting access token:", error);
         }
         return config;
       },
@@ -75,7 +75,7 @@ class ApiClient {
     // Interceptor para manejar respuestas y errores
     this.client.interceptors.response.use(
       (response) => {
-        console.log(`✅ Response: ${response.status} ${response.config.url}`);
+        console.log(`Response: ${response.status} ${response.config.url}`);
         return response;
       },
       async (error: AxiosError<ApiErrorResponse>) => {
@@ -97,7 +97,7 @@ class ApiClient {
 
         if (isExpected401) {
           console.warn(
-            `⚠️ Auth failed: ${error.response?.status} ${requestUrl}`,
+            `Auth failed: ${error.response?.status} ${requestUrl}`,
             error.response?.data?.message,
           );
         } else if (isTimeoutError) {
@@ -111,7 +111,7 @@ class ApiClient {
           );
         } else {
           console.error(
-            `❌ Error: ${error.response?.status || error.code} ${requestUrl}`,
+            `Error: ${error.response?.status || error.code} ${requestUrl}`,
             { message: error.message, data: error.response?.data },
           );
         }
@@ -146,7 +146,7 @@ class ApiClient {
               return Promise.reject(error);
             }
 
-            console.log("🔄 Intentando renovar token...");
+            console.log("Intentando renovar token...");
             const response = await this.client.post<{
               access_token: string;
               expires_in?: number;
@@ -161,7 +161,7 @@ class ApiClient {
               refreshToken,
               expiresInSeconds,
             );
-            console.log("✅ Token renovado exitosamente");
+            console.log("Token renovado exitosamente");
 
             // Procesar la cola de requests pendientes
             this.failedQueue.forEach((prom) => prom.onSuccess(access_token));
@@ -172,7 +172,7 @@ class ApiClient {
             return this.client(originalRequest);
           } catch (refreshError) {
             // Si el refresh falla, limpiar tokens localmente y rechazar
-            console.error("❌ Error renovando token:", refreshError);
+            console.error("Error renovando token:", refreshError);
             await TokenManager.clearTokens();
 
             // Notificar la cola de errores
@@ -211,7 +211,7 @@ class ApiClient {
 
   // Método estático para cambiar URL en debugging
   static setBaseURL(newUrl: string) {
-    console.log(`🔄 Cambiando API base URL a: ${newUrl}`);
+    console.log(`Cambiando API base URL a: ${newUrl}`);
     ApiClient.baseURL = newUrl;
     // Recrear el cliente con la nueva URL
     apiClientInstance.recreateClient();

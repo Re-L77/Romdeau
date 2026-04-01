@@ -139,11 +139,7 @@ export default function LoginScreen() {
             colors={["#0c1a39", "#10245e"]}
             style={styles.logoContainer}
           >
-            <Image
-              source={require("../../assets/icon.png")}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
+            <Text style={styles.logoEmoji}>📦</Text>
           </LinearGradient>
 
           <Text style={[styles.title, { color: "#ffffff" }]}>Romdeau Audit</Text>

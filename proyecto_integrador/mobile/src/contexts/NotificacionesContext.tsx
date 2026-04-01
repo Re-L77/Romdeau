@@ -45,7 +45,7 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
       setNotificaciones(lista);
       setNoLeidasCount(count);
     } catch (error) {
-      console.error("🔔 Error cargando notificaciones:", error);
+      console.error("Error cargando notificaciones:", error);
     } finally {
       setIsLoading(false);
     }

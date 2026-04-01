@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const isExpired = await TokenManager.isTokenExpired();
           if (isExpired) {
-            console.log("🔄 Token cercano a expiración, intentando renovar...");
+            console.log("Token cercano a expiracion, intentando renovar...");
             const refreshToken = await TokenManager.getRefreshToken();
             if (refreshToken) {
               const response = await authApi.refreshToken(refreshToken);
@@ -156,13 +156,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 refreshToken,
                 expiresIn,
               );
-              console.log("✅ Token renovado automáticamente");
+              console.log("Token renovado automaticamente");
             }
           }
         } catch (error) {
           // No hacer logout automático en error de refresh - el próximo refresh lo intentará
           console.error(
-            "⚠️ Auto-refresh falló (próximo intento en 30min):",
+            "Auto-refresh fallo (proximo intento en 30min):",
             error,
           );
         }
@@ -189,9 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       dispatch((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        console.log("📡 Intentando login con:", email);
+        console.log("Intentando login con:", email);
         const response = await authApi.login({ email, password });
-        console.log("✅ Login exitoso:", response.user);
+        console.log("Login exitoso:", response.user);
 
         // Guardar tokens de forma segura
         // Si expires_in no viene del backend, usar 24 horas (86400 segundos)
@@ -212,11 +212,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: null,
         });
 
-        console.log("✅ Usuario autenticado:", response.user.email);
+        console.log("Usuario autenticado:", response.user.email);
       } catch (error: any) {
         // Solo loguear errores inesperados (no credenciales inválidas)
         if (error.response?.status !== 401) {
-          console.error("❌ Login error inesperado:", error.message);
+          console.error("Login error inesperado:", error.message);
         }
 
         let errorMessage =
@@ -251,7 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Notificar al backend
         await authApi.logout();
       } catch (error) {
-        console.error("❌ Logout error (continúa local):", error);
+        console.error("Logout error (continua local):", error);
       }
 
       // Limpiar tokens y usuario localmente
@@ -264,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: null,
       });
 
-      console.log("✅ Usuario desconectado");
+      console.log("Usuario desconectado");
     }, []),
 
     // Validar sesión actual
@@ -283,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       } catch (error) {
         // Si la validación falla, hacer logout
-        console.error("❌ Session validation failed:", error);
+        console.error("Session validation failed:", error);
         await TokenManager.clearTokens();
         dispatch((prev) => {
           return {
@@ -313,7 +313,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isLoading: false,
             error: null,
           }));
-          console.log("✅ Contraseña actualizada");
+          console.log("Contrasena actualizada");
         } catch (error: any) {
           const errorMessage =
             error.response?.data?.message || "Error al cambiar la contraseña.";

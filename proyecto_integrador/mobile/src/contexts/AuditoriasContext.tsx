@@ -48,7 +48,7 @@ export function AuditoriasProvider({ children }: { children: ReactNode }) {
       const lista = await auditoriasApi.listarMias();
       setAuditorias(lista);
     } catch (error) {
-      console.error("📋 Error cargando auditorías:", error);
+      console.error("Error cargando auditorias:", error);
     } finally {
       setIsLoading(false);
     }

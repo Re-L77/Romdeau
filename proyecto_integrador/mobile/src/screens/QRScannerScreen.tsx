@@ -48,7 +48,7 @@ export default function QRScannerScreen() {
 
     setScanned(true);
     const raw = result.data;
-    console.log("📱 [LOG] QR escaneado:", raw);
+    console.log("[LOG] QR escaneado:", raw);
 
     // Intentar parsear JSON para extraer codigo_etiqueta
     let codigoEtiqueta: string = raw;
@@ -56,7 +56,7 @@ export default function QRScannerScreen() {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed.codigo_etiqueta === "string") {
         codigoEtiqueta = parsed.codigo_etiqueta;
-        console.log("📱 [LOG] codigo_etiqueta extraído:", codigoEtiqueta);
+        console.log("[LOG] codigo_etiqueta extraido:", codigoEtiqueta);
       }
     } catch {
       // No es JSON, usar el valor crudo directamente
@@ -120,7 +120,7 @@ export default function QRScannerScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.permissionContainer}>
           <View style={styles.permissionIcon}>
-            <Text style={styles.permissionEmoji}>📷</Text>
+            <Text style={styles.permissionEmoji}>CAM</Text>
           </View>
           <Text style={[styles.permissionTitle, { color: colors.text }]}>
             Acceso a Cámara Requerido
