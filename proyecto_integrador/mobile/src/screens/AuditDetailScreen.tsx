@@ -71,8 +71,18 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   useEffect(() => {
     if (!audit?.id) return;
 
+    const channelName = `logs-auditoria-detail:auditoria=${audit.id}`;
+    supabase
+      .getChannels()
+      .filter((existingChannel) =>
+        existingChannel.topic.includes(channelName),
+      )
+      .forEach((existingChannel) => {
+        supabase.removeChannel(existingChannel);
+      });
+
     const channel = supabase
-      .channel(`logs-auditoria-detail:auditoria=${audit.id}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {

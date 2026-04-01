@@ -6,8 +6,10 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuditoriasService } from './auditorias.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
@@ -31,8 +33,16 @@ export class AuditoriasController {
   @Roles(Role.ADMIN, Role.AUDITOR)
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createAuditoriaDto: CreateAuditoriaDto) {
-    return this.auditoriasService.create(createAuditoriaDto);
+  create(@Body() createAuditoriaDto: CreateAuditoriaDto, @Req() req: any) {
+    const auditorId = req.user?.id;
+    if (!auditorId) {
+      throw new UnauthorizedException('No se pudo identificar al auditor');
+    }
+
+    return this.auditoriasService.create({
+      ...createAuditoriaDto,
+      auditor_id: auditorId,
+    });
   }
 
   /**

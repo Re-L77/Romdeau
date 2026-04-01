@@ -57,6 +57,33 @@ export class AuditoriasService {
           `Auditoría programada con ID ${auditoriaId} no encontrada`,
         );
       }
+
+      if (auditoriaProgramada.auditor_id !== auditorId) {
+        throw new BadRequestException(
+          'La auditoría programada no está asignada al auditor autenticado',
+        );
+      }
+
+      const isAuditActive = [1, 2].includes(auditoriaProgramada.estado_id);
+      if (!isAuditActive) {
+        throw new BadRequestException(
+          'Solo se pueden registrar activos en auditorías programadas o en progreso',
+        );
+      }
+
+      if (auditoriaProgramada.estante_id) {
+        if (activo.estante_id !== auditoriaProgramada.estante_id) {
+          throw new BadRequestException(
+            'El activo no pertenece al estante de la auditoría seleccionada',
+          );
+        }
+      } else if (auditoriaProgramada.oficina_id) {
+        if (activo.oficina_id !== auditoriaProgramada.oficina_id) {
+          throw new BadRequestException(
+            'El activo no pertenece a la oficina de la auditoría seleccionada',
+          );
+        }
+      }
     }
   }
   async create(createAuditoriaDto: CreateAuditoriaDto) {
@@ -67,6 +94,22 @@ export class AuditoriasService {
       createAuditoriaDto.estado_reportado_id,
       createAuditoriaDto.auditoria,
     );
+
+    if (createAuditoriaDto.auditoria) {
+      const duplicate = await this.prisma.logs_auditoria.findFirst({
+        where: {
+          activo_id: createAuditoriaDto.activo_id,
+          auditoria: createAuditoriaDto.auditoria,
+        },
+        select: { id: true },
+      });
+
+      if (duplicate) {
+        throw new BadRequestException(
+          'Este activo ya fue registrado en la auditoría seleccionada',
+        );
+      }
+    }
 
     return this.prisma.logs_auditoria.create({
       data: createAuditoriaDto,

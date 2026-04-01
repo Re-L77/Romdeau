@@ -147,8 +147,18 @@ export default function SettingsScreen() {
   useEffect(() => {
     if (!user?.id) return;
 
+    const channelName = `logs-auditoria-settings:auditor_id=${user.id}`;
+    supabase
+      .getChannels()
+      .filter((existingChannel) =>
+        existingChannel.topic.includes(channelName),
+      )
+      .forEach((existingChannel) => {
+        supabase.removeChannel(existingChannel);
+      });
+
     const channel = supabase
-      .channel(`logs-auditoria-settings:auditor_id=${user.id}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {

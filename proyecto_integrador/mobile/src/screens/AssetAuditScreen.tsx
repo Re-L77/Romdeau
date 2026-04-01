@@ -29,6 +29,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { ActivoDetalle, activosApi } from "@/api/activos";
+import { auditoriasApi } from "@/api/auditorias";
 
 interface AssetAuditScreenProps {
   assetId: string;
@@ -72,7 +73,14 @@ export default function AssetAuditScreen({
   const [asset, setAsset] = useState<ActivoDetalle | null>(null);
   const [isAssetLoading, setIsAssetLoading] = useState(true);
   const [assetError, setAssetError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const isReadOnlyMode = !auditoriaProgramadaId;
+
+  const statusToEstadoId: Record<AuditStatus, number> = {
+    ENCONTRADO: 1,
+    DAÑADO: 2,
+    NO_LOCALIZADO: 3,
+  };
 
   const loadAsset = async () => {
     setIsAssetLoading(true);
@@ -189,7 +197,14 @@ export default function AssetAuditScreen({
     setShowSaveConfirm(true);
   };
 
-  const confirmSave = () => {
+  const confirmSave = async () => {
+    if (!asset?.id) {
+      Alert.alert("Error", "No se pudo identificar el activo para registrar la auditoría.");
+      return;
+    }
+
+    setIsSaving(true);
+
     const auditData: AuditData = {
       asset_id: assetId,
       auditoria_programada_id: auditoriaProgramadaId,
@@ -214,13 +229,30 @@ export default function AssetAuditScreen({
       DAÑADO: "⚠️",
     };
 
-    setShowSaveConfirm(false);
+    try {
+      await auditoriasApi.registrarLog({
+        activo_id: asset.id,
+        auditoria: auditoriaProgramadaId,
+        estado_reportado_id: statusToEstadoId[status],
+        comentarios: observaciones?.trim() || undefined,
+      });
 
-    Alert.alert(
-      `${statusEmoji[status]} Auditoría Registrada`,
-      `Activo: ${assetId}\nEstado: ${status}\nAuditor: ${user?.nombre_completo || `${user?.nombres ?? ""} ${user?.apellido_paterno ?? ""}`.trim()}\n${gpsCoords ? `\n📍 GPS: ${gpsCoords.lat.toFixed(6)}, ${gpsCoords.lng.toFixed(6)}` : ""}`,
-      [{ text: "OK", onPress: () => router.replace("/(tabs)") }],
-    );
+      setShowSaveConfirm(false);
+
+      Alert.alert(
+        `${statusEmoji[status]} Auditoría Registrada`,
+        `Activo: ${assetId}\nEstado: ${status}\nAuditor: ${user?.nombre_completo || `${user?.nombres ?? ""} ${user?.apellido_paterno ?? ""}`.trim()}\n${gpsCoords ? `\n📍 GPS: ${gpsCoords.lat.toFixed(6)}, ${gpsCoords.lng.toFixed(6)}` : ""}`,
+        [{ text: "OK", onPress: () => router.replace("/(tabs)") }],
+      );
+    } catch (error) {
+      console.error("Error registrando auditoría:", error);
+      Alert.alert(
+        "Error",
+        "No se pudo registrar la auditoría. Intenta nuevamente.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const statusOptions = [
@@ -727,10 +759,15 @@ export default function AssetAuditScreen({
                   <TouchableOpacity
                     style={[styles.modalButton, { backgroundColor: "#10b981" }]}
                     onPress={confirmSave}
+                    disabled={isSaving}
                   >
-                    <Text style={[styles.modalButtonText, { color: "#fff" }]}>
-                      Confirmar
-                    </Text>
+                    {isSaving ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                        Confirmar
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>

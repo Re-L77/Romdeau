@@ -68,6 +68,13 @@ export interface AuditoriaLog {
   } | null;
 }
 
+export interface RegistrarAuditoriaPayload {
+  activo_id: string;
+  auditoria?: string;
+  estado_reportado_id: number;
+  comentarios?: string;
+}
+
 export const auditoriasApi = {
   listarMias: async (): Promise<AuditoriaProgramada[]> => {
     const response = await apiClient.get<AuditoriaProgramada[]>(
@@ -94,6 +101,11 @@ export const auditoriasApi = {
     const response = await apiClient.get<AuditoriaLog[]>(
       `/api/auditorias/auditor/${auditorId}`,
     );
+    return response.data;
+  },
+
+  registrarLog: async (payload: RegistrarAuditoriaPayload) => {
+    const response = await apiClient.post("/api/auditorias", payload);
     return response.data;
   },
 };
