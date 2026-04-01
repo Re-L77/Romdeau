@@ -19,6 +19,7 @@ import { Skeleton } from "../ui/skeleton";
 interface AuditDetailFullViewProps {
   auditId: string;
   onBack: () => void;
+  onAssetClick?: (assetId: string) => void;
 }
 
 const estadoColors = {
@@ -42,7 +43,11 @@ const estadoColors = {
   },
 };
 
-export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProps) {
+export function AuditDetailFullView({
+  auditId,
+  onBack,
+  onAssetClick,
+}: AuditDetailFullViewProps) {
   const [auditData, setAuditData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,31 +87,44 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
     }
   };
 
-  const data = auditData ? {
-    ...auditData,
-    titulo: auditData.auditorias_programadas?.titulo ?? "Registro de Auditoría Completada",
-    activo_codigo: auditData.activos?.codigo_etiqueta,
-    activo_nombre: auditData.activos?.nombre,
-    activo_categoria: auditData.activos?.categorias?.nombre,
-    estado_reportado: auditData.estados_auditoria?.nombre,
-    auditor: auditData.usuarios?.nombre_completo,
-    auditor_email: auditData.usuarios?.email,
-    campus: auditData.activos?.oficinas?.pisos?.edificios?.sedes?.nombre ??
-            auditData.activos?.estantes?.pasillos?.almacenes?.sedes?.nombre ?? "—",
-    edificio: auditData.activos?.oficinas?.pisos?.edificios?.nombre ??
-              auditData.activos?.estantes?.pasillos?.almacenes?.nombre ?? "—",
-    piso: auditData.activos?.oficinas?.pisos?.nombre ??
-          auditData.activos?.estantes?.pasillos?.nombre ?? "—",
-    salon: auditData.activos?.oficinas?.nombre ??
-           auditData.activos?.estantes?.nombre ?? "—",
-    created_at: auditData.fecha_hora,
-    lat: auditData.lat,
-    lng: auditData.lng,
-    coincidencia_ubicacion: auditData.coincidencia_ubicacion ?? true,
-    comentarios: auditData.comentarios,
-    evidencia_foto_url: auditData.evidencia_foto_url,
-    duracion_minutos: auditData.duracion_minutos,
-  } : null;
+  const data = auditData
+    ? {
+        ...auditData,
+        titulo:
+          auditData.auditorias_programadas?.titulo ??
+          "Registro de Auditoría Completada",
+        activo_id: auditData.activo_id ?? auditData.activos?.id,
+        activo_codigo: auditData.activos?.codigo_etiqueta,
+        activo_nombre: auditData.activos?.nombre,
+        activo_categoria: auditData.activos?.categorias?.nombre,
+        estado_reportado: auditData.estados_auditoria?.nombre,
+        auditor: auditData.usuarios?.nombre_completo,
+        auditor_email: auditData.usuarios?.email,
+        campus:
+          auditData.activos?.oficinas?.pisos?.edificios?.sedes?.nombre ??
+          auditData.activos?.estantes?.pasillos?.almacenes?.sedes?.nombre ??
+          "—",
+        edificio:
+          auditData.activos?.oficinas?.pisos?.edificios?.nombre ??
+          auditData.activos?.estantes?.pasillos?.almacenes?.nombre ??
+          "—",
+        piso:
+          auditData.activos?.oficinas?.pisos?.nombre ??
+          auditData.activos?.estantes?.pasillos?.nombre ??
+          "—",
+        salon:
+          auditData.activos?.oficinas?.nombre ??
+          auditData.activos?.estantes?.nombre ??
+          "—",
+        created_at: auditData.fecha_hora,
+        lat: auditData.lat,
+        lng: auditData.lng,
+        coincidencia_ubicacion: auditData.coincidencia_ubicacion ?? true,
+        comentarios: auditData.comentarios,
+        evidencia_foto_url: auditData.evidencia_foto_url,
+        duracion_minutos: auditData.duracion_minutos,
+      }
+    : null;
 
   if (loading) {
     return (
@@ -134,8 +152,13 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
     return (
       <div className="max-w-[1600px] mx-auto py-20 text-center">
         <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-        <p className="text-xl font-bold dark:text-white mb-6 text-balance">{error}</p>
-        <button onClick={onBack} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold transition-transform hover:scale-105 active:scale-95">
+        <p className="text-xl font-bold dark:text-white mb-6 text-balance">
+          {error}
+        </p>
+        <button
+          onClick={onBack}
+          className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold transition-transform hover:scale-105 active:scale-95"
+        >
           Volver al Historial
         </button>
       </div>
@@ -184,13 +207,14 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
                   {data.activo_nombre || "—"}
                 </h2>
                 <div className="flex flex-wrap gap-2">
-                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                     ID: {data.id?.split('-')[0].toUpperCase()}
-                   </span>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                    ID: {data.id?.split("-")[0].toUpperCase()}
+                  </span>
                 </div>
               </div>
               {(() => {
-                const estado = (data.estado_reportado ?? "BUENO") as keyof typeof estadoColors;
+                const estado = (data.estado_reportado ??
+                  "BUENO") as keyof typeof estadoColors;
                 const colors = estadoColors[estado] ?? estadoColors.BUENO;
                 const IconComponent = colors.icon;
                 return (
@@ -234,7 +258,10 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
             {/* Auditor Info */}
             <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-lg font-semibold shadow-lg shrink-0">
-                {data.auditor?.split(" ").map((n: string) => n[0]).join("") || "A"}
+                {data.auditor
+                  ?.split(" ")
+                  .map((n: string) => n[0])
+                  .join("") || "A"}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -260,7 +287,13 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
             <h3 className="text-lg font-bold mb-6 dark:text-white">
               Activo Auditado
             </h3>
-            <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
+            <div
+              className={`p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl ${data.activo_id ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors" : ""}`}
+              onClick={() => {
+                if (data.activo_id && onAssetClick)
+                  onAssetClick(data.activo_id);
+              }}
+            >
               <p className="text-xs text-gray-500 dark:text-gray-500 mb-2 font-bold uppercase tracking-widest">
                 Código de Activo
               </p>
@@ -310,21 +343,22 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
                 </p>
               </div>
             </div>
-            
+
             <div className="mt-4 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-               <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                 <FileText className="w-4 h-4 text-emerald-500" /> Registros del sistema
-               </p>
-               <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                  <p className="flex justify-between">
-                    <span className="text-gray-500">Iniciado:</span>
-                    <span>{formatDateTime(data.fecha_inicio)}</span>
-                  </p>
-                  <p className="flex justify-between">
-                    <span className="text-gray-500">Cerrado:</span>
-                    <span>{formatDateTime(data.fecha_fin)}</span>
-                  </p>
-               </div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-emerald-500" /> Registros del
+                sistema
+              </p>
+              <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300 font-medium">
+                <p className="flex justify-between">
+                  <span className="text-gray-500">Iniciado:</span>
+                  <span>{formatDateTime(data.fecha_inicio)}</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-500">Cerrado:</span>
+                  <span>{formatDateTime(data.fecha_fin)}</span>
+                </p>
+              </div>
             </div>
           </motion.div>
 
@@ -348,7 +382,7 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
                   Coordenadas GPS
                 </p>
                 <p className="text-sm font-mono font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                   {data.lat && data.lng ? `${data.lat}, ${data.lng}` : "—"}
+                  {data.lat && data.lng ? `${data.lat}, ${data.lng}` : "—"}
                 </p>
               </div>
 
@@ -359,7 +393,8 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
                     <p className="font-bold">Ubicación Validada</p>
                   </div>
                   <p className="text-sm text-emerald-600 dark:text-emerald-500 mt-2">
-                    Las coordenadas coinciden con la ubicación registrada del activo.
+                    Las coordenadas coinciden con la ubicación registrada del
+                    activo.
                   </p>
                 </div>
               ) : (
@@ -391,7 +426,9 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
             </div>
             <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl min-h-[100px]">
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed italic">
-                "{data.comentarios || "Sin comentarios adicionales registrados."}"
+                "
+                {data.comentarios || "Sin comentarios adicionales registrados."}
+                "
               </p>
             </div>
           </motion.div>
@@ -418,7 +455,9 @@ export function AuditDetailFullView({ auditId, onBack }: AuditDetailFullViewProp
                     className="w-full h-auto object-cover transition-transform group-hover:scale-105 duration-500"
                   />
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                     <span className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-white text-xs font-bold border border-white/30">Ampliar</span>
+                    <span className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-white text-xs font-bold border border-white/30">
+                      Ampliar
+                    </span>
                   </div>
                 </div>
               ) : (

@@ -29,6 +29,7 @@ interface AuditDetailProps {
   auditId: string;
   auditType: "scheduled" | "completed";
   onBack: () => void;
+  onAssetClick?: (assetId: string) => void;
 }
 
 const estadoColors = {
@@ -52,7 +53,12 @@ const estadoColors = {
   },
 };
 
-export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
+export function AuditDetail({
+  auditId,
+  auditType,
+  onBack,
+  onAssetClick,
+}: AuditDetailProps) {
   const isScheduled = auditType === "scheduled";
   const [scheduledAudit, setScheduledAudit] = useState<any | null>(null);
   const [isLoadingScheduledAudit, setIsLoadingScheduledAudit] = useState(false);
@@ -149,6 +155,7 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
           "Registro de Auditoría Individual",
 
         // Activo
+        activo_id: scheduledData?.activo_id ?? scheduledData?.activos?.id,
         activo_codigo: scheduledData?.activos?.codigo_etiqueta,
         activo_nombre: scheduledData?.activos?.nombre,
 
@@ -613,7 +620,11 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.2 + index * 0.05 }}
-                                className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl"
+                                onClick={() => {
+                                  const id = log.activos?.id ?? log.activo_id;
+                                  if (id && onAssetClick) onAssetClick(id);
+                                }}
+                                className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                               >
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex-1 min-w-0">
@@ -659,7 +670,8 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.2 + index * 0.05 }}
-                              className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl"
+                              onClick={() => onAssetClick?.(activo.id)}
+                              className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                             >
                               <div className="flex items-center justify-between">
                                 <div>
@@ -697,7 +709,13 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
                   <h3 className="text-lg font-bold mb-6 dark:text-white">
                     Activo Auditado
                   </h3>
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
+                  <div
+                    className={`p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl ${data.activo_id ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors" : ""}`}
+                    onClick={() => {
+                      if (data.activo_id && onAssetClick)
+                        onAssetClick(data.activo_id);
+                    }}
+                  >
                     <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">
                       Código de Activo
                     </p>
