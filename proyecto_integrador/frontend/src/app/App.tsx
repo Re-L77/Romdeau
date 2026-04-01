@@ -19,6 +19,7 @@ import { ProveedorDetail } from "./components/providers/ProveedorDetail";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { Toaster } from "./components/ui/sonner";
+import { toast } from "sonner";
 
 type ViewType =
   | "login"
@@ -54,6 +55,9 @@ function AppContent() {
   const [selectedProveedorId, setSelectedProveedorId] = useState<string | null>(
     null,
   );
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRefresh = () => setRefreshKey((prev) => prev + 1);
 
   const handleLogin = () => {
     setCurrentView("dashboard");
@@ -193,7 +197,8 @@ function AppContent() {
   const handleSaveAsset = () => {
     setShowCreateEditModal(false);
     setEditingAssetId(null);
-    alert("Activo guardado exitosamente");
+    handleRefresh();
+    toast.success("Activo guardado exitosamente");
   };
 
   const handleCloseModal = () => {
@@ -266,6 +271,8 @@ function AppContent() {
           <ModuloInventario
             onAssetClick={handleAssetClick}
             onCreateAsset={handleCreateAsset}
+            onEditAsset={handleEditAsset}
+            refreshKey={refreshKey}
           />
         )}
 
@@ -301,6 +308,8 @@ function AppContent() {
             assetId={selectedAssetId}
             onBack={handleBackToInventory}
             onEdit={handleEditAsset}
+            refreshKey={refreshKey}
+            onUpdate={handleRefresh}
           />
         )}
 

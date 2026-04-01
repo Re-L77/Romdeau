@@ -14,16 +14,18 @@ import { ConfirmationModal } from "../shared/ConfirmationModal";
 import { QrPrintModal } from "./QrPrintModal";
 import { LocationTransferModal } from "./LocationTransferModal";
 import { activosApi, usuariosApi, departamentosApi } from "../../../services/api";
+import { toast } from "sonner";
 
 
 interface AssetDetailProps {
   assetId: string;
   onBack: () => void;
-  onEdit: () => void;
+  onEdit: (assetId?: string) => void;
+  refreshKey: number;
+  onUpdate: () => void;
 }
 
-export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
-  const [isEditing, setIsEditing] = useState(false);
+export function AssetDetail({ assetId, onBack, onEdit, refreshKey, onUpdate }: AssetDetailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [asset, setAsset] = useState<any | null>(null);
@@ -102,7 +104,7 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
     };
 
     loadAsset();
-  }, [assetId]);
+  }, [assetId, refreshKey]);
 
   useEffect(() => {
     const loadDepartamentos = async () => {
@@ -143,7 +145,8 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
 
   const handleConfirmAction = () => {
     if (confirmModal.action === "delete") {
-      alert("Activo eliminado exitosamente");
+      toast.success("Activo eliminado exitosamente");
+      onUpdate();
       onBack();
       return;
     }
@@ -183,9 +186,10 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
       setIsChangingCustodian(false);
       setSelectedDepartamentoId("");
       setSelectedCustodioId("");
-      alert("Custodio actualizado exitosamente");
+      onUpdate();
+      toast.success("Custodio actualizado exitosamente");
     } catch (err: any) {
-      alert(err.message || "Error al actualizar custodio");
+      toast.error(err.message || "Error al actualizar custodio");
     } finally {
       setUpdatingCustodian(false);
     }
@@ -359,7 +363,7 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={onEdit}
+                  onClick={() => onEdit(assetId)}
                   className="px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
                 >
                   <Edit3 className="w-4 h-4" />
@@ -582,18 +586,6 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
                 <h3 className="text-lg font-bold dark:text-white">
                   Especificaciones Tecnicas
                 </h3>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsEditing(!isEditing)}
-                  className={`px-5 py-2.5 rounded-full font-medium transition-colors flex items-center gap-2 ${isEditing
-                    ? "bg-black dark:bg-white text-white dark:text-black"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    }`}
-                >
-                  <Edit3 className="w-4 h-4" />
-                  {isEditing ? "Guardar" : "Editar Specs"}
-                </motion.button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -603,10 +595,7 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: index * 0.03 }}
-                    className={`p-4 rounded-2xl border-2 transition-all ${isEditing
-                      ? "bg-white dark:bg-[#1a1a1a] border-gray-300 dark:border-gray-700 hover:border-black dark:hover:border-white"
-                      : "bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800"
-                      }`}
+                    className="p-4 rounded-2xl border-2 transition-all bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800"
                   >
                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-1.5 uppercase tracking-wide">
                       {spec.key}
@@ -785,7 +774,8 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
           setAsset(updatedAsset);
           const historyData = await activosApi.getTrazabilidad(assetId);
           setHistory(historyData);
-          alert("Transferencia realizada exitosamente");
+          onUpdate();
+          toast.success("Transferencia realizada exitosamente");
         }}
       />
     </div>

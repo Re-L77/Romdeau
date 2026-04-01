@@ -11,7 +11,7 @@ import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 export class AuditoriasService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
+  /**haz
    * Valida que los IDs requeridos existan antes de crear la auditoría
    */
   private async validateReferences(

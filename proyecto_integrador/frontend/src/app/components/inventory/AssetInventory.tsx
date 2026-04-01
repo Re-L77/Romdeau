@@ -43,11 +43,15 @@ const categoryIcons = {
 interface AssetInventoryProps {
   onAssetClick: (assetId: string) => void;
   onCreateAsset: () => void;
+  onEditAsset: (assetId: string) => void;
+  refreshKey: number;
 }
 
 export function AssetInventory({
   onAssetClick,
   onCreateAsset,
+  onEditAsset,
+  refreshKey,
 }: AssetInventoryProps) {
   const [activosEnriquecidos, setActivosEnriquecidos] = useState<any[]>([]);
   const [allActivos, setAllActivos] = useState<any[]>([]);
@@ -194,6 +198,7 @@ export function AssetInventory({
     searchText,
     sinCustodio,
     tipoRastreoFilter,
+    refreshKey,
   ]);
 
   // Extract unique values for filters from master list (allActivos)
@@ -851,9 +856,47 @@ export function AssetInventory({
                               </p>
                             </div>
                           </div>
-                        )}
+                        )}                        <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-50 dark:border-gray-800/50">
+                          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 dark:text-gray-500 w-full mb-1">
+                            Acciones Rápidas
+                          </p>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => onEditAsset(asset.id)}
+                            className="px-4 py-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            Editar Info
+                          </motion.button>
 
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => onAssetClick(asset.id)}
+                            className="px-4 py-2 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                          >
+                            <ArrowRightLeft className="w-3.5 h-3.5" />
+                            Gestionar Detalle
+                          </motion.button>
 
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() =>
+                              setConfirmModal({
+                                isOpen: true,
+                                action: "delete",
+                                assetId: asset.id,
+                                assetName: asset.nombre,
+                              })
+                            }
+                            className="px-4 py-2 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Eliminar
+                          </motion.button>
+                        </div>
                       </motion.div>
                     )}
                   </div>

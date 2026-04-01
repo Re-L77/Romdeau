@@ -232,6 +232,10 @@ export const activosApi = {
   update: async (id: string, data: any): Promise<any> => {
     return apiClient.patch<any>(`/api/activos/${id}`, data);
   },
+
+  getTrazabilidad: async (id: string): Promise<any[]> => {
+    return apiClient.get<any[]>(`/api/activos/${id}/trazabilidad`);
+  },
 };
 
 export interface LogAuditoria {
