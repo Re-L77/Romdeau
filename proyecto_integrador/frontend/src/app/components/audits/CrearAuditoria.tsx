@@ -76,6 +76,7 @@ interface CrearAuditoriaProps {
   onSave: (auditData: CreateAuditoriaProgramadaDto) => void;
   catalogs: AuditoriaFormCatalogs;
   existingAudits?: Array<{ titulo: string }>;
+  editData?: any;
 }
 
 export interface CreateAuditoriaProgramadaDto {
@@ -113,25 +114,71 @@ export function CrearAuditoria({
   onSave,
   catalogs,
   existingAudits = [],
+  editData,
 }: CrearAuditoriaProps) {
+  const isEditing = !!editData;
+
+  // Derive initial location selections from editData
+  const getInitialSelections = () => {
+    if (!editData)
+      return { sede: "", edificio: "", piso: "", almacen: "", pasillo: "" };
+
+    if (editData.oficinas?.pisos?.edificios?.sedes) {
+      return {
+        sede: editData.oficinas.pisos.edificios.sedes.id ?? "",
+        edificio: editData.oficinas.pisos.edificios.id ?? "",
+        piso: editData.oficinas.pisos.id ?? "",
+        almacen: "",
+        pasillo: "",
+      };
+    }
+    if (editData.estantes?.pasillos?.almacenes?.sedes) {
+      return {
+        sede: editData.estantes.pasillos.almacenes.sedes.id ?? "",
+        edificio: "",
+        piso: "",
+        almacen: editData.estantes.pasillos.almacenes.id ?? "",
+        pasillo: editData.estantes.pasillos.id ?? "",
+      };
+    }
+    return { sede: "", edificio: "", piso: "", almacen: "", pasillo: "" };
+  };
+
+  const initSel = getInitialSelections();
+
+  const formatDateForInput = (d: string | undefined) => {
+    if (!d) return "";
+    return new Date(d).toISOString().split("T")[0];
+  };
+
+  const formatTimeForInput = (d: string | undefined) => {
+    if (!d) return "";
+    const date = new Date(d);
+    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  };
+
   const [step, setStep] = useState<"form" | "summary">("form");
   const [formData, setFormData] = useState<AuditFormData>({
-    titulo: "",
-    descripcion: "",
-    sede_id: "",
-    auditor_id: "",
-    hora: "",
-    fecha_inicio: "",
-    fecha_fin: "",
-    tipo_ubicacion: "oficina",
+    titulo: editData?.titulo ?? "",
+    descripcion: editData?.descripcion ?? "",
+    sede_id: initSel.sede,
+    auditor_id: editData?.auditor_id ?? "",
+    hora: editData?.fecha_programada
+      ? formatTimeForInput(editData.fecha_programada)
+      : "",
+    fecha_inicio: formatDateForInput(editData?.fecha_inicio),
+    fecha_fin: formatDateForInput(editData?.fecha_fin),
+    tipo_ubicacion: editData?.estante_id ? "estante" : "oficina",
+    oficina_id: editData?.oficina_id ?? undefined,
+    estante_id: editData?.estante_id ?? undefined,
     activos_programados: [],
   });
 
-  const [selectedSede, setSelectedSede] = useState("");
-  const [selectedEdificio, setSelectedEdificio] = useState("");
-  const [selectedPiso, setSelectedPiso] = useState("");
-  const [selectedAlmacen, setSelectedAlmacen] = useState("");
-  const [selectedPasillo, setSelectedPasillo] = useState("");
+  const [selectedSede, setSelectedSede] = useState(initSel.sede);
+  const [selectedEdificio, setSelectedEdificio] = useState(initSel.edificio);
+  const [selectedPiso, setSelectedPiso] = useState(initSel.piso);
+  const [selectedAlmacen, setSelectedAlmacen] = useState(initSel.almacen);
+  const [selectedPasillo, setSelectedPasillo] = useState(initSel.pasillo);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activosDisponibles, setActivosDisponibles] = useState<
     ActivoCatalogItem[]
@@ -296,7 +343,10 @@ export function CrearAuditoria({
       newErrors.titulo = `El título no puede superar ${TITULO_MAX} caracteres`;
     } else if (
       existingAudits.some(
-        (audit) => audit.titulo.toLowerCase() === formData.titulo.toLowerCase(),
+        (audit) =>
+          audit.titulo.toLowerCase() === formData.titulo.toLowerCase() &&
+          (!isEditing ||
+            audit.titulo.toLowerCase() !== editData?.titulo?.toLowerCase()),
       )
     ) {
       newErrors.titulo = "Ya existe una auditoría con este título";
@@ -384,7 +434,7 @@ export function CrearAuditoria({
       const dataToSend = {
         titulo: formData.titulo,
         descripcion: formData.descripcion || undefined,
-        fecha_programada: new Date(),
+        ...(isEditing ? {} : { fecha_programada: new Date() }),
         fecha_inicio: formData.fecha_inicio
           ? new Date(formData.fecha_inicio)
           : undefined,
@@ -477,12 +527,16 @@ export function CrearAuditoria({
             <div>
               <h2 className="text-2xl font-bold dark:text-white">
                 {step === "form"
-                  ? "Programar Nueva Auditoría"
+                  ? isEditing
+                    ? "Editar Auditoría"
+                    : "Programar Nueva Auditoría"
                   : "Revisar Auditoría"}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {step === "form"
-                  ? "Selecciona ubicación, auditor y activos a verificar"
+                  ? isEditing
+                    ? "Modifica los detalles de la auditoría programada"
+                    : "Selecciona ubicación, auditor y activos a verificar"
                   : "Verifica los detalles antes de confirmar"}
               </p>
             </div>
@@ -1163,7 +1217,7 @@ export function CrearAuditoria({
                   className="flex-1 px-6 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full font-medium hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4" />
-                  Confirmar
+                  {isEditing ? "Guardar Cambios" : "Confirmar"}
                 </button>
               </div>
             </>

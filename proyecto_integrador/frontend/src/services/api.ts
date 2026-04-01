@@ -443,6 +443,15 @@ export const auditoriasProgramadasApi = {
   create: async (data: any): Promise<any> => {
     return apiClient.post<any>("/api/auditorias-programadas", data);
   },
+  update: async (id: string, data: any): Promise<any> => {
+    return apiClient.patch<any>(`/api/auditorias-programadas/${id}`, data);
+  },
+  updateStatus: async (id: string, estadoId: number): Promise<any> => {
+    return apiClient.patch<any>(
+      `/api/auditorias-programadas/${id}/estado/${estadoId}`,
+      {},
+    );
+  },
 };
 
 export const depreciacionApi = {

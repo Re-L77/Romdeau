@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   User,
   Calendar,
@@ -11,10 +11,19 @@ import {
   FileText,
   Clock,
   Building2,
+  Edit3,
+  Ban,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { activosApi, auditoriasProgramadasApi, auditoriasApi } from "../../../services/api";
+import {
+  activosApi,
+  auditoriasProgramadasApi,
+  auditoriasApi,
+} from "../../../services/api";
+import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
+import { CrearAuditoria } from "./CrearAuditoria";
+import type { CreateAuditoriaProgramadaDto } from "./CrearAuditoria";
 
 interface AuditDetailProps {
   auditId: string;
@@ -50,6 +59,54 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
   const [scheduledAssets, setScheduledAssets] = useState<any[]>([]);
   const [isLoadingScheduledAssets, setIsLoadingScheduledAssets] =
     useState(false);
+
+  // Cancel & Edit states
+  const [cancelModal, setCancelModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [formCatalogs, setFormCatalogs] = useState<any>(null);
+
+  const handleCancel = async () => {
+    setSaving(true);
+    try {
+      // estado_id 4 = CANCELADA
+      await auditoriasProgramadasApi.updateStatus(auditId, 4);
+      setScheduledAudit((prev: any) => ({
+        ...prev,
+        estado_auditoria_programada_id: 4,
+        estados_auditoria_programada: { id: 4, nombre: "CANCELADA" },
+      }));
+      setCancelModal(false);
+      toast.success("Auditoría cancelada correctamente");
+    } catch (e: any) {
+      toast.error(e?.message || "Error al cancelar la auditoría");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOpenEdit = async () => {
+    try {
+      if (!formCatalogs) {
+        const catalogs = await auditoriasProgramadasApi.getFormCatalogs();
+        setFormCatalogs(catalogs);
+      }
+      setEditModal(true);
+    } catch {
+      toast.error("Error al cargar catálogos para edición");
+    }
+  };
+
+  const handleSaveEdit = async (formData: CreateAuditoriaProgramadaDto) => {
+    try {
+      const updated = await auditoriasProgramadasApi.update(auditId, formData);
+      setScheduledAudit((prev: any) => ({ ...prev, ...updated }));
+      setEditModal(false);
+      toast.success("Auditoría actualizada correctamente");
+    } catch (e: any) {
+      toast.error(e?.message || "Error al actualizar la auditoría");
+    }
+  };
 
   useEffect(() => {
     if (!auditId) return;
@@ -105,7 +162,8 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
         // Ubicación Jerárquica (Lógica robusta)
         campus:
           scheduledData?.activos?.oficinas?.pisos?.edificios?.sedes?.nombre ??
-          scheduledData?.activos?.estantes?.pasillos?.almacenes?.sedes?.nombre ??
+          scheduledData?.activos?.estantes?.pasillos?.almacenes?.sedes
+            ?.nombre ??
           "—",
         edificio:
           scheduledData?.activos?.oficinas?.pisos?.edificios?.nombre ??
@@ -153,8 +211,14 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
   const scheduledDateLabel = scheduledData.fecha_programada
     ? formatDateTime(scheduledData.fecha_programada)
     : `${scheduledData.fecha ?? "—"} a las ${scheduledData.hora ?? "—"}`;
-  const scheduledStatusLabel =
-    scheduledData.estados_auditoria_programada?.nombre ?? "Pendiente";
+  const scheduledStatusRaw =
+    scheduledData.estados_auditoria_programada?.nombre ?? "PROGRAMADA";
+  const scheduledStatusLabel = scheduledStatusRaw;
+  const canEdit = isScheduled && scheduledStatusRaw === "PROGRAMADA";
+  const canCancel =
+    isScheduled &&
+    (scheduledStatusRaw === "PROGRAMADA" ||
+      scheduledStatusRaw === "EN PROGRESO");
 
   // Extraer ubicación desde oficina o estante
   const getScheduledLocation = () => {
@@ -362,27 +426,46 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
                       </div>
                     )}
                   </div>
-                  {isScheduled ? (
-                    <div className="px-6 py-3 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-full font-semibold border-2 border-blue-200 dark:border-blue-700/30">
-                      {scheduledStatusLabel}
-                    </div>
-                  ) : (
-                    (() => {
-                      const estado = (data.estado_reportado ??
-                        "BUENO") as keyof typeof estadoColors;
-                      const colors =
-                        estadoColors[estado] ?? estadoColors["BUENO"];
-                      const IconComponent = colors.icon;
-                      return (
-                        <div
-                          className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold border-2 ${colors.bg} ${colors.text} ${colors.border}`}
-                        >
-                          <IconComponent className="w-5 h-5" />
-                          <span>{data.estado_reportado ?? "—"}</span>
-                        </div>
-                      );
-                    })()
-                  )}
+                  {isScheduled
+                    ? (() => {
+                        const statusColorMap: Record<string, string> = {
+                          PROGRAMADA:
+                            "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30",
+                          "EN PROGRESO":
+                            "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700/30",
+                          COMPLETADA:
+                            "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/30",
+                          CANCELADA:
+                            "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-700/30",
+                          VENCIDA:
+                            "bg-gray-100 dark:bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700/30",
+                        };
+                        const statusClasses =
+                          statusColorMap[scheduledStatusRaw] ??
+                          statusColorMap["PROGRAMADA"];
+                        return (
+                          <div
+                            className={`px-6 py-3 rounded-full font-semibold border-2 ${statusClasses}`}
+                          >
+                            {scheduledStatusLabel}
+                          </div>
+                        );
+                      })()
+                    : (() => {
+                        const estado = (data.estado_reportado ??
+                          "BUENO") as keyof typeof estadoColors;
+                        const colors =
+                          estadoColors[estado] ?? estadoColors["BUENO"];
+                        const IconComponent = colors.icon;
+                        return (
+                          <div
+                            className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold border-2 ${colors.bg} ${colors.text} ${colors.border}`}
+                          >
+                            <IconComponent className="w-5 h-5" />
+                            <span>{data.estado_reportado ?? "—"}</span>
+                          </div>
+                        );
+                      })()}
                 </div>
 
                 {/* Location Hierarchy */}
@@ -748,6 +831,48 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
                 </motion.div>
               )}
 
+              {/* Actions - Only for scheduled */}
+              {isScheduled && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8"
+                >
+                  <h2 className="text-xl font-bold mb-6 dark:text-white">
+                    Acciones
+                  </h2>
+                  <div className="space-y-3">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleOpenEdit}
+                      disabled={!canEdit}
+                      className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Editar Auditoría
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setCancelModal(true)}
+                      disabled={!canCancel}
+                      className="w-full px-6 py-4 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 rounded-full font-medium hover:bg-red-200 dark:hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Ban className="w-4 h-4" />
+                      Cancelar Auditoría
+                    </motion.button>
+                    {!canCancel && (
+                      <p className="text-xs text-center text-gray-500 dark:text-gray-500 mt-2">
+                        Solo se pueden modificar auditorías con estado
+                        PROGRAMADA o EN PROGRESO.
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
               {/* Comments/Notes */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -808,6 +933,68 @@ export function AuditDetail({ auditId, auditType, onBack }: AuditDetailProps) {
           </div>
         )}
       </div>
+
+      {/* === MODAL: Cancel Confirmation === */}
+      <AnimatePresence>
+        {cancelModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
+            onClick={() => setCancelModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-2xl p-8 w-full max-w-md text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                <Ban className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+              <h2 className="text-xl font-bold dark:text-white mb-2">
+                ¿Cancelar auditoría?
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                La auditoría{" "}
+                <span className="font-semibold text-gray-800 dark:text-gray-200">
+                  {scheduledData.titulo}
+                </span>{" "}
+                será cancelada. Esta acción no puede revertirse.
+              </p>
+              <div className="flex gap-3">
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setCancelModal(false)}
+                  className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium"
+                >
+                  Volver
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full font-medium transition-colors disabled:opacity-50"
+                >
+                  {saving ? "Cancelando..." : "Confirmar"}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* === MODAL: Edit Audit === */}
+      {editModal && formCatalogs && (
+        <CrearAuditoria
+          onClose={() => setEditModal(false)}
+          onSave={handleSaveEdit}
+          catalogs={formCatalogs}
+          editData={scheduledData}
+        />
+      )}
     </div>
   );
 }
