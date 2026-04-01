@@ -32,8 +32,8 @@ export default function LoginScreen() {
   const { isConnected } = useNetInfo();
   const router = useRouter();
 
-  const [email, setEmail] = useState("124051537@upq.edu.mx");
-  const [password, setPassword] = useState("xK9$mP2@vL5*qR8");
+  const [email, setEmail] = useState("xd@xd.com");
+  const [password, setPassword] = useState("ZmY!xH5eMCpT");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [generalError, setGeneralError] = useState<string | null>(null);

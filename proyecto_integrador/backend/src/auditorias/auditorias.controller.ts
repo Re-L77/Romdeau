@@ -28,7 +28,7 @@ export class AuditoriasController {
    * @requires ADMIN role
    * @param createAuditoriaDto Datos de la auditoría a crear
    */
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.AUDITOR)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createAuditoriaDto: CreateAuditoriaDto) {
@@ -39,7 +39,7 @@ export class AuditoriasController {
    * Obtiene todas las auditorías registradas
    * @requires ADMIN or AUDITOR role
    */
-  @Roles(Role.ADMIN, Role.AUDITOR)
+  @Roles(Role.ADMIN)
   @Get()
   @HttpCode(HttpStatus.OK)
   findAll() {
