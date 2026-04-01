@@ -39,14 +39,14 @@ export function CreateEditAsset({ assetId, onClose, onSave }: CreateEditAssetPro
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-900 rounded-2xl md:rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] mx-2 md:mx-0 overflow-y-auto"
       >
-        <div className="sticky top-0 bg-white border-b border-gray-100 p-8 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 p-4 md:p-8 flex items-center justify-between z-10">
           <div>
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-xl md:text-2xl font-bold dark:text-white">
               {isEditing ? 'Editar Activo' : 'Crear Nuevo Activo'}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
               {isEditing ? `ID: ${assetId}` : 'Complete la información del activo'}
             </p>
           </div>
@@ -54,29 +54,29 @@ export function CreateEditAsset({ assetId, onClose, onSave }: CreateEditAssetPro
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClose}
-            className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+            className="w-9 h-9 md:w-10 md:h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 md:w-5 md:h-5 dark:text-white" />
           </motion.button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-8">
+        <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-6 md:space-y-8">
           {/* Basic Information */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Package className="w-5 h-5 text-gray-600" />
-              <h3 className="text-lg font-bold">Información Básica</h3>
+            <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <Package className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
+              <h3 className="text-base md:text-lg font-bold dark:text-white">Información Básica</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Nombre del Activo
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-5 py-3 bg-gray-50 border-2 border-gray-200 rounded-full focus:outline-none focus:border-black transition-all"
+                  className="w-full px-3 md:px-5 py-2 md:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg md:rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all text-sm md:text-base"
                   placeholder="Ej: MacBook Pro 16"
                   required
                 />
@@ -119,50 +119,50 @@ export function CreateEditAsset({ assetId, onClose, onSave }: CreateEditAssetPro
 
           {/* Location & Custody */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-gray-600" />
-              <h3 className="text-lg font-bold">Ubicación y Custodia</h3>
+            <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <MapPin className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
+              <h3 className="text-base md:text-lg font-bold dark:text-white">Ubicación y Custodia</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Ubicación General
                 </label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-5 py-3 bg-gray-50 border-2 border-gray-200 rounded-full focus:outline-none focus:border-black transition-all"
+                  className="w-full px-3 md:px-5 py-2 md:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg md:rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all text-sm md:text-base"
                   placeholder="Ej: Oficina Central - Piso 3"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Ubicación Exacta
                 </label>
                 <input
                   type="text"
                   value={formData.exactLocation}
                   onChange={(e) => setFormData({ ...formData, exactLocation: e.target.value })}
-                  className="w-full px-5 py-3 bg-gray-50 border-2 border-gray-200 rounded-full focus:outline-none focus:border-black transition-all"
+                  className="w-full px-3 md:px-5 py-2 md:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg md:rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all text-sm md:text-base"
                   placeholder="Ej: Desk 3B-14"
                   required
                 />
               </div>
 
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Custodio
                 </label>
                 <div className="relative">
-                  <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                   <input
                     type="text"
                     value={formData.custodian}
                     onChange={(e) => setFormData({ ...formData, custodian: e.target.value })}
-                    className="w-full pl-14 pr-5 py-3 bg-gray-50 border-2 border-gray-200 rounded-full focus:outline-none focus:border-black transition-all"
+                    className="w-full pl-9 md:pl-14 pr-3 md:pr-5 py-2 md:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg md:rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all text-sm md:text-base"
                     placeholder="Nombre del custodio"
                     required
                   />
@@ -173,38 +173,38 @@ export function CreateEditAsset({ assetId, onClose, onSave }: CreateEditAssetPro
 
           {/* Financial Information */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="w-5 h-5 text-gray-600" />
-              <h3 className="text-lg font-bold">Información Financiera</h3>
+            <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
+              <h3 className="text-base md:text-lg font-bold dark:text-white">Información Financiera</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Fecha de Compra
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Calendar className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                   <input
                     type="date"
                     value={formData.purchaseDate}
                     onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-                    className="w-full pl-14 pr-5 py-3 bg-gray-50 border-2 border-gray-200 rounded-full focus:outline-none focus:border-black transition-all"
+                    className="w-full pl-9 md:pl-14 pr-3 md:pr-5 py-2 md:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg md:rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all text-sm md:text-base"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Precio de Compra (USD)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                  <span className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
                   <input
                     type="number"
                     value={formData.purchasePrice}
                     onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })}
-                    className="w-full pl-10 pr-5 py-3 bg-gray-50 border-2 border-gray-200 rounded-full focus:outline-none focus:border-black transition-all"
+                    className="w-full pl-7 md:pl-10 pr-3 md:pr-5 py-2 md:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg md:rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all text-sm md:text-base"
                     placeholder="0.00"
                     step="0.01"
                     required
@@ -213,16 +213,16 @@ export function CreateEditAsset({ assetId, onClose, onSave }: CreateEditAssetPro
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Vencimiento de Garantía
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Calendar className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                   <input
                     type="date"
                     value={formData.warrantyExpiration}
                     onChange={(e) => setFormData({ ...formData, warrantyExpiration: e.target.value })}
-                    className="w-full pl-14 pr-5 py-3 bg-gray-50 border-2 border-gray-200 rounded-full focus:outline-none focus:border-black transition-all"
+                    className="w-full pl-9 md:pl-14 pr-3 md:pr-5 py-2 md:py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg md:rounded-full focus:outline-none focus:border-black dark:focus:border-white transition-all text-sm md:text-base"
                   />
                 </div>
               </div>
@@ -297,24 +297,24 @@ export function CreateEditAsset({ assetId, onClose, onSave }: CreateEditAssetPro
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              className="flex-1 px-6 py-4 bg-black text-white rounded-full font-semibold hover:bg-gray-900 transition-colors flex items-center justify-center gap-2"
-            >
-              <Save className="w-5 h-5" />
-              {isEditing ? 'Guardar Cambios' : 'Crear Activo'}
-            </motion.button>
+          <div className="flex flex-col-reverse sm:flex-row items-center gap-3 pt-4 md:pt-6 border-t border-gray-200 dark:border-gray-800">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="button"
               onClick={onClose}
-              className="px-6 py-4 bg-gray-100 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition-colors"
+              className="w-full sm:flex-1 px-4 md:px-6 py-2 md:py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg md:rounded-full font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm md:text-base"
             >
               Cancelar
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              className="w-full sm:flex-1 px-4 md:px-6 py-2 md:py-4 bg-black dark:bg-white text-white dark:text-black rounded-lg md:rounded-full font-semibold hover:bg-gray-900 dark:hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm md:text-base"
+            >
+              <Save className="w-4 h-4 md:w-5 md:h-5" />
+              {isEditing ? 'Guardar Cambios' : 'Crear Activo'}
             </motion.button>
           </div>
         </form>

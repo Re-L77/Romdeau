@@ -97,13 +97,13 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
   return (
     <div className="space-y-6">
       {/* ─── Row 1: Area Chart + Depreciation Mini ───────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
         {/* Auditorías por Mes — AreaChart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="lg:col-span-2 bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 md:p-8"
+          className="md:col-span-2 lg:col-span-2 bg-white dark:bg-[#1a1a1a] rounded-2xl md:rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 md:p-6 lg:p-8"
         >
           <div className="mb-6">
             <h3 className="text-xl font-bold mb-1 dark:text-white">Auditorías por Mes</h3>
@@ -159,7 +159,7 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 md:p-8 flex flex-col justify-between"
+          className="bg-white dark:bg-[#1a1a1a] rounded-2xl md:rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 md:p-6 lg:p-8 flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center gap-2 mb-5">
@@ -197,13 +197,13 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
       </div>
 
       {/* ─── Row 2: BarChart + PieChart ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         {/* Activos por Departamento — BarChart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.25 }}
-          className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 md:p-8"
+          className="bg-white dark:bg-[#1a1a1a] rounded-2xl md:rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 md:p-6 lg:p-8"
         >
           <div className="mb-6">
             <h3 className="text-xl font-bold mb-1 dark:text-white">Activos por Departamento</h3>
@@ -236,7 +236,7 @@ export const FinancialWidgets = memo(function FinancialWidgets({ financiero, gra
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 md:p-8"
+          className="bg-white dark:bg-[#1a1a1a] rounded-2xl md:rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 md:p-6 lg:p-8"
         >
           <div className="mb-4">
             <h3 className="text-xl font-bold mb-1 dark:text-white">Activos por Estado</h3>

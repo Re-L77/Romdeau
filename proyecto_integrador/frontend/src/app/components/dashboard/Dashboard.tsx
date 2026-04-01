@@ -38,8 +38,8 @@ export const Dashboard = memo(function Dashboard({ onNavigate }: DashboardProps)
   return (
     <>
       <AuditTimeline auditorias={data.auditorias} onNavigate={onNavigate} />
-      <main className="pl-4 pr-16 sm:pl-6 sm:pr-20 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] lg:pr-20 pt-6 lg:pt-8 pb-16 relative">
-        <div className="max-w-[1400px] mx-auto space-y-8">
+      <main className="px-3 sm:px-4 md:px-6 lg:px-20 transition-[padding] duration-300 lg:pl-[var(--content-padding,20rem)] pt-20 md:pt-8 pb-16 relative">
+        <div className="max-w-[1400px] mx-auto space-y-6 md:space-y-8">
 
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">

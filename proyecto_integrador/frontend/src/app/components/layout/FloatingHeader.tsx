@@ -91,7 +91,7 @@ export function FloatingHeader({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="fixed top-6 left-6 lg:left-80 right-6 z-50 flex items-center gap-4 pointer-events-none"
+      className="fixed top-4 md:top-6 left-4 lg:left-80 right-4 md:right-6 z-50 flex items-center gap-3 md:gap-4 pointer-events-none"
     >
       <div className="flex-1" />
 
@@ -100,11 +100,11 @@ export function FloatingHeader({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setNotificationsOpen(!notificationsOpen)}
-          className="relative w-14 h-14 bg-white dark:bg-[#1a1a1a] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center hover:shadow-lg transition-shadow"
+          className="relative w-12 h-12 md:w-14 md:h-14 bg-white dark:bg-[#1a1a1a] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center hover:shadow-lg transition-shadow"
         >
-          <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <Bell className="w-5 h-5 md:w-6 md:h-6 text-gray-700 dark:text-gray-300" />
           {unreadCount > 0 && (
-            <span className="absolute top-2 right-2 w-5 h-5 bg-amber-500 rounded-full text-white text-xs flex items-center justify-center font-semibold">
+            <span className="absolute top-1 right-1 md:top-2 md:right-2 w-4 h-4 md:w-5 md:h-5 bg-amber-500 rounded-full text-white text-xs flex items-center justify-center font-semibold">
               {unreadCount}
             </span>
           )}
@@ -128,7 +128,7 @@ export function FloatingHeader({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="absolute right-0 top-16 w-96 max-w-[calc(100vw-3rem)] bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_20px_60px_rgb(0,0,0,0.15)] dark:shadow-[0_20px_60px_rgb(0,0,0,0.8)] overflow-hidden z-[70]"
+                className="absolute right-0 top-14 md:top-16 w-96 max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)] bg-white dark:bg-[#1a1a1a] rounded-2xl md:rounded-3xl shadow-[0_20px_60px_rgb(0,0,0,0.15)] dark:shadow-[0_20px_60px_rgb(0,0,0,0.8)] overflow-hidden z-[70]"
               >
                 <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                   <div>

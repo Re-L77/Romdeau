@@ -42,9 +42,9 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-6 left-6 z-[60] w-14 h-14 bg-white dark:bg-[#1a1a1a] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center"
+        className="lg:hidden fixed top-4 left-4 z-[60] w-12 h-12 md:w-14 md:h-14 bg-white dark:bg-[#1a1a1a] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center"
       >
-        {mobileMenuOpen ? <X className="w-6 h-6 dark:text-white" /> : <Menu className="w-6 h-6 dark:text-white" />}
+        {mobileMenuOpen ? <X className="w-5 h-5 md:w-6 md:h-6 dark:text-white" /> : <Menu className="w-5 h-5 md:w-6 md:h-6 dark:text-white" />}
       </motion.button>
 
       {/* Mobile Backdrop */}
@@ -65,17 +65,17 @@ export function FloatingSidebar({ activeView, onNavigate }: FloatingSidebarProps
         transition={{ duration: 0.3 }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`fixed left-6 top-6 bottom-6 bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 z-50 flex flex-col
+        className={`fixed left-4 top-4 bottom-4 bg-white dark:bg-[#1a1a1a] rounded-2xl md:rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 md:p-6 z-50 flex flex-col
           max-lg:left-0 max-lg:top-0 max-lg:bottom-0 max-lg:rounded-none max-lg:rounded-r-3xl max-lg:w-64
           ${mobileMenuOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'}
           lg:translate-x-0 transition-all duration-300 group overflow-hidden
           ${isHovered || mobileMenuOpen ? 'w-64' : 'w-[6.5rem]'}`}
       >
         <div 
-          className={`mb-8 flex items-center gap-3 ${!isHovered && !mobileMenuOpen ? 'justify-center mx-auto' : ''}`}
+          className={`mb-6 md:mb-8 flex items-center gap-3 ${!isHovered && !mobileMenuOpen ? 'justify-center mx-auto' : ''}`}
         >
           <div className="flex items-center justify-center flex-shrink-0">
-            <img src={iconSrc} alt="Romdeau Icon" className="w-14 h-14 object-contain dark:invert" />
+            <img src={iconSrc} alt="Romdeau Icon" className="w-10 h-10 md:w-14 md:h-14 object-contain dark:invert" />
           </div>
           {(isHovered || mobileMenuOpen) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="whitespace-nowrap">

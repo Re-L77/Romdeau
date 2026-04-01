@@ -40,23 +40,23 @@ export const UserPerformance = memo(function UserPerformance({ data }: Props) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 md:p-8"
+      className="bg-white dark:bg-[#1a1a1a] rounded-2xl md:rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 md:p-6 lg:p-8"
     >
-      <div className="mb-6">
-        <h3 className="text-xl font-bold mb-1 dark:text-white">Desempeño por Auditor</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Ranking de actividad — todas las auditorías</p>
+      <div className="mb-4 md:mb-6">
+        <h3 className="text-lg md:text-xl font-bold mb-1 dark:text-white">Desempeño por Auditor</h3>
+        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Ranking de actividad — todas las auditorías</p>
       </div>
 
       {/* Top 3 badges */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4 md:mb-6">
         {data.slice(0, 3).map((u, i) => (
           <div
             key={u.usuario_id}
-            className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-3 text-center"
+            className="bg-gray-50 dark:bg-gray-800/50 rounded-lg md:rounded-2xl p-2 md:p-3 text-center"
           >
-            <Medal className={`w-5 h-5 mx-auto mb-1 ${MEDAL_COLORS[i]}`} />
+            <Medal className={`w-4 h-4 md:w-5 md:h-5 mx-auto mb-1 ${MEDAL_COLORS[i]}`} />
             <p className="text-xs font-bold dark:text-white truncate">{u.nombre.split(' ')[0]}</p>
-            <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">
+            <p className="text-base md:text-lg font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">
               {u.total_auditorias}
             </p>
             <div className={`flex items-center justify-center gap-0.5 text-xs ${u.variacion >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
@@ -70,7 +70,7 @@ export const UserPerformance = memo(function UserPerformance({ data }: Props) {
       </div>
 
       {/* Bar chart */}
-      <ResponsiveContainer width="100%" height={180}>
+      <ResponsiveContainer width="100%" height={150}>
         <BarChart data={top5} layout="vertical" margin={{ top: 0, right: 40, left: 8, bottom: 0 }}>
           <XAxis type="number" allowDecimals={false} tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
           <YAxis

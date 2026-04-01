@@ -64,13 +64,13 @@ export const FinancialMetricCards = memo(function FinancialMetricCards({ financi
   const depreciationTrend = scaleTrendData(financiero?.depreciationTrend);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6">
       {/* Hero Card — Valor Total */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative bg-black dark:bg-gradient-to-br dark:from-indigo-700 dark:to-purple-800 rounded-3xl p-6 md:p-8 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.18)] dark:shadow-[0_8px_30px_rgb(79,70,229,.35)] group"
+        className="relative bg-black dark:bg-gradient-to-br dark:from-indigo-700 dark:to-purple-800 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.18)] dark:shadow-[0_8px_30px_rgb(79,70,229,.35)] group"
         title="Suma del costo de adquisición de todos los activos registrados"
       >
         {/* Sparkline bg */}
@@ -107,7 +107,7 @@ export const FinancialMetricCards = memo(function FinancialMetricCards({ financi
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="relative bg-white dark:bg-[#1a1a1a] rounded-3xl p-6 md:p-8 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] group"
+        className="relative bg-white dark:bg-[#1a1a1a] rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] group"
         title="Diferencia entre el costo de adquisición y el valor en libros actual"
       >
         <svg className="absolute bottom-0 left-0 w-full h-24 opacity-10 dark:opacity-20 group-hover:opacity-20 dark:group-hover:opacity-30 transition-opacity" viewBox="0 0 180 80" preserveAspectRatio="none">
@@ -115,27 +115,27 @@ export const FinancialMetricCards = memo(function FinancialMetricCards({ financi
         </svg>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-9 h-9 bg-indigo-50 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center">
-              <Activity className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+            <div className="w-8 h-8 md:w-9 md:h-9 bg-indigo-50 dark:bg-indigo-500/20 rounded-lg md:rounded-xl flex items-center justify-center">
+              <Activity className="w-4 h-4 md:w-5 md:h-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <p className="text-gray-400 dark:text-gray-500 text-xs uppercase tracking-widest font-semibold">
               Depreciación Acumulada
             </p>
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-bold text-black dark:text-white mb-2 tabular-nums">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-black dark:text-white mb-1 md:mb-2 tabular-nums">
             {formatCurrency(depreciacionAcumulada)}
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mb-5">
+          <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mb-3 md:mb-5">
             Sobre el costo de adquisición
           </p>
 
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold
+          <div className={`inline-flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-semibold
             ${porcentaje > 50 ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400'
               : porcentaje > 25 ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
               : 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'}`}>
-            <TrendingDown className="w-3.5 h-3.5" />
+            <TrendingDown className="w-3 h-3 md:w-3.5 md:h-3.5" />
             <AnimatedValue value={Math.round(porcentaje)} />% depreciado
           </div>
         </div>

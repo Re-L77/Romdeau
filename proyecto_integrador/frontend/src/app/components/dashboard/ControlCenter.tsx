@@ -38,14 +38,14 @@ function KpiCard({ name, icon: Icon, value, subtext, status, bgColor, iconBg, te
       transition={{ duration: 0.4, delay: index * 0.08 }}
       whileHover={{ y: -3, transition: { duration: 0.2 } }}
       title={tooltip}
-      className={`bg-gradient-to-br ${bgColor} dark:from-gray-800/80 dark:to-gray-900 rounded-2xl p-6 border-2 ${statusStyles[status]} cursor-default select-none`}
+      className={`bg-gradient-to-br ${bgColor} dark:from-gray-800/80 dark:to-gray-900 rounded-lg md:rounded-2xl p-3 md:p-6 border-2 ${statusStyles[status]} cursor-default select-none`}
     >
-      <div className="flex items-start justify-between mb-5">
-        <div className={`${iconBg} w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg`}>
-          <Icon className="w-6 h-6 text-white" />
+      <div className="flex items-start justify-between mb-3 md:mb-5">
+        <div className={`${iconBg} w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center shadow-lg`}>
+          <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
         </div>
         {/* Indicator dot */}
-        <div className={`w-2.5 h-2.5 rounded-full mt-1 ${
+        <div className={`w-2 md:w-2.5 h-2 md:h-2.5 rounded-full mt-1 ${
           status === 'success' ? 'bg-emerald-400' :
           status === 'warning' ? 'bg-amber-400' :
           status === 'danger'  ? 'bg-red-400' :
@@ -53,12 +53,12 @@ function KpiCard({ name, icon: Icon, value, subtext, status, bgColor, iconBg, te
         } shadow-[0_0_8px_2px_rgba(0,0,0,.12)]`} />
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
-          <p className={`text-sm font-bold ${textColor} dark:text-white mb-1`}>{name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight pr-2">{subtext}</p>
+      <div className="flex flex-col gap-2 md:gap-4">
+        <div>
+          <p className={`text-xs md:text-sm font-bold ${textColor} dark:text-white mb-1`}>{name}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight pr-1 md:pr-2">{subtext}</p>
         </div>
-        <div className={`${textColor} dark:text-white font-bold text-4xl tabular-nums tracking-tight`}>
+        <div className={`${textColor} dark:text-white font-bold text-2xl md:text-4xl tabular-nums tracking-tight`}>
           {animated.toLocaleString('es-MX')}
         </div>
       </div>
@@ -119,15 +119,15 @@ export const ControlCenter = memo(function ControlCenter({ resumen }: ControlCen
   ];
 
   return (
-    <div className="mb-10">
-      <div className="mb-5">
-        <h2 className="text-2xl font-bold mb-1 dark:text-white">Resumen Operativo</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+    <div className="mb-8 md:mb-10">
+      <div className="mb-3 md:mb-5">
+        <h2 className="text-xl md:text-2xl font-bold mb-1 dark:text-white">Resumen Operativo</h2>
+        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
           Métricas clave del estado de activos — actualizado en tiempo real
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2 md:gap-4">
         {cards.map((card, index) => (
           <KpiCard key={card.id} {...card} index={index} />
         ))}
