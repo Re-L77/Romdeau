@@ -75,12 +75,12 @@ export function AuditDetail({
   const handleCancel = async () => {
     setSaving(true);
     try {
-      // estado_id 4 = CANCELADA
-      await auditoriasProgramadasApi.updateStatus(auditId, 4);
+      // estado_id 3 = CANCELADA
+      await auditoriasProgramadasApi.updateStatus(auditId, 3);
       setScheduledAudit((prev: any) => ({
         ...prev,
-        estado_auditoria_programada_id: 4,
-        estados_auditoria_programada: { id: 4, nombre: "CANCELADA" },
+        estado_auditoria_programada_id: 3,
+        estados_auditoria_programada: { id: 3, nombre: "CANCELADA" },
       }));
       setCancelModal(false);
       toast.success("Auditoría cancelada correctamente");

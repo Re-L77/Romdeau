@@ -18,6 +18,11 @@ import {
 } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
+import {
+  AuditoriaStatusKey,
+  getAuditoriaStatusLabel,
+  resolveAuditoriaStatus,
+} from "../data/auditoriaStatus";
 
 type FilterType = "ALL" | 1 | 2 | 3 | 4 | 5;
 
@@ -33,54 +38,74 @@ export default function AssetListScreen() {
       audit.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
       audit.id.toString().includes(searchQuery);
 
+    const status = resolveAuditoriaStatus(audit);
+    const statusByFilter: Partial<
+      Record<Exclude<FilterType, "ALL">, AuditoriaStatusKey>
+    > = {
+      1: "programada",
+      2: "en_progreso",
+      3: "cancelada",
+      4: "completada",
+      5: "vencida",
+    };
+
     const matchesFilter =
-      filterStatus === "ALL" || audit.estado_id === filterStatus;
+      filterStatus === "ALL" || status === statusByFilter[filterStatus];
 
     return matchesSearch && matchesFilter;
   });
 
   const stats = {
-    programada: auditorias.filter((a) => a.estado_id === 1).length,
-    enProgreso: auditorias.filter((a) => a.estado_id === 2).length,
-    completada: auditorias.filter((a) => a.estado_id === 4).length,
-    cancelada: auditorias.filter((a) => a.estado_id === 3).length,
-    vencida: auditorias.filter((a) => a.estado_id === 5).length,
+    programada: auditorias.filter(
+      (a) => resolveAuditoriaStatus(a) === "programada",
+    ).length,
+    enProgreso: auditorias.filter(
+      (a) => resolveAuditoriaStatus(a) === "en_progreso",
+    ).length,
+    completada: auditorias.filter(
+      (a) => resolveAuditoriaStatus(a) === "completada",
+    ).length,
+    cancelada: auditorias.filter(
+      (a) => resolveAuditoriaStatus(a) === "cancelada",
+    ).length,
+    vencida: auditorias.filter((a) => resolveAuditoriaStatus(a) === "vencida")
+      .length,
     total: auditorias.length,
   };
 
-  const getStatusConfig = (estadoId: number) => {
-    switch (estadoId) {
-      case 1:
+  const getStatusConfig = (status: AuditoriaStatusKey) => {
+    switch (status) {
+      case "programada":
         return {
-          label: "Programada",
+          label: getAuditoriaStatusLabel(status),
           bgColor: "#dbeafe",
           textColor: "#1e40af",
           Icon: Clock,
         };
-      case 2:
+      case "en_progreso":
         return {
-          label: "En Progreso",
+          label: getAuditoriaStatusLabel(status),
           bgColor: "#fef3c7",
           textColor: "#b45309",
           Icon: Clock,
         };
-      case 4:
+      case "completada":
         return {
-          label: "Completada",
+          label: getAuditoriaStatusLabel(status),
           bgColor: "#d1fae5",
           textColor: "#047857",
           Icon: CheckCircle,
         };
-      case 3:
+      case "cancelada":
         return {
-          label: "Cancelada",
+          label: getAuditoriaStatusLabel(status),
           bgColor: "#fee2e2",
           textColor: "#b91c1c",
           Icon: AlertCircle,
         };
-      case 5:
+      case "vencida":
         return {
-          label: "Vencida",
+          label: getAuditoriaStatusLabel(status),
           bgColor: "#fff7ed",
           textColor: "#ea580c",
           Icon: AlertCircle,
@@ -140,7 +165,7 @@ export default function AssetListScreen() {
   ];
 
   const renderAuditoria = ({ item }: { item: (typeof auditorias)[0] }) => {
-    const statusConfig = getStatusConfig(item.estado_id);
+    const statusConfig = getStatusConfig(resolveAuditoriaStatus(item));
     const StatusIcon = statusConfig.Icon;
     const fecha = new Date(item.fecha_programada).toLocaleDateString("es-MX", {
       month: "short",

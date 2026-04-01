@@ -24,10 +24,16 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useNotificaciones } from "../contexts/NotificacionesContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
 import { Alert } from "react-native";
+import {
+  getAuditoriaStatusLabel,
+  resolveAuditoriaStatus,
+} from "../data/auditoriaStatus";
 
 interface AuditStats {
   pending: number;
   completed: number;
+  cancelada: number;
+  vencida: number;
   notFound: number;
   total: number;
 }
@@ -43,14 +49,30 @@ export default function HomeScreen() {
   const notifications = noLeidasCount;
 
   const stats: AuditStats = {
-    pending: auditorias.filter((a) => a.estado_id === 1).length,
-    completed: auditorias.filter((a) => a.estado_id === 4).length,
+    pending: auditorias.filter(
+      (a) => resolveAuditoriaStatus(a) === "programada",
+    ).length,
+    completed: auditorias.filter(
+      (a) => resolveAuditoriaStatus(a) === "completada",
+    ).length,
+    cancelada: auditorias.filter(
+      (a) => resolveAuditoriaStatus(a) === "cancelada",
+    ).length,
+    vencida: auditorias.filter((a) => resolveAuditoriaStatus(a) === "vencida")
+      .length,
     notFound: 0,
     total: auditorias.length,
   };
 
+  // Solo contar auditorías activas (sin canceladas/vencidas) para el progreso
+  const activeAuditorias = auditorias.filter((a) => {
+    const status = resolveAuditoriaStatus(a);
+    return status !== "cancelada" && status !== "vencida";
+  }).length;
   const completionRate =
-    stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+    activeAuditorias > 0
+      ? Math.round((stats.completed / activeAuditorias) * 100)
+      : 0;
 
   // Detectar cuando llega una nueva notificación de auditoría asignada
   useEffect(() => {
@@ -193,6 +215,19 @@ export default function HomeScreen() {
                 Pendientes
               </Text>
             </View>
+            {stats.cancelada > 0 && (
+              <View style={styles.progressInfoRow}>
+                <View
+                  style={[styles.progressDot, { backgroundColor: "#dc2626" }]}
+                />
+                <Text style={styles.progressInfoText}>
+                  <Text style={{ color: "#dc2626", fontWeight: "700" }}>
+                    {stats.cancelada}
+                  </Text>{" "}
+                  Canceladas
+                </Text>
+              </View>
+            )}
           </View>
           <View style={styles.progressStats}>
             <View style={styles.progressStat}>
@@ -203,6 +238,14 @@ export default function HomeScreen() {
               <Text style={styles.statValue}>{stats.pending}</Text>
               <Text style={styles.statLabel}>Pendientes</Text>
             </View>
+            {stats.cancelada > 0 && (
+              <View style={styles.progressStat}>
+                <Text style={[styles.statValue, { color: "#dc2626" }]}>
+                  {stats.cancelada}
+                </Text>
+                <Text style={styles.statLabel}>Canceladas</Text>
+              </View>
+            )}
             <View style={styles.progressStat}>
               <Text style={[styles.statValue, { color: "#2563eb" }]}>
                 {stats.total}
@@ -263,28 +306,23 @@ export default function HomeScreen() {
               </Text>
             </View>
 
-            {auditorias.map((audit) => {
-              const estadoColor =
-                audit.estado_id === 1
-                  ? "#2563eb"
-                  : audit.estado_id === 2
-                    ? "#f59e0b"
-                    : audit.estado_id === 4
-                      ? "#10b981"
-                      : audit.estado_id === 5
-                        ? "#ea580c"
-                        : "#6b7280";
+            {auditorias.slice(0, 5).map((audit) => {
+              const status = resolveAuditoriaStatus(audit);
 
-              const estadoLabel =
-                audit.estado_id === 1
-                  ? "Programada"
-                  : audit.estado_id === 2
-                    ? "En Progreso"
-                    : audit.estado_id === 4
-                      ? "Completada"
-                      : audit.estado_id === 5
-                        ? "Vencida"
-                        : "Cancelada";
+              const estadoColor =
+                status === "programada"
+                  ? "#2563eb"
+                  : status === "en_progreso"
+                    ? "#f59e0b"
+                    : status === "completada"
+                      ? "#10b981"
+                      : status === "cancelada"
+                        ? "#dc2626"
+                        : status === "vencida"
+                          ? "#ea580c"
+                          : "#6b7280";
+
+              const estadoLabel = getAuditoriaStatusLabel(status);
 
               const fecha = new Date(audit.fecha_programada).toLocaleDateString(
                 "es-MX",
@@ -347,6 +385,23 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               );
             })}
+            {auditorias.length > 5 && (
+              <TouchableOpacity
+                style={[
+                  styles.auditoryCard,
+                  { backgroundColor: colors.surface },
+                ]}
+                activeOpacity={0.7}
+                onPress={() => router.push("/(tabs)/assets")}
+              >
+                <View style={styles.auditContent}>
+                  <Text style={[styles.auditTitle, { color: colors.primary }]}>
+                    Ver todas ({auditorias.length - 5} más)
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.primary} />
+              </TouchableOpacity>
+            )}
           </View>
         )}
 

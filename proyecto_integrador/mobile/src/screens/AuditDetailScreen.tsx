@@ -27,6 +27,10 @@ import {
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
 import { auditoriasApi } from "@/api/auditorias";
+import {
+  getAuditoriaStatusLabel,
+  resolveAuditoriaStatus,
+} from "../data/auditoriaStatus";
 
 interface AuditDetailScreenProps {
   auditId: string;
@@ -59,44 +63,52 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   }
 
   const estadoConfig = {
-    1: {
-      label: "Programada",
+    programada: {
+      label: getAuditoriaStatusLabel("programada"),
       color: "#1e40af",
       bgColor: "#dbeafe",
       textColor: "#073397",
       icon: Calendar,
     },
-    2: {
-      label: "En Progreso",
+    en_progreso: {
+      label: getAuditoriaStatusLabel("en_progreso"),
       color: "#d97706",
       bgColor: "#fef3c7",
       textColor: "#92400e",
       icon: Play,
     },
-    4: {
-      label: "Completada",
+    completada: {
+      label: getAuditoriaStatusLabel("completada"),
       color: "#047857",
       bgColor: "#d1fae5",
       textColor: "#065f46",
       icon: Check,
     },
-    3: {
-      label: "Cancelada",
+    cancelada: {
+      label: getAuditoriaStatusLabel("cancelada"),
       color: "#dc2626",
       bgColor: "#fee2e2",
       textColor: "#991b1b",
       icon: AlertCircle,
     },
-    5: {
-      label: "Vencida",
+    vencida: {
+      label: getAuditoriaStatusLabel("vencida"),
       color: "#ea580c",
       bgColor: "#fff7ed",
       textColor: "#9a3412",
       icon: AlertCircle,
     },
+    desconocido: {
+      label: getAuditoriaStatusLabel("desconocido"),
+      color: "#6b7280",
+      bgColor: "#f3f4f6",
+      textColor: "#4b5563",
+      icon: Clock,
+    },
   };
 
-  const config = estadoConfig[audit.estado_id as keyof typeof estadoConfig];
+  const status = resolveAuditoriaStatus(audit);
+  const config = estadoConfig[status];
   const IconComp = config.icon;
   const fecha = new Date(audit.fecha_programada);
   const fechaFormato = fecha.toLocaleDateString("es-MX", {
