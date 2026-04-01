@@ -215,11 +215,7 @@ export default function HomeScreen() {
                     { backgroundColor: colors.surface },
                   ]}
                   activeOpacity={0.7}
-                  onPress={() =>
-                    audit.estado_id === 1
-                      ? router.push("/scanner")
-                      : router.push(`/audit/${audit.id}`)
-                  }
+                  onPress={() => router.push(`/audit/${audit.id}`)}
                 >
                   <View
                     style={[
@@ -254,7 +250,7 @@ export default function HomeScreen() {
                       ]}
                       onPress={(e) => {
                         e.stopPropagation();
-                        router.push("/scanner");
+                        router.push(`/scanner?auditId=${audit.id}`);
                       }}
                     >
                       <Zap size={16} color="#fff" />
