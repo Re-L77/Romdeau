@@ -9,7 +9,7 @@ import { UpdateAuditoriaProgramadaDto } from './dto/update-auditoria-programada.
 
 @Injectable()
 export class AuditoriasprogramadasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createAuditoriaProgramadaDto: CreateAuditoriaProgramadaDto) {
     const { auditor_id, ...data } = createAuditoriaProgramadaDto;
@@ -64,6 +64,7 @@ export class AuditoriasprogramadasService {
   }
 
   async findAll() {
+    await this.syncAuditStateInDB();
     return await this.prisma.auditorias_programadas.findMany({
       include: {
         usuarios: true,
@@ -100,6 +101,7 @@ export class AuditoriasprogramadasService {
   }
 
   async findOne(id: string) {
+    await this.syncAuditStateInDB(id);
     const auditoria = await this.prisma.auditorias_programadas.findUnique({
       where: { id },
       include: {
@@ -386,5 +388,31 @@ export class AuditoriasprogramadasService {
       auditores,
       sedes,
     };
+  }
+
+  /**
+   * Ejecuta la validación de estados DIRECTAMENTE en PostgreSQL usando NOW()
+   * Respeta la regla: Si llega la fecha_programada, pasa automáticamente de 1 a 2.
+   * La base de datos es la única que compara y evalúa los timestamps en tiempo real con su zona horaria.
+   */
+  private async syncAuditStateInDB(id?: string) {
+    if (id) {
+      await this.prisma.$executeRaw`
+        UPDATE auditorias_programadas
+        SET estado_id = 2, updated_at = NOW()
+        WHERE estado_id = 1
+          AND fecha_programada IS NOT NULL
+          AND NOW() >= fecha_programada
+          AND id = ${id}::uuid;
+      `;
+    } else {
+      await this.prisma.$executeRaw`
+        UPDATE auditorias_programadas
+        SET estado_id = 2, updated_at = NOW()
+        WHERE estado_id = 1
+          AND fecha_programada IS NOT NULL
+          AND NOW() >= fecha_programada;
+      `;
+    }
   }
 }

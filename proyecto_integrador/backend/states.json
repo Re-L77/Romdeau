@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "nombre": "PROGRAMADA",
+    "descripcion": "Asignada al auditor, en espera de ejecución"
+  },
+  {
+    "id": 2,
+    "nombre": "EN PROGRESO",
+    "descripcion": "El auditor ha iniciado el escaneo en la locación"
+  },
+  {
+    "id": 3,
+    "nombre": "COMPLETADA",
+    "descripcion": "Auditoría cerrada y enviada al servidor"
+  },
+  {
+    "id": 4,
+    "nombre": "CANCELADA",
+    "descripcion": "Cancelada por un administrador desde el dashboard web"
+  },
+  {
+    "id": 5,
+    "nombre": "VENCIDA",
+    "descripcion": "Se superó la fecha programada sin iniciarla"
+  }
+]
