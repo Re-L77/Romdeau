@@ -7,7 +7,7 @@ import {
   StyleSheet,
   FlatList,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
@@ -29,13 +29,14 @@ type FilterType = "ALL" | 1 | 2 | 3 | 4 | 5;
 
 export default function AssetListScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { auditorias } = useAuditorias();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterType>("ALL");
   const headerGradient = isDark
-    ? (["#101a36", "#142752", "#1f3b79"] as const)
-    : (["#326cff", "#4d7cff", "#7b9dff"] as const);
+    ? (["#0b1430", "#122452", "#1d3b82"] as const)
+    : (["#234fd9", "#2f66ff", "#5f8dff"] as const);
 
   const filteredAuditorias = auditorias.filter((audit) => {
     const matchesSearch =
@@ -221,12 +222,14 @@ export default function AssetListScreen() {
   };
 
   return (
-    <SafeAreaView
+    <View
       style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top"]}
     >
       {/* Header */}
-      <LinearGradient colors={headerGradient} style={styles.header}>
+      <LinearGradient
+        colors={headerGradient}
+        style={[styles.header, { paddingTop: insets.top + 18 }]}
+      >
         <Text style={styles.title}>Mis Auditorías</Text>
 
         {/* Search */}
@@ -250,7 +253,7 @@ export default function AssetListScreen() {
         <FlatList
           horizontal
           data={filters}
-          keyExtractor={(item) => item.key}
+          keyExtractor={(item) => String(item.key)}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersContainer}
           renderItem={({ item }) => (
@@ -297,7 +300,7 @@ export default function AssetListScreen() {
           </View>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -380,7 +383,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 18,
     paddingBottom: 14,
     borderBottomLeftRadius: 26,
     borderBottomRightRadius: 26,
@@ -472,20 +474,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     flex: 1,
   },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 4,
-    marginTop: 4,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
+
   emptyContainer: {
     alignItems: "center",
     paddingVertical: 60,

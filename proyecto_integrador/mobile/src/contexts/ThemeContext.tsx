@@ -14,38 +14,71 @@ interface ThemeContextType {
   isDark: boolean;
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
-  colors: typeof lightColors;
+  colors: {
+    primary: string;
+    primaryDark: string;
+    "primary-foreground": string;
+    background: string;
+    surface: string;
+    "surface-2": string;
+    border: string;
+    "text-primary": string;
+    "text-secondary": string;
+    success: string;
+    warning: string;
+    danger: string;
+    // Mantener compatibilidad
+    surfaceSecondary: string;
+    text: string;
+    textSecondary: string;
+    textMuted: string;
+    error: string;
+    headerBg: string;
+    headerText: string;
+  };
 }
 
 const lightColors = {
-  background: "#eef3ff",
+  primary: "#2f66ff",
+  "primary-foreground": "#ffffff",
+  background: "#f4f7ff",
   surface: "#ffffff",
+  "surface-2": "#f0f4ff",
+  border: "#cdd8f3",
+  "text-primary": "#0f172a",
+  "text-secondary": "#5b708d",
+  success: "#16c784",
+  warning: "#e2a23f",
+  danger: "#ff4d6d",
+  // Compatibilidad existente
   surfaceSecondary: "#e2ebff",
   text: "#0f172a",
   textSecondary: "#475569",
-  textMuted: "#7c8aa5",
-  border: "#cdd8f3",
-  primary: "#2f66ff",
+  textMuted: "#7281a4",
   primaryDark: "#1e4ee0",
-  success: "#22c55e",
-  warning: "#f59e0b",
   error: "#ff4d6d",
-  headerBg: "#16274a",
-  headerText: "#ffffff",
+  headerBg: "#eaf0ff",
+  headerText: "#0f172a",
 };
 
 const darkColors = {
-  background: "#070d1f",
-  surface: "#111b34",
+  primary: "#4a7dff",
+  "primary-foreground": "#ffffff",
+  background: "#020714",
+  surface: "#0e1b40",
+  "surface-2": "#123060",
+  border: "#25427b",
+  "text-primary": "#eef4ff",
+  "text-secondary": "#a9b8d7",
+  success: "#32d583",
+  warning: "#ffb84d",
+  danger: "#ff6b8a",
+  // Compatibilidad existente
   surfaceSecondary: "#1a2848",
   text: "#eef4ff",
   textSecondary: "#a9b8d7",
-  textMuted: "#7d90b4",
-  border: "#263a65",
-  primary: "#4a7dff",
+  textMuted: "#8aa0c4",
   primaryDark: "#2f66ff",
-  success: "#32d583",
-  warning: "#ffb84d",
   error: "#ff6b8a",
   headerBg: "#0b142b",
   headerText: "#ffffff",

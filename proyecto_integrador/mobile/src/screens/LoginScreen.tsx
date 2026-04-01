@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TextInput,
+  Image,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -135,38 +136,20 @@ export default function LoginScreen() {
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <LinearGradient
-            colors={["#334155", "#0f172a"]}
+            colors={["#0c1a39", "#10245e"]}
             style={styles.logoContainer}
           >
-            <Text style={styles.logoEmoji}>📦</Text>
+            <Image
+              source={require("../../assets/icon.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </LinearGradient>
 
-          <Text style={[styles.title, { color: colors.text }]}>
-            Romdeau Audit
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Sistema de Auditoría Móvil
-          </Text>
-
-          <View
-            style={[
-              styles.versionBadge,
-              { backgroundColor: colors.surfaceSecondary },
-            ]}
-          >
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: isConnected ? "#10b981" : "#ef4444" },
-              ]}
-            />
-            <Text style={[styles.versionText, { color: colors.textSecondary }]}>
-              {isConnected ? "Conectado" : "Sin conexión"} • v1.0.0
-            </Text>
-          </View>
+          <Text style={[styles.title, { color: "#ffffff" }]}>Romdeau Audit</Text>
+          <Text style={[styles.subtitle, { color: "rgba(227, 242, 255, 0.8)" }]}>Sistema de Auditoría Móvil</Text>
         </View>
 
-        {/* Form */}
         <View style={styles.form}>
           {/* Error General */}
           {generalError && (
@@ -174,13 +157,13 @@ export default function LoginScreen() {
               style={[
                 styles.errorBanner,
                 {
-                  backgroundColor: colors.error + "15",
-                  borderColor: colors.error,
+                  backgroundColor: colors.danger + "20",
+                  borderColor: colors.danger,
                 },
               ]}
             >
-              <AlertCircle size={20} color={colors.error} />
-              <Text style={[styles.errorBannerText, { color: colors.error }]}>
+              <AlertCircle size={20} color={colors.danger} />
+              <Text style={[styles.errorBannerText, { color: colors.danger }]}>
                 {generalError}
               </Text>
             </View>
@@ -188,7 +171,7 @@ export default function LoginScreen() {
 
           {/* Email Input */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>
+            <Text style={[styles.label, { color: colors["text-primary"] }]}> 
               Correo Electrónico
             </Text>
             <View
@@ -196,27 +179,27 @@ export default function LoginScreen() {
                 styles.inputContainer,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: errors.email ? colors.error : colors.border,
+                  borderColor: errors.email ? colors.danger : colors.border,
                 },
               ]}
             >
               <View
                 style={[
                   styles.iconBox,
-                  { backgroundColor: colors.surfaceSecondary },
+                  { backgroundColor: "rgba(96, 165, 250, 0.25)" },
                 ]}
               >
-                <Mail size={20} color={colors.textSecondary} />
+                <Mail size={22} color="#93c5fd" />
               </View>
               <TextInput
-                style={[styles.input, { color: colors.text }]}
+                style={[styles.input, { color: "#f8fafc" }]}
                 value={email}
                 onChangeText={(text) => {
                   setEmail(text);
                   if (errors.email) setErrors({ ...errors, email: "" });
                 }}
                 placeholder="tu.email@empresa.com"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor="#dbeafe"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -232,7 +215,7 @@ export default function LoginScreen() {
 
           {/* Password Input */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>
+            <Text style={[styles.label, { color: colors["text-primary"] }]}>
               Contraseña
             </Text>
             <View
@@ -240,27 +223,27 @@ export default function LoginScreen() {
                 styles.inputContainer,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: errors.password ? colors.error : colors.border,
+                  borderColor: errors.password ? colors.danger : colors.border,
                 },
               ]}
             >
               <View
                 style={[
                   styles.iconBox,
-                  { backgroundColor: colors.surfaceSecondary },
+                  { backgroundColor: "rgba(96, 165, 250, 0.25)" },
                 ]}
               >
-                <Lock size={20} color={colors.textSecondary} />
+                <Lock size={22} color="#93c5fd" />
               </View>
               <TextInput
-                style={[styles.input, { color: colors.text }]}
+                style={[styles.input, { color: "#f8fafc" }]}
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
                   if (errors.password) setErrors({ ...errors, password: "" });
                 }}
                 placeholder="••••••••"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor="#dbeafe"
                 secureTextEntry={!showPassword}
                 editable={!isLoading}
               />
@@ -270,9 +253,9 @@ export default function LoginScreen() {
                 disabled={isLoading}
               >
                 {showPassword ? (
-                  <EyeOff size={20} color={colors.textSecondary} />
+                  <EyeOff size={20} color={colors["text-secondary"]} />
                 ) : (
-                  <Eye size={20} color={colors.textSecondary} />
+                  <Eye size={20} color={colors["text-secondary"]} />
                 )}
               </TouchableOpacity>
             </View>
@@ -294,7 +277,7 @@ export default function LoginScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#334155", "#0f172a"]}
+              colors={[colors.primary, colors["primary-foreground"]]}
               style={styles.loginButtonGradient}
             >
               {isLoading ? (
@@ -332,27 +315,28 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 70,
     paddingBottom: 40,
+    backgroundColor: "#060b1a",
   },
   offlineBanner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ef4444",
+    backgroundColor: "#dc2626",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     marginBottom: 20,
     gap: 8,
   },
   offlineText: {
     color: "#fff",
-    fontWeight: "600",
+    fontWeight: "700",
   },
   logoSection: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 34,
   },
   logoContainer: {
     width: 96,
@@ -360,32 +344,38 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
+    marginBottom: 18,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(72,187,255,0.45)",
+    shadowColor: "rgba(0, 143, 255, 0.45)",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.46,
     shadowRadius: 16,
-    elevation: 10,
+    elevation: 12,
   },
-  logoEmoji: {
-    fontSize: 48,
+  logoImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 20,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "800",
-    marginBottom: 8,
+    fontSize: 34,
+    fontWeight: "900",
+    marginBottom: 6,
+    color: "#ffffff",
+    textShadowColor: "rgba(0, 0, 0, 0.35)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   subtitle: {
-    fontSize: 16,
-    marginBottom: 16,
+    fontSize: 15,
+    marginBottom: 20,
+    color: "rgba(242, 246, 255, 0.8)",
+    fontWeight: "500",
   },
   versionBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 8,
+    display: "none",
   },
   statusDot: {
     width: 8,
@@ -424,9 +414,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 2,
+    borderColor: "rgba(96, 165, 250, 0.8)",
     overflow: "hidden",
+    backgroundColor: "rgba(15, 23, 42, 0.85)",
   },
   iconBox: {
     width: 48,
@@ -436,12 +428,14 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginVertical: 4,
     borderRadius: 12,
+    backgroundColor: "rgba(51, 65, 85, 0.8)",
   },
   input: {
     flex: 1,
     height: 56,
     paddingHorizontal: 12,
     fontSize: 16,
+    color: "#ffffff",
   },
   eyeButton: {
     padding: 16,
@@ -450,14 +444,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 4,
     fontWeight: "500",
+    color: "#fb7185",
   },
   loginButton: {
-    marginTop: 8,
+    marginTop: 10,
     borderRadius: 16,
     overflow: "hidden",
+    shadowColor: "rgba(56, 189, 248, 0.45)",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 10,
   },
   loginButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.6,
   },
   loginButtonGradient: {
     paddingVertical: 18,
@@ -466,9 +466,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   loginButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   forgotPasswordButton: {
     alignItems: "center",

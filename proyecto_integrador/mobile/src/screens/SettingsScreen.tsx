@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
@@ -41,7 +41,11 @@ type AuditProgressItem = {
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const headerGradient = isDark
+    ? (["#0b1430", "#122452", "#1d3b82"] as const)
+    : (["#234fd9", "#2f66ff", "#5f8dff"] as const);
   const { user } = useAuth();
   const { auditorias } = useAuditorias();
   const [isLoading, setIsLoading] = useState(false);
@@ -187,11 +191,11 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top"]}
-    >
-      <LinearGradient colors={["#0b1430", "#122452", "#1d3b82"]} style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={headerGradient}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
+      >
         <Text style={styles.headerTitle}>Activos por Auditar</Text>
         <Text style={styles.headerSubtitle}>
           Progreso real de activos asignados a tus auditorias activas
@@ -373,7 +377,7 @@ export default function SettingsScreen() {
 
         <View style={{ height: 24 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -382,7 +386,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: 16,
     paddingHorizontal: 20,
     paddingBottom: 18,
     borderBottomLeftRadius: 28,

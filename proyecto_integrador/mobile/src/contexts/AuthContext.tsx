@@ -219,10 +219,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("❌ Login error inesperado:", error.message);
         }
 
-        const errorMessage =
+        let errorMessage =
           error.response?.data?.message ||
           error.message ||
           "Error al iniciar sesión. Verifica tus credenciales.";
+
+        if (error.code === "ECONNABORTED") {
+          errorMessage =
+            "Error de conexión: tiempo de espera agotado. Verifica que el servidor esté accesible desde tu red y vuelve a intentarlo.";
+        } else if (!error.response) {
+          errorMessage =
+            "No se recibió respuesta del servidor. Verifica tu conexión de red o la URL del backend.";
+        }
 
         dispatch({
           isLoading: false,

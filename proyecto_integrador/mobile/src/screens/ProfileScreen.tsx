@@ -56,6 +56,9 @@ const formatDate = (dateStr?: string | null) => {
 export default function ProfileScreen() {
   const { user, logout, validateSession } = useAuth();
   const { colors, isDark, setThemeMode, themeMode } = useTheme();
+  const headerGradient = isDark
+    ? (["#0b1430", "#122452", "#1d3b82"] as const)
+    : (["#234fd9", "#2f66ff", "#5f8dff"] as const);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -302,7 +305,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
-          colors={["#334155", "#1e293b", "#0f172a"]}
+          colors={headerGradient}
           style={styles.header}
         >
           <Text style={styles.headerTitle}>Mi Perfil</Text>

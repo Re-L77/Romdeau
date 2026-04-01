@@ -42,7 +42,10 @@ interface AuditDetailScreenProps {
 
 export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const headerGradient = isDark
+    ? (["#0b1430", "#122452", "#1d3b82"] as const)
+    : (["#234fd9", "#2f66ff", "#5f8dff"] as const);
   const { user } = useAuth();
   const { auditorias, refresh, setSelectedAuditId } = useAuditorias();
   const [audit, setAudit] = useState<any>(null);
@@ -309,16 +312,18 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
     >
       {/* Header */}
       <LinearGradient
-        colors={["#334155", "#1e293b", "#0f172a"]}
+        colors={headerGradient}
         style={styles.header}
       >
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
         >
-          <ArrowLeft size={24} color="#fff" />
+          <ArrowLeft size={24} color={colors["primary-foreground"]} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Auditoría</Text>
+        <Text style={[styles.headerTitle, { color: colors["primary-foreground"] }]}>
+          Mis Auditorías - {user?.nombre_completo || "Usuario"}
+        </Text>
       </LinearGradient>
 
       <ScrollView

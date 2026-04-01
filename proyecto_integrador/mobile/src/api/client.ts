@@ -16,6 +16,7 @@ class ApiClient {
   private client: AxiosInstance;
   private refreshing = false;
   private static baseURL = API_URL;
+  private static readonly REQUEST_TIMEOUT = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS || 30000);
   private static readonly AUTH_PUBLIC_ENDPOINTS = [
     "/api/auth/login",
     "/api/auth/refresh-token",
@@ -29,10 +30,11 @@ class ApiClient {
 
   constructor() {
     console.log("🔧 Inicializando API Client con baseURL:", ApiClient.baseURL);
+    console.log("⏱️ Timeout de requests (ms):", ApiClient.REQUEST_TIMEOUT);
 
     this.client = axios.create({
       baseURL: ApiClient.baseURL,
-      timeout: 10000,
+      timeout: ApiClient.REQUEST_TIMEOUT,
       headers: {
         "Content-Type": "application/json",
       },
@@ -89,10 +91,23 @@ class ApiClient {
         // no es un error del sistema — loguear a nivel warn, no error.
         const isExpected401 =
           isPublicAuthRequest && error.response?.status === 401;
+        const isTimeoutError =
+          error.code === "ECONNABORTED" ||
+          (error.message && error.message.toLowerCase().includes("timeout"));
+
         if (isExpected401) {
           console.warn(
             `⚠️ Auth failed: ${error.response?.status} ${requestUrl}`,
             error.response?.data?.message,
+          );
+        } else if (isTimeoutError) {
+          console.error(
+            `❌ Timeout de conexión: ${requestUrl}`,
+            {
+              code: error.code,
+              message: error.message,
+              config: originalRequest,
+            },
           );
         } else {
           console.error(
@@ -184,7 +199,7 @@ class ApiClient {
   private recreateClient() {
     this.client = axios.create({
       baseURL: ApiClient.baseURL,
-      timeout: 10000,
+      timeout: ApiClient.REQUEST_TIMEOUT,
       headers: {
         "Content-Type": "application/json",
       },
