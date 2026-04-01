@@ -11,156 +11,86 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   Search,
-  Package,
-  MapPin,
   CheckCircle,
   Clock,
-  XCircle,
+  AlertCircle,
   ChevronRight,
 } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuditorias } from "../contexts/AuditoriasContext";
 
-interface Asset {
-  id: string;
-  nombre: string;
-  categoria: string;
-  ubicacion: string;
-  estado: "PENDIENTE" | "AUDITADO" | "NO_LOCALIZADO";
-  valor: number;
-}
-
-const mockAssets: Asset[] = [
-  {
-    id: "ACT-00001",
-    nombre: "Laptop Dell Latitude 5420",
-    categoria: "Equipos de Cómputo",
-    ubicacion: "Oficina 301 - Edificio A",
-    estado: "PENDIENTE",
-    valor: 25000,
-  },
-  {
-    id: "ACT-00002",
-    nombre: 'Monitor LG 27" 4K',
-    categoria: "Equipos de Cómputo",
-    ubicacion: "Oficina 301 - Edificio A",
-    estado: "AUDITADO",
-    valor: 8500,
-  },
-  {
-    id: "ACT-00003",
-    nombre: "Impresora HP LaserJet Pro",
-    categoria: "Equipos de Oficina",
-    ubicacion: "Sala de Juntas B",
-    estado: "PENDIENTE",
-    valor: 6200,
-  },
-  {
-    id: "ACT-00004",
-    nombre: "Escritorio Ejecutivo",
-    categoria: "Mobiliario",
-    ubicacion: "Oficina 305 - Edificio A",
-    estado: "AUDITADO",
-    valor: 12000,
-  },
-  {
-    id: "ACT-00005",
-    nombre: "Silla Ergonómica Herman Miller",
-    categoria: "Mobiliario",
-    ubicacion: "Oficina 305 - Edificio A",
-    estado: "PENDIENTE",
-    valor: 18500,
-  },
-  {
-    id: "ACT-00006",
-    nombre: "Servidor Dell PowerEdge R740",
-    categoria: "Equipos de Cómputo",
-    ubicacion: "Data Center - Edificio C",
-    estado: "NO_LOCALIZADO",
-    valor: 125000,
-  },
-  {
-    id: "ACT-00007",
-    nombre: "Proyector Epson EB-2250U",
-    categoria: "Equipos de Oficina",
-    ubicacion: "Sala de Capacitación",
-    estado: "PENDIENTE",
-    valor: 32000,
-  },
-  {
-    id: "ACT-00008",
-    nombre: 'Laptop MacBook Pro 16"',
-    categoria: "Equipos de Cómputo",
-    ubicacion: "Oficina 402 - Edificio B",
-    estado: "AUDITADO",
-    valor: 55000,
-  },
-  {
-    id: "ACT-00009",
-    nombre: "Aire Acondicionado Split",
-    categoria: "Climatización",
-    ubicacion: "Oficina 301 - Edificio A",
-    estado: "PENDIENTE",
-    valor: 15000,
-  },
-  {
-    id: "ACT-00010",
-    nombre: "UPS APC Smart-UPS 3000VA",
-    categoria: "Equipos de Cómputo",
-    ubicacion: "Data Center - Edificio C",
-    estado: "AUDITADO",
-    valor: 22000,
-  },
-];
-
-type FilterType = "ALL" | "PENDIENTE" | "AUDITADO" | "NO_LOCALIZADO";
+type FilterType = "ALL" | 1 | 2 | 3 | 4 | 5;
 
 export default function AssetListScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { auditorias } = useAuditorias();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterType>("ALL");
 
-  const filteredAssets = mockAssets.filter((asset) => {
+  const filteredAuditorias = auditorias.filter((audit) => {
     const matchesSearch =
-      asset.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.ubicacion.toLowerCase().includes(searchQuery.toLowerCase());
+      audit.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      audit.id.toString().includes(searchQuery);
 
     const matchesFilter =
-      filterStatus === "ALL" || asset.estado === filterStatus;
+      filterStatus === "ALL" || audit.estado_id === filterStatus;
 
     return matchesSearch && matchesFilter;
   });
 
   const stats = {
-    pendiente: mockAssets.filter((a) => a.estado === "PENDIENTE").length,
-    auditado: mockAssets.filter((a) => a.estado === "AUDITADO").length,
-    noLocalizado: mockAssets.filter((a) => a.estado === "NO_LOCALIZADO").length,
-    total: mockAssets.length,
+    programada: auditorias.filter((a) => a.estado_id === 1).length,
+    enProgreso: auditorias.filter((a) => a.estado_id === 2).length,
+    completada: auditorias.filter((a) => a.estado_id === 4).length,
+    cancelada: auditorias.filter((a) => a.estado_id === 3).length,
+    vencida: auditorias.filter((a) => a.estado_id === 5).length,
+    total: auditorias.length,
   };
 
-  const getStatusConfig = (estado: Asset["estado"]) => {
-    switch (estado) {
-      case "PENDIENTE":
+  const getStatusConfig = (estadoId: number) => {
+    switch (estadoId) {
+      case 1:
         return {
-          label: "Pendiente",
+          label: "Programada",
+          bgColor: "#dbeafe",
+          textColor: "#1e40af",
+          Icon: Clock,
+        };
+      case 2:
+        return {
+          label: "En Progreso",
           bgColor: "#fef3c7",
           textColor: "#b45309",
           Icon: Clock,
         };
-      case "AUDITADO":
+      case 4:
         return {
-          label: "Auditado",
+          label: "Completada",
           bgColor: "#d1fae5",
           textColor: "#047857",
           Icon: CheckCircle,
         };
-      case "NO_LOCALIZADO":
+      case 3:
         return {
-          label: "No Localizado",
+          label: "Cancelada",
           bgColor: "#fee2e2",
           textColor: "#b91c1c",
-          Icon: XCircle,
+          Icon: AlertCircle,
+        };
+      case 5:
+        return {
+          label: "Vencida",
+          bgColor: "#fff7ed",
+          textColor: "#ea580c",
+          Icon: AlertCircle,
+        };
+      default:
+        return {
+          label: "Desconocido",
+          bgColor: "#f3f4f6",
+          textColor: "#6b7280",
+          Icon: Clock,
         };
     }
   };
@@ -173,83 +103,87 @@ export default function AssetListScreen() {
   }[] = [
     {
       key: "ALL",
-      label: "Todos",
+      label: "Todas",
       count: stats.total,
       activeColor: colors.primary,
     },
     {
-      key: "PENDIENTE",
-      label: "Pendientes",
-      count: stats.pendiente,
+      key: 1,
+      label: "Programadas",
+      count: stats.programada,
+      activeColor: "#2563eb",
+    },
+    {
+      key: 2,
+      label: "En Progreso",
+      count: stats.enProgreso,
       activeColor: "#f59e0b",
     },
     {
-      key: "AUDITADO",
-      label: "Auditados",
-      count: stats.auditado,
+      key: 4,
+      label: "Completadas",
+      count: stats.completada,
       activeColor: "#10b981",
     },
     {
-      key: "NO_LOCALIZADO",
-      label: "No Local.",
-      count: stats.noLocalizado,
+      key: 3,
+      label: "Canceladas",
+      count: stats.cancelada,
       activeColor: "#ef4444",
+    },
+    {
+      key: 5,
+      label: "Vencidas",
+      count: stats.vencida,
+      activeColor: "#ea580c",
     },
   ];
 
-  const renderAsset = ({ item, index }: { item: Asset; index: number }) => {
-    const statusConfig = getStatusConfig(item.estado);
+  const renderAuditoria = ({ item }: { item: (typeof auditorias)[0] }) => {
+    const statusConfig = getStatusConfig(item.estado_id);
     const StatusIcon = statusConfig.Icon;
+    const fecha = new Date(item.fecha_programada).toLocaleDateString("es-MX", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
 
     return (
       <TouchableOpacity
-        style={[styles.assetCard, { backgroundColor: colors.surface }]}
+        style={[styles.auditCard, { backgroundColor: colors.surface }]}
         onPress={() => router.push(`/audit/${item.id}`)}
         activeOpacity={0.7}
       >
-        <View
-          style={[styles.assetIcon, { backgroundColor: colors.primary + "20" }]}
-        >
-          <Package size={24} color={colors.primary} />
+        <View style={styles.auditHeader}>
+          <Text
+            style={[styles.auditTitle, { color: colors.text }]}
+            numberOfLines={2}
+          >
+            {item.titulo}
+          </Text>
+          <Text style={[styles.auditId, { color: colors.textMuted }]}>
+            #{item.id}
+          </Text>
         </View>
 
-        <View style={styles.assetInfo}>
-          <View style={styles.assetHeader}>
-            <Text
-              style={[styles.assetName, { color: colors.text }]}
-              numberOfLines={1}
-            >
-              {item.nombre}
-            </Text>
-          </View>
-
-          <Text style={[styles.assetMeta, { color: colors.textSecondary }]}>
-            {item.id} • {item.categoria}
-          </Text>
-
-          <View style={styles.locationRow}>
-            <MapPin size={12} color={colors.textMuted} />
-            <Text
-              style={[styles.locationText, { color: colors.textMuted }]}
-              numberOfLines={1}
-            >
-              {item.ubicacion}
-            </Text>
-          </View>
-
+        <View style={styles.auditDetails}>
           <View
             style={[
               styles.statusBadge,
               { backgroundColor: statusConfig.bgColor },
             ]}
           >
-            <StatusIcon size={12} color={statusConfig.textColor} />
+            <StatusIcon size={14} color={statusConfig.textColor} />
             <Text
               style={[styles.statusText, { color: statusConfig.textColor }]}
             >
               {statusConfig.label}
             </Text>
           </View>
+
+          <Text style={[styles.auditDate, { color: colors.textMuted }]}>
+            {fecha}
+          </Text>
         </View>
 
         <ChevronRight size={20} color={colors.textMuted} />
@@ -270,7 +204,7 @@ export default function AssetListScreen() {
         ]}
       >
         <Text style={[styles.title, { color: colors.text }]}>
-          Activos Asignados
+          Mis Auditorías
         </Text>
 
         {/* Search */}
@@ -285,7 +219,7 @@ export default function AssetListScreen() {
             style={[styles.searchInput, { color: colors.text }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Buscar por nombre, ID o ubicación..."
+            placeholder="Buscar por nombre o ID..."
             placeholderTextColor={colors.textMuted}
           />
         </View>
@@ -325,16 +259,16 @@ export default function AssetListScreen() {
 
       {/* List */}
       <FlatList
-        data={filteredAssets}
-        keyExtractor={(item) => item.id}
-        renderItem={renderAsset}
+        data={filteredAuditorias}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderAuditoria}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Package size={64} color={colors.border} />
+            <CheckCircle size={64} color={colors.border} />
             <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>
-              No se encontraron activos
+              No se encontraron auditorías
             </Text>
             <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
               Intenta cambiar los filtros o la búsqueda
@@ -349,6 +283,79 @@ export default function AssetListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  auditoriasSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f4f8",
+  },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  auditoriasContainer: {
+    gap: 12,
+  },
+  auditCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    gap: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  auditHeader: {
+    flex: 1,
+  },
+  auditTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  auditId: {
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  auditDetails: {
+    flexDirection: "column",
+    gap: 4,
+    alignItems: "flex-end",
+  },
+  auditDate: {
+    fontSize: 12,
+  },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  auditCardTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 6,
+    lineHeight: 16,
+  },
+  auditCardEstado: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  auditCardDate: {
+    fontSize: 11,
   },
   header: {
     paddingHorizontal: 20,

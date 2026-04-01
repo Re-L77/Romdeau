@@ -281,26 +281,37 @@ export class AuditoriasprogramadasService {
       throw new NotFoundException('Auditoría programada no encontrada');
     }
 
-    // Validar transiciones de estado
-    const estadosValidos =
+    // Bloquear transición manual a "Vencida" (solo se asigna programáticamente)
+    if (estado_id === 5) {
+      throw new BadRequestException(
+        'El estado "Vencida" no puede asignarse manualmente',
+      );
+    }
+
+    // Bloquear transiciones desde estados terminales (Cancelada, Completada, Vencida)
+    if ([3, 4, 5].includes(auditoria.estado_id)) {
+      throw new BadRequestException(
+        'No se pueden realizar cambios de estado en auditorías finalizadas, canceladas o vencidas',
+      );
+    }
+
+    // Validar que el estado destino exista
+    const estadoDestino =
       await this.prisma.estados_auditoria_programada.findUnique({
         where: { id: estado_id },
       });
 
-    if (!estadosValidos) {
+    if (!estadoDestino) {
       throw new BadRequestException('Estado de auditoría no válido');
     }
 
-    // Aquí puedes agregar lógica adicional según el estado:
-    // - Si pasa a "En progreso": registrar fecha_inicio
-    // - Si pasa a "Terminada" o "Cancelada": registrar fecha_fin
     const updateData: Record<string, unknown> = { estado_id };
 
     if (estado_id === 2) {
-      // En progreso
+      // En progreso → registrar fecha_inicio
       updateData.fecha_inicio = new Date();
-    } else if (estado_id === 4 || estado_id === 5) {
-      // Terminada o Cancelada
+    } else if (estado_id === 3 || estado_id === 4) {
+      // Cancelada o Completada → registrar fecha_fin
       updateData.fecha_fin = new Date();
     }
 

@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { useColorScheme, View, StyleSheet } from "react-native";
-import { Home, List, QrCode, Settings, User } from "lucide-react-native";
+import { Home, CheckSquare, QrCode, Settings, User } from "lucide-react-native";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -45,8 +45,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="assets"
         options={{
-          title: "Activos",
-          tabBarIcon: ({ color, size }) => <List size={size} color={color} />,
+          title: "Auditorías",
+          tabBarIcon: ({ color, size }) => (
+            <CheckSquare size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen

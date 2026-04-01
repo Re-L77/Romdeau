@@ -56,6 +56,13 @@ const getStateColor = (estadoNombre: string) => {
       border: "border-red-200 dark:border-red-700/30",
     };
   }
+  if (estado.includes("vencida") || estado.includes("expirada")) {
+    return {
+      bg: "bg-orange-100 dark:bg-orange-500/20",
+      text: "text-orange-700 dark:text-orange-400",
+      border: "border-orange-200 dark:border-orange-700/30",
+    };
+  }
 
   return {
     bg: "bg-gray-100 dark:bg-gray-500/20",
