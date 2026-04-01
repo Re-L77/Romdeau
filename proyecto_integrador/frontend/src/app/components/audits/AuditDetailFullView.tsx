@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -7,7 +7,6 @@ import {
   Navigation,
   Camera,
   FileText,
-  Clock,
   Building2,
   User,
   Calendar,
@@ -51,6 +50,7 @@ export function AuditDetailFullView({
   const [auditData, setAuditData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
 
   useEffect(() => {
     const loadAudit = async () => {
@@ -122,7 +122,6 @@ export function AuditDetailFullView({
         coincidencia_ubicacion: auditData.coincidencia_ubicacion ?? true,
         comentarios: auditData.comentarios,
         evidencia_foto_url: auditData.evidencia_foto_url,
-        duracion_minutos: auditData.duracion_minutos,
       }
     : null;
 
@@ -166,6 +165,22 @@ export function AuditDetailFullView({
   }
 
   if (!data) return null;
+
+  const lat = data.lat != null ? Number(data.lat) : null;
+  const lng = data.lng != null ? Number(data.lng) : null;
+  const hasValidCoordinates =
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat !== null &&
+    lng !== null;
+
+  const mapEmbedUrl = hasValidCoordinates
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${(lng - 0.005).toFixed(6)}%2C${(lat - 0.005).toFixed(6)}%2C${(lng + 0.005).toFixed(6)}%2C${(lat + 0.005).toFixed(6)}&layer=mapnik&marker=${lat.toFixed(6)}%2C${lng.toFixed(6)}`
+    : null;
+
+  const mapViewUrl = hasValidCoordinates
+    ? `https://www.openstreetmap.org/?mlat=${lat.toFixed(6)}&mlon=${lng.toFixed(6)}#map=17/${lat.toFixed(6)}/${lng.toFixed(6)}`
+    : null;
 
   return (
     <div className="max-w-[1600px] mx-auto">
@@ -304,19 +319,26 @@ export function AuditDetailFullView({
                 {data.activo_nombre || "—"}
               </p>
 
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Duración de auditoría
-                  </span>
-                </div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  {data.duracion_minutos != null
-                    ? `${data.duracion_minutos} minutos`
-                    : "—"}
-                </p>
-              </div>
+              {(() => {
+                const estado = (data.estado_reportado ??
+                  "BUENO") as keyof typeof estadoColors;
+                const colors = estadoColors[estado] ?? estadoColors.BUENO;
+                const IconComponent = colors.icon;
+
+                return (
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-2 font-bold uppercase tracking-widest">
+                      Estado reportado
+                    </p>
+                    <div
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold border ${colors.bg} ${colors.text} ${colors.border}`}
+                    >
+                      <IconComponent className="w-4 h-4" />
+                      <span>{data.estado_reportado || "—"}</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </motion.div>
         </div>
@@ -343,23 +365,6 @@ export function AuditDetailFullView({
                 </p>
               </div>
             </div>
-
-            <div className="mt-4 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-500" /> Registros del
-                sistema
-              </p>
-              <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                <p className="flex justify-between">
-                  <span className="text-gray-500">Iniciado:</span>
-                  <span>{formatDateTime(data.fecha_inicio)}</span>
-                </p>
-                <p className="flex justify-between">
-                  <span className="text-gray-500">Cerrado:</span>
-                  <span>{formatDateTime(data.fecha_fin)}</span>
-                </p>
-              </div>
-            </div>
           </motion.div>
 
           {/* GPS Validation */}
@@ -382,9 +387,35 @@ export function AuditDetailFullView({
                   Coordenadas GPS
                 </p>
                 <p className="text-sm font-mono font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                  {data.lat && data.lng ? `${data.lat}, ${data.lng}` : "—"}
+                  {hasValidCoordinates
+                    ? `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+                    : "—"}
                 </p>
               </div>
+
+              {mapEmbedUrl ? (
+                <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                  <iframe
+                    title="Mapa de geolocalización del registro"
+                    src={mapEmbedUrl}
+                    className="w-full h-64 md:h-80 border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  {mapViewUrl ? (
+                    <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 text-sm">
+                      <a
+                        href={mapViewUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                      >
+                        Abrir ubicación en OpenStreetMap
+                      </a>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               {data.coincidencia_ubicacion ? (
                 <div className="p-4 bg-emerald-50 dark:bg-emerald-500/20 rounded-2xl border-2 border-emerald-200 dark:border-emerald-700/30">
@@ -448,7 +479,11 @@ export function AuditDetailFullView({
             </div>
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
               {data.evidencia_foto_url ? (
-                <div className="group relative">
+                <button
+                  type="button"
+                  onClick={() => setIsEvidenceOpen(true)}
+                  className="group relative w-full text-left cursor-zoom-in"
+                >
                   <img
                     src={data.evidencia_foto_url}
                     alt="Evidencia"
@@ -459,7 +494,7 @@ export function AuditDetailFullView({
                       Ampliar
                     </span>
                   </div>
-                </div>
+                </button>
               ) : (
                 <div className="py-12 text-center">
                   <Camera className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3 opacity-50" />
@@ -472,6 +507,44 @@ export function AuditDetailFullView({
           </motion.div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isEvidenceOpen && data.evidencia_foto_url ? (
+          <>
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsEvidenceOpen(false)}
+              className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm"
+              aria-label="Cerrar imagen ampliada"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[91] p-4 md:p-8 flex items-center justify-center"
+            >
+              <div className="relative max-w-6xl w-full max-h-[90vh]">
+                <button
+                  type="button"
+                  onClick={() => setIsEvidenceOpen(false)}
+                  className="absolute top-3 right-3 z-10 px-3 py-1.5 rounded-full bg-black/60 text-white text-sm font-semibold hover:bg-black/80 transition-colors"
+                >
+                  Cerrar
+                </button>
+                <img
+                  src={data.evidencia_foto_url}
+                  alt="Evidencia ampliada"
+                  className="w-full max-h-[90vh] object-contain rounded-2xl"
+                />
+              </div>
+            </motion.div>
+          </>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

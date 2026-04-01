@@ -492,6 +492,8 @@ export class AuditoriasService {
       ...record,
       // Alias explícitos esperados por la UI web
       evidencia_foto_url: record.url ?? null,
+      coordenadas_gps:
+        gps.lat !== null && gps.lng !== null ? `${gps.lat}, ${gps.lng}` : null,
       lat: gps.lat,
       lng: gps.lng,
       coincidencia_ubicacion: gps.lat !== null && gps.lng !== null,
