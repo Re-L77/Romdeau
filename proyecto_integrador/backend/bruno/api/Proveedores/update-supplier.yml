@@ -1,0 +1,27 @@
+info:
+  name: Update Supplier
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: '{{baseUrl}}/api/proveedores/1'
+  headers:
+    - name: Authorization
+      value: 'Bearer {{token}}'
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Tech Supplies International",
+        "contacto": "support@techsupplies.com"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

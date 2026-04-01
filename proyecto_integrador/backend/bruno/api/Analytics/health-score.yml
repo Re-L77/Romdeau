@@ -1,0 +1,20 @@
+info:
+  name: Health Score
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: '{{baseUrl}}/api/analytics/health-score'
+  headers:
+    - name: Authorization
+      value: 'Bearer {{token}}'
+    - name: Content-Type
+      value: application/json
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

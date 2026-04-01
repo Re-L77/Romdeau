@@ -1,0 +1,32 @@
+info:
+  name: Create Scheduled Audit
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: '{{baseUrl}}/api/auditorias-programadas'
+  headers:
+    - name: Authorization
+      value: 'Bearer {{token}}'
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "titulo": "Auditoría Programada de Activos",
+        "descripcion": "Auditoría para verificar el estado de los activos",
+        "oficina_id": 1,
+        "estante_id": null,
+        "auditor_id": 2,
+        "fecha_programada": "2026-04-15T10:00:00Z",
+        "activos": [1, 2, 3]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

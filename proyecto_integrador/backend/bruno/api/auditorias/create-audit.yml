@@ -1,0 +1,30 @@
+info:
+  name: Create Audit
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: '{{baseUrl}}/api/auditorias'
+  headers:
+    - name: Authorization
+      value: 'Bearer {{token}}'
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "auditor_id": 1,
+        "activo_id": 1,
+        "plan_auditoria_id": 1,
+        "estado_reportado_id": 1,
+        "comentarios": "Auditoría completada con éxito"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

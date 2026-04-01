@@ -1,0 +1,28 @@
+info:
+  name: Create Supplier
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: '{{baseUrl}}/api/proveedores'
+  headers:
+    - name: Authorization
+      value: 'Bearer {{token}}'
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Tech Supplies Inc",
+        "contacto": "info@techsupplies.com",
+        "telefono": "+1234567890"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

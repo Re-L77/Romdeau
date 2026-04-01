@@ -1,0 +1,28 @@
+info:
+  name: Update User
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: '{{baseUrl}}/api/usuarios/1'
+  headers:
+    - name: Authorization
+      value: 'Bearer {{token}}'
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "nombres": "Juan",
+        "apellido_paterno": "Pérez",
+        "email": "juan.perez@example.com"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
