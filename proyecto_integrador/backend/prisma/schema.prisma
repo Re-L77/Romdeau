@@ -207,11 +207,13 @@ model logs_auditoria {
   estado_reportado_id    Int                       @db.SmallInt
   comentarios            String?
   auditoria              String?                   @db.Uuid
+  url                    String?
   activos                activos                   @relation(fields: [activo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuarios               usuarios                  @relation(fields: [auditor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   auditorias_programadas auditorias_programadas?   @relation(fields: [auditoria], references: [id], onDelete: NoAction, onUpdate: NoAction)
   estados_auditoria      estados_auditoria         @relation(fields: [estado_reportado_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
+
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model logs_depreciacion {
   id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid

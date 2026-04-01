@@ -7,10 +7,13 @@ import {
   Param,
   Delete,
   Req,
+  UploadedFile,
+  UseInterceptors,
   HttpCode,
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuditoriasService } from './auditorias.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
@@ -24,6 +27,28 @@ import { Role } from '../auth/roles/roles.enum';
 @Controller('api/auditorias')
 export class AuditoriasController {
   constructor(private readonly auditoriasService: AuditoriasService) {}
+
+  @Roles(Role.ADMIN, Role.AUDITOR)
+  @Post('evidencia/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadEvidencia(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('auditoria') auditoriaId: string | undefined,
+    @Body('activo_id') activoId: string | undefined,
+    @Req() req: any,
+  ) {
+    const auditorId = req.user?.id;
+    if (!auditorId) {
+      throw new UnauthorizedException('No se pudo identificar al auditor');
+    }
+
+    return this.auditoriasService.uploadEvidenciaToStorage({
+      file,
+      auditorId,
+      auditoriaId,
+      activoId,
+    });
+  }
 
   /**
    * Crea una nueva auditoría de activos

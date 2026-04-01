@@ -38,4 +38,10 @@ export class CreateAuditoriaDto {
    * @example "550e8400-e29b-41d4-a716-446655440002"
    */
   auditoria?: string;
+
+  /**
+   * URL pública de la evidencia fotográfica (opcional)
+   * @example "https://project.supabase.co/storage/v1/object/public/evidencias_auditoria/auditorias/...jpg"
+   */
+  url?: string;
 }

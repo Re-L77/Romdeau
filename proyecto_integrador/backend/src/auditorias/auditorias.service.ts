@@ -2,14 +2,141 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createClient } from '@supabase/supabase-js';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 
+type UploadFile = {
+  mimetype: string;
+  originalname: string;
+  buffer: Buffer;
+};
+
 @Injectable()
 export class AuditoriasService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly supabase: ReturnType<typeof createClient>;
+  private readonly evidenceBucket: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {
+    const supabaseUrl = this.config.get<string>('SUPABASE_URL')!;
+    const serviceKey =
+      this.config.get<string>('SUPABASE_SERVICE_KEY') ??
+      this.config.get<string>('SUPABASE_ANON_KEY')!;
+
+    this.supabase = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    this.evidenceBucket =
+      this.config.get<string>('SUPABASE_AUDIT_EVIDENCE_BUCKET') ??
+      'evidencias_auditoria';
+  }
+
+  private async tryAutoCompleteAuditoria(auditoriaId: string): Promise<void> {
+    const auditoria = await this.prisma.auditorias_programadas.findUnique({
+      where: { id: auditoriaId },
+      select: {
+        id: true,
+        estado_id: true,
+        fecha_inicio: true,
+        oficina_id: true,
+        estante_id: true,
+      },
+    });
+
+    if (!auditoria) return;
+
+    // Solo autocompletar auditorías activas
+    if (![1, 2].includes(auditoria.estado_id)) return;
+
+    const activosWhere = auditoria.estante_id
+      ? { estante_id: auditoria.estante_id }
+      : auditoria.oficina_id
+        ? { oficina_id: auditoria.oficina_id }
+        : null;
+
+    if (!activosWhere) return;
+
+    const [totalObjetivo, logs] = await this.prisma.$transaction([
+      this.prisma.activos.count({ where: activosWhere }),
+      this.prisma.logs_auditoria.findMany({
+        where: { auditoria: auditoria.id },
+        select: { activo_id: true },
+      }),
+    ]);
+
+    if (totalObjetivo <= 0) return;
+
+    const auditadosCount = new Set(logs.map((log) => log.activo_id)).size;
+    if (auditadosCount < totalObjetivo) return;
+
+    await this.prisma.auditorias_programadas.update({
+      where: { id: auditoria.id },
+      data: {
+        estado_id: 3,
+        fecha_fin: new Date(),
+        ...(auditoria.fecha_inicio ? {} : { fecha_inicio: new Date() }),
+      },
+    });
+  }
+
+  async uploadEvidenciaToStorage({
+    file,
+    auditorId,
+    auditoriaId,
+    activoId,
+  }: {
+    file: UploadFile;
+    auditorId: string;
+    auditoriaId?: string;
+    activoId?: string;
+  }) {
+    if (!file) {
+      throw new BadRequestException('Debes enviar un archivo');
+    }
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Solo se permiten imágenes JPG, PNG, WEBP o GIF',
+      );
+    }
+
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const auditFolder = auditoriaId || 'sin-auditoria';
+    const assetFragment = activoId || 'sin-activo';
+    const filePath = `auditorias/${auditFolder}/${auditorId}/${Date.now()}-${assetFragment}-${safeName}`;
+
+    const { error } = await this.supabase.storage
+      .from(this.evidenceBucket)
+      .upload(filePath, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false,
+      });
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `No se pudo subir la evidencia: ${error.message}`,
+      );
+    }
+
+    const { data } = this.supabase.storage
+      .from(this.evidenceBucket)
+      .getPublicUrl(filePath);
+
+    return {
+      evidencia_url: data.publicUrl,
+      bucket: this.evidenceBucket,
+      path: filePath,
+    };
+  }
 
   /**
    * Valida que los IDs requeridos existan antes de crear la auditoría
@@ -111,7 +238,7 @@ export class AuditoriasService {
       }
     }
 
-    return this.prisma.logs_auditoria.create({
+    const createdLog = await this.prisma.logs_auditoria.create({
       data: createAuditoriaDto,
       include: {
         activos: {
@@ -134,6 +261,12 @@ export class AuditoriasService {
         auditorias_programadas: true,
       },
     });
+
+    if (createAuditoriaDto.auditoria) {
+      await this.tryAutoCompleteAuditoria(createAuditoriaDto.auditoria);
+    }
+
+    return createdLog;
   }
 
   async findAll() {

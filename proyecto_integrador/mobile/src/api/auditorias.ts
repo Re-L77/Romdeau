@@ -73,6 +73,15 @@ export interface RegistrarAuditoriaPayload {
   auditoria?: string;
   estado_reportado_id: number;
   comentarios?: string;
+  url?: string;
+}
+
+export interface UploadEvidenciaPayload {
+  uri: string;
+  fileName: string;
+  mimeType: string;
+  auditoria?: string;
+  activo_id?: string;
 }
 
 export const auditoriasApi = {
@@ -107,5 +116,33 @@ export const auditoriasApi = {
   registrarLog: async (payload: RegistrarAuditoriaPayload) => {
     const response = await apiClient.post("/api/auditorias", payload);
     return response.data;
+  },
+
+  subirEvidencia: async (payload: UploadEvidenciaPayload) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: payload.uri,
+      name: payload.fileName,
+      type: payload.mimeType,
+    } as any);
+
+    if (payload.auditoria) {
+      formData.append("auditoria", payload.auditoria);
+    }
+    if (payload.activo_id) {
+      formData.append("activo_id", payload.activo_id);
+    }
+
+    const response = await apiClient.post(
+      "/api/auditorias/evidencia/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return response.data as { evidencia_url: string; bucket: string; path: string };
   },
 };

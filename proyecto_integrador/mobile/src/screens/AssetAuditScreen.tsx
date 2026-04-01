@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  Image,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -13,6 +14,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   X,
@@ -45,11 +49,12 @@ interface AuditData {
   timestamp: string;
   status: AuditStatus;
   observaciones: string;
-  nueva_ubicacion?: string;
   gps_latitude?: number;
   gps_longitude?: number;
   foto_evidencia?: string;
 }
+
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;
 
 export default function AssetAuditScreen({
   assetId,
@@ -61,19 +66,19 @@ export default function AssetAuditScreen({
 
   const [status, setStatus] = useState<AuditStatus>("ENCONTRADO");
   const [observaciones, setObservaciones] = useState("");
-  const [nuevaUbicacion, setNuevaUbicacion] = useState("");
-  const [fotoEvidencia, setFotoEvidencia] = useState<string | null>(null);
+  const [fotoEvidenciaLocalUri, setFotoEvidenciaLocalUri] = useState<string | null>(null);
+  const [fotoEvidenciaUrl, setFotoEvidenciaUrl] = useState<string | null>(null);
   const [gpsCoords, setGpsCoords] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const [ubicacionCambiada, setUbicacionCambiada] = useState(false);
   const [asset, setAsset] = useState<ActivoDetalle | null>(null);
   const [isAssetLoading, setIsAssetLoading] = useState(true);
   const [assetError, setAssetError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const isReadOnlyMode = !auditoriaProgramadaId;
 
   const statusToEstadoId: Record<AuditStatus, number> = {
@@ -171,14 +176,107 @@ export default function AssetAuditScreen({
     })();
   }, [isReadOnlyMode]);
 
-  const handleTakePhoto = () => {
-    // En producción usar expo-image-picker
-    setFotoEvidencia("mock_photo_" + Date.now());
-    Alert.alert("✅ Foto capturada", "La foto de evidencia ha sido guardada.");
+  const compressImageUnder2MB = async (uri: string) => {
+    let workingUri = uri;
+    let targetWidth: number | null = null;
+
+    for (let i = 0; i < 8; i += 1) {
+      const quality = Math.max(0.35, 0.8 - i * 0.07);
+      const actions = targetWidth
+        ? [{ resize: { width: targetWidth } }]
+        : [];
+
+      const result = await ImageManipulator.manipulateAsync(workingUri, actions, {
+        compress: quality,
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+
+      const info = await FileSystem.getInfoAsync(result.uri, { size: true });
+      const size = info.exists ? info.size || 0 : 0;
+
+      if (size > 0 && size <= MAX_IMAGE_SIZE_BYTES) {
+        return result.uri;
+      }
+
+      workingUri = result.uri;
+      targetWidth = Math.max(
+        720,
+        Math.round((result.width || targetWidth || 1080) * 0.85),
+      );
+    }
+
+    return null;
+  };
+
+  const uploadEvidenceToBackend = async (localUri: string) => {
+    const fileName = `evidencia-${Date.now()}.jpg`;
+    const uploadResult = await auditoriasApi.subirEvidencia({
+      uri: localUri,
+      fileName,
+      mimeType: "image/jpeg",
+      auditoria: auditoriaProgramadaId,
+      activo_id: asset?.id,
+    });
+
+    return uploadResult.evidencia_url;
+  };
+
+  const handleTakePhoto = async () => {
+    if (isUploadingPhoto) return;
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Permiso requerido",
+        "Necesitas conceder permiso de cámara para tomar evidencia.",
+      );
+      return;
+    }
+
+    const capture = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+      allowsEditing: false,
+      exif: false,
+    });
+
+    if (capture.canceled || !capture.assets?.length) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const compressedUri = await compressImageUnder2MB(capture.assets[0].uri);
+      if (!compressedUri) {
+        Alert.alert(
+          "No se pudo comprimir",
+          "La imagen sigue superando 2MB. Intenta con otra foto.",
+        );
+        return;
+      }
+
+      setFotoEvidenciaLocalUri(compressedUri);
+      setFotoEvidenciaUrl(null);
+
+      Alert.alert(
+        "✅ Foto lista",
+        "La evidencia quedó lista y se subirá al guardar la auditoría.",
+      );
+    } catch (error) {
+      console.error("Error procesando evidencia:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Error desconocido al subir evidencia.";
+      Alert.alert(
+        "Error",
+        `No se pudo subir la evidencia. ${message}`,
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   const handleSave = () => {
-    if (status === "DAÑADO" && !fotoEvidencia) {
+    if (status === "DAÑADO" && !fotoEvidenciaLocalUri) {
       Alert.alert(
         "⚠️ Evidencia Obligatoria",
         "Debes tomar una foto del activo dañado antes de guardar.",
@@ -215,10 +313,9 @@ export default function AssetAuditScreen({
       timestamp: currentTime.toISOString(),
       status,
       observaciones,
-      nueva_ubicacion: ubicacionCambiada ? nuevaUbicacion : undefined,
       gps_latitude: gpsCoords?.lat,
       gps_longitude: gpsCoords?.lng,
-      foto_evidencia: fotoEvidencia || undefined,
+      foto_evidencia: fotoEvidenciaUrl || undefined,
     };
 
     console.log("💾 [LOG] Guardando auditoría:", auditData);
@@ -230,11 +327,19 @@ export default function AssetAuditScreen({
     };
 
     try {
+      let evidenceUrl = fotoEvidenciaUrl;
+
+      if (fotoEvidenciaLocalUri && !evidenceUrl) {
+        evidenceUrl = await uploadEvidenceToBackend(fotoEvidenciaLocalUri);
+        setFotoEvidenciaUrl(evidenceUrl);
+      }
+
       await auditoriasApi.registrarLog({
         activo_id: asset.id,
         auditoria: auditoriaProgramadaId,
         estado_reportado_id: statusToEstadoId[status],
         comentarios: observaciones?.trim() || undefined,
+        url: evidenceUrl || undefined,
       });
 
       setShowSaveConfirm(false);
@@ -608,53 +713,6 @@ export default function AssetAuditScreen({
               textAlignVertical="top"
             />
 
-            {/* Location Change Toggle */}
-            <TouchableOpacity
-              style={[
-                styles.toggleRow,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-              onPress={() => setUbicacionCambiada(!ubicacionCambiada)}
-            >
-              <Text style={[styles.toggleLabel, { color: colors.text }]}>
-                ¿Cambió la ubicación del activo?
-              </Text>
-              <View
-                style={[
-                  styles.toggleSwitch,
-                  {
-                    backgroundColor: ubicacionCambiada
-                      ? colors.primary
-                      : colors.border,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.toggleKnob,
-                    { transform: [{ translateX: ubicacionCambiada ? 20 : 0 }] },
-                  ]}
-                />
-              </View>
-            </TouchableOpacity>
-
-            {ubicacionCambiada && (
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={nuevaUbicacion}
-                onChangeText={setNuevaUbicacion}
-                placeholder="Nueva ubicación del activo"
-                placeholderTextColor={colors.textMuted}
-              />
-            )}
-
             {/* Photo Evidence */}
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Foto de Evidencia{" "}
@@ -666,25 +724,40 @@ export default function AssetAuditScreen({
               style={[
                 styles.photoButton,
                 {
-                  backgroundColor: fotoEvidencia ? "#d1fae5" : colors.surface,
-                  borderColor: fotoEvidencia ? "#10b981" : colors.border,
+                  backgroundColor: fotoEvidenciaLocalUri ? "#d1fae5" : colors.surface,
+                  borderColor: fotoEvidenciaLocalUri ? "#10b981" : colors.border,
                 },
               ]}
               onPress={handleTakePhoto}
             >
               <Camera
                 size={24}
-                color={fotoEvidencia ? "#047857" : colors.textSecondary}
+                color={fotoEvidenciaLocalUri ? "#047857" : colors.textSecondary}
               />
               <Text
                 style={[
                   styles.photoButtonText,
-                  { color: fotoEvidencia ? "#047857" : colors.textSecondary },
+                  {
+                    color: fotoEvidenciaLocalUri
+                      ? "#047857"
+                      : colors.textSecondary,
+                  },
                 ]}
               >
-                {fotoEvidencia ? "Foto capturada ✓" : "Tomar foto"}
+                {isUploadingPhoto
+                  ? "Procesando..."
+                  : fotoEvidenciaLocalUri
+                    ? "Foto capturada ✓"
+                    : "Tomar foto"}
               </Text>
             </TouchableOpacity>
+
+            {fotoEvidenciaLocalUri && (
+              <Image
+                source={{ uri: fotoEvidenciaLocalUri }}
+                style={styles.evidencePreview}
+              />
+            )}
           </>
         )}
 
@@ -1035,6 +1108,13 @@ const styles = StyleSheet.create({
   photoButtonText: {
     fontSize: 15,
     fontWeight: "600",
+  },
+  evidencePreview: {
+    width: "100%",
+    height: 180,
+    borderRadius: 12,
+    marginTop: -8,
+    marginBottom: 20,
   },
   footer: {
     position: "absolute",
