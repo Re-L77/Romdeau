@@ -79,8 +79,7 @@ export default function AssetAuditScreen({
   const [asset, setAsset] = useState<ActivoDetalle | null>(null);
   const [isAssetLoading, setIsAssetLoading] = useState(true);
   const [assetError, setAssetError] = useState<string | null>(null);
-  const [isAlreadyAuditedInAudit, setIsAlreadyAuditedInAudit] =
-    useState(false);
+  const [isAlreadyAuditedInAudit, setIsAlreadyAuditedInAudit] = useState(false);
   const [isCheckingDuplicateAudit, setIsCheckingDuplicateAudit] =
     useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -416,6 +415,8 @@ export default function AssetAuditScreen({
         estado_reportado_id: statusToEstadoId[status],
         comentarios: observaciones?.trim() || undefined,
         url: evidenceUrl || undefined,
+        lat: gpsCoords?.lat,
+        lng: gpsCoords?.lng,
       });
 
       setShowSaveConfirm(false);
@@ -596,7 +597,9 @@ export default function AssetAuditScreen({
                     },
                   ]}
                 >
-                  <Text style={[styles.infoSectionTitle, { color: colors.text }]}> 
+                  <Text
+                    style={[styles.infoSectionTitle, { color: colors.text }]}
+                  >
                     Identificación
                   </Text>
                   <InfoRow
@@ -631,7 +634,9 @@ export default function AssetAuditScreen({
                     },
                   ]}
                 >
-                  <Text style={[styles.infoSectionTitle, { color: colors.text }]}> 
+                  <Text
+                    style={[styles.infoSectionTitle, { color: colors.text }]}
+                  >
                     Especificaciones
                   </Text>
                   <InfoRow label="Marca" value={marca} colors={colors} />
@@ -649,7 +654,9 @@ export default function AssetAuditScreen({
                     },
                   ]}
                 >
-                  <Text style={[styles.infoSectionTitle, { color: colors.text }]}> 
+                  <Text
+                    style={[styles.infoSectionTitle, { color: colors.text }]}
+                  >
                     Ubicación y Custodia
                   </Text>
                   <InfoRow
@@ -679,7 +686,9 @@ export default function AssetAuditScreen({
                     },
                   ]}
                 >
-                  <Text style={[styles.infoSectionTitle, { color: colors.text }]}> 
+                  <Text
+                    style={[styles.infoSectionTitle, { color: colors.text }]}
+                  >
                     Información Financiera
                   </Text>
                   <InfoRow
@@ -699,7 +708,9 @@ export default function AssetAuditScreen({
                   />
                   <InfoRow
                     label="Proveedor"
-                    value={toText(asset?.datos_financieros?.proveedores?.nombre)}
+                    value={toText(
+                      asset?.datos_financieros?.proveedores?.nombre,
+                    )}
                     colors={colors}
                   />
                 </View>

@@ -44,4 +44,16 @@ export class CreateAuditoriaDto {
    * @example "https://project.supabase.co/storage/v1/object/public/evidencias_auditoria/auditorias/...jpg"
    */
   url?: string;
+
+  /**
+   * Latitud GPS capturada en campo (opcional)
+   * @example 20.5143
+   */
+  lat?: number;
+
+  /**
+   * Longitud GPS capturada en campo (opcional)
+   * @example -100.0825
+   */
+  lng?: number;
 }

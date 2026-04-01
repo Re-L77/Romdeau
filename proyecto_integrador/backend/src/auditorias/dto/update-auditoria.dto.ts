@@ -7,4 +7,6 @@ export class UpdateAuditoriaDto implements Partial<CreateAuditoriaDto> {
   comentarios?: string;
   auditoria?: string;
   url?: string;
+  lat?: number;
+  lng?: number;
 }

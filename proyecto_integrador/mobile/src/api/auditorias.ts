@@ -74,6 +74,8 @@ export interface RegistrarAuditoriaPayload {
   estado_reportado_id: number;
   comentarios?: string;
   url?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface UploadEvidenciaPayload {
@@ -143,6 +145,10 @@ export const auditoriasApi = {
       },
     );
 
-    return response.data as { evidencia_url: string; bucket: string; path: string };
+    return response.data as {
+      evidencia_url: string;
+      bucket: string;
+      path: string;
+    };
   },
 };
