@@ -458,7 +458,30 @@ export class AuditoriasService {
     if (!record) {
       throw new NotFoundException(`Auditoría ${id} no encontrada`);
     }
-    return record;
+
+    // Extraer coordenadas GPS (PostGIS geography -> lat/lng) para el frontend
+    const gpsRows = await this.prisma.$queryRaw<
+      Array<{ lat: number | null; lng: number | null }>
+    >`
+      SELECT
+        ST_Y(coordenadas_gps::geometry) AS lat,
+        ST_X(coordenadas_gps::geometry) AS lng
+      FROM logs_auditoria
+      WHERE id = ${id}::uuid
+      LIMIT 1
+    `;
+
+    const gps = gpsRows[0] || { lat: null, lng: null };
+
+    return {
+      ...record,
+      // Alias explícitos esperados por la UI web
+      evidencia_foto_url: record.url ?? null,
+      lat: gps.lat,
+      lng: gps.lng,
+      coincidencia_ubicacion: gps.lat !== null && gps.lng !== null,
+      duracion_minutos: null,
+    };
   }
 
   async update(id: string, updateAuditoriaDto: UpdateAuditoriaDto) {
