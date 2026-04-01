@@ -34,7 +34,7 @@ export class AuditoriasprogramadasController {
   }
 
   @Get('mias')
-  @Roles(Role.AUDITOR)
+  @Roles(Role.ADMIN, Role.AUDITOR)
   findMine(@Req() req: any) {
     const auditorId = req.user?.id;
     return this.auditoriasService.findByAuditor(auditorId);
