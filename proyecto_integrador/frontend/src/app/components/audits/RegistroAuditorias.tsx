@@ -115,7 +115,11 @@ const LogSkeleton = () => (
 );
 
 // ─── CSV export ───────────────────────────────────────────────────────────────
-function exportarCSV(logs: LogAuditoria[], periodo: string, generadoPor: string) {
+function exportarCSV(
+  logs: LogAuditoria[],
+  periodo: string,
+  generadoPor: string,
+) {
   const e = (v: string | null | undefined) => {
     const s = v ?? "";
     return s.includes(",") || s.includes('"') || s.includes("\n")
@@ -162,7 +166,11 @@ function exportarCSV(logs: LogAuditoria[], periodo: string, generadoPor: string)
 }
 
 // ─── Excel SpreadsheetML ──────────────────────────────────────────────────────
-function exportarExcel(logs: LogAuditoria[], periodo: string, generadoPor: string) {
+function exportarExcel(
+  logs: LogAuditoria[],
+  periodo: string,
+  generadoPor: string,
+) {
   const cell = (val: string, styleId: string) =>
     `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${esc(val)}</Data></Cell>`;
 
@@ -260,13 +268,33 @@ function exportarExcel(logs: LogAuditoria[], periodo: string, generadoPor: strin
 }
 
 // ─── PDF via ventana de impresión ─────────────────────────────────────────────
-function exportarPDF(logs: LogAuditoria[], periodo: string, generadoPor: string) {
+function exportarPDF(
+  logs: LogAuditoria[],
+  periodo: string,
+  generadoPor: string,
+) {
   const estadoBadge = (estado: string | null) => {
     const n = (estado ?? "").toUpperCase();
-    let bg = "#F3F4F6"; let color = "#374151"; let border = "#D1D5DB";
-    if (n.includes("BUENO") || n.includes("NUEVO"))  { bg="#DCFCE7"; color="#166534"; border="#86EFAC"; }
-    else if (n.includes("DA") || n.includes("MALO") || n.includes("DETERIORADO")) { bg="#FEF3C7"; color="#92400E"; border="#FCD34D"; }
-    else if (n.includes("BAJA") || n.includes("NO")) { bg="#FEE2E2"; color="#991B1B"; border="#FCA5A5"; }
+    let bg = "#F3F4F6";
+    let color = "#374151";
+    let border = "#D1D5DB";
+    if (n.includes("BUENO") || n.includes("NUEVO")) {
+      bg = "#DCFCE7";
+      color = "#166534";
+      border = "#86EFAC";
+    } else if (
+      n.includes("DA") ||
+      n.includes("MALO") ||
+      n.includes("DETERIORADO")
+    ) {
+      bg = "#FEF3C7";
+      color = "#92400E";
+      border = "#FCD34D";
+    } else if (n.includes("BAJA") || n.includes("NO")) {
+      bg = "#FEE2E2";
+      color = "#991B1B";
+      border = "#FCA5A5";
+    }
     return `<span style="background:${bg};color:${color};border:1px solid ${border};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap">${esc(estado ?? "—")}</span>`;
   };
 
@@ -518,9 +546,12 @@ function ExportModal({ logs, onClose, generadoPor }: ExportModalProps) {
       setExporting(true);
       setExportError(null);
       await new Promise((r) => setTimeout(r, 250));
-      if (formato === "CSV") exportarCSV(logsExport, etiquetaPeriodo, generadoPor);
-      if (formato === "EXCEL") exportarExcel(logsExport, etiquetaPeriodo, generadoPor);
-      if (formato === "PDF") exportarPDF(logsExport, etiquetaPeriodo, generadoPor);
+      if (formato === "CSV")
+        exportarCSV(logsExport, etiquetaPeriodo, generadoPor);
+      if (formato === "EXCEL")
+        exportarExcel(logsExport, etiquetaPeriodo, generadoPor);
+      if (formato === "PDF")
+        exportarPDF(logsExport, etiquetaPeriodo, generadoPor);
       onClose();
     } catch {
       setExportError("Error al generar el archivo. Intenta de nuevo.");
@@ -755,7 +786,11 @@ function ExportModal({ logs, onClose, generadoPor }: ExportModalProps) {
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-export function RegistroAuditorias() {
+export function RegistroAuditorias({
+  onAssetClick,
+}: {
+  onAssetClick?: (assetId: string) => void;
+}) {
   const { user } = useAuth();
   const [logs, setLogs] = useState<LogAuditoria[]>([]);
   const [loading, setLoading] = useState(true);
@@ -769,7 +804,8 @@ export function RegistroAuditorias() {
 
   // Nombre completo del usuario para los reportes
   const nombreUsuario = user
-    ? [user.nombres, user.apellido_paterno].filter(Boolean).join(" ") || user.email
+    ? [user.nombres, user.apellido_paterno].filter(Boolean).join(" ") ||
+      user.email
     : "Sistema";
 
   const fetchLogs = useCallback(async () => {
@@ -890,6 +926,7 @@ export function RegistroAuditorias() {
         <AuditDetailFullView
           auditId={selectedAuditId}
           onBack={() => setSelectedAuditId(null)}
+          onAssetClick={onAssetClick}
         />
       </main>
     );

@@ -344,7 +344,9 @@ function AppContent() {
           )}
 
           {/* View 5: Registro de Auditorías */}
-          {currentView === "registro-auditorias" && <RegistroAuditorias />}
+          {currentView === "registro-auditorias" && (
+            <RegistroAuditorias onAssetClick={handleAssetClick} />
+          )}
 
           {/* View 5.5: Depreciación y Garantías */}
           {currentView === "depreciacion-garantias" && (
@@ -379,6 +381,7 @@ function AppContent() {
               auditId={selectedAuditId}
               auditType={auditType}
               onBack={() => handleNavigate("auditorias")}
+              onAssetClick={handleAssetClick}
             />
           )}
 
