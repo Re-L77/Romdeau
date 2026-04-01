@@ -13,6 +13,8 @@ import {
   Building2,
   Edit3,
   Ban,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -20,6 +22,7 @@ import {
   auditoriasProgramadasApi,
   auditoriasApi,
 } from "../../../services/api";
+import { useAuth } from "../../../contexts/AuthContext";
 import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
 import { CrearAuditoria } from "./CrearAuditoria";
@@ -60,6 +63,7 @@ export function AuditDetail({
   onAssetClick,
 }: AuditDetailProps) {
   const isScheduled = auditType === "scheduled";
+  const { user } = useAuth();
   const [scheduledAudit, setScheduledAudit] = useState<any | null>(null);
   const [isLoadingScheduledAudit, setIsLoadingScheduledAudit] = useState(false);
   const [scheduledAssets, setScheduledAssets] = useState<any[]>([]);
@@ -71,6 +75,7 @@ export function AuditDetail({
   const [saving, setSaving] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [formCatalogs, setFormCatalogs] = useState<any>(null);
+  const [exportModal, setExportModal] = useState(false);
 
   const handleCancel = async () => {
     setSaving(true);
@@ -112,6 +117,375 @@ export function AuditDetail({
     } catch (e: any) {
       toast.error(e?.message || "Error al actualizar la auditoría");
     }
+  };
+
+  // Helper functions for export
+  const formatFecha = (value: string | null | undefined) => {
+    if (!value) return "—";
+    try {
+      return new Intl.DateTimeFormat("es-MX", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(value));
+    } catch {
+      return value;
+    }
+  };
+
+  const hoy = () => new Date().toISOString().split("T")[0];
+
+  const descargar = (blob: Blob, nombre: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const esc = (s: string | null | undefined) => {
+    if (!s) return "";
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
+  const handleExportCSV = () => {
+    const e = (v: string | null | undefined) => {
+      const s = v ?? "";
+      return s.includes(",") || s.includes('"') || s.includes("\n")
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
+    };
+
+    const nombreUsuario = user
+      ? [user.nombres, user.apellido_paterno].filter(Boolean).join(" ") ||
+        user.email
+      : "Sistema";
+    const generadoEn = formatFecha(new Date().toISOString());
+
+    // Para auditorías programadas completadas, usar scheduledData
+    const exportData =
+      isScheduled && scheduledStatusRaw === "COMPLETADA"
+        ? {
+            titulo: scheduledData.titulo ?? "—",
+            estado: scheduledStatusRaw,
+            auditor: scheduledAuditorName,
+            activo:
+              scheduledData.auditorias?.reduce(
+                (acc: any, a: any) =>
+                  acc + (a.activos?.codigo_etiqueta ? 1 : 0),
+                0,
+              ) ?? "—",
+            ubicacion: getScheduledLocation().level4,
+            fecha: formatFecha(scheduledData.fecha_programada),
+            duracion: "—",
+            comentarios:
+              scheduledData.descripcion ?? scheduledData.notas ?? "—",
+          }
+        : {
+            titulo: data.titulo ?? "—",
+            estado: data.estado_reportado ?? "—",
+            auditor: data.auditor ?? "—",
+            activo: data.activo_codigo ?? "—",
+            ubicacion: data.salon ?? "—",
+            fecha: formatFecha(data.created_at),
+            duracion: data.duracion_minutos
+              ? `${data.duracion_minutos} min`
+              : "—",
+            comentarios: data.comentarios ?? "—",
+          };
+
+    const csv = [
+      '"AUDITORÍA COMPLETADA"',
+      `"Generado por:","${nombreUsuario}"`,
+      `"Fecha de generación:","${generadoEn}"`,
+      "",
+      [
+        "Título",
+        "Estado",
+        "Auditor",
+        "Activo",
+        "Ubicación",
+        "Fecha",
+        "Duración",
+        "Comentarios",
+      ].join(","),
+      [
+        e(exportData.titulo),
+        e(exportData.estado),
+        e(exportData.auditor),
+        e(exportData.activo),
+        e(exportData.ubicacion),
+        e(exportData.fecha),
+        e(exportData.duracion),
+        e(exportData.comentarios),
+      ].join(","),
+      ...(isScheduled &&
+      scheduledStatusRaw === "COMPLETADA" &&
+      logsAuditados.length > 0
+        ? [
+            "",
+            "DETALLE DE ACTIVOS AUDITADOS",
+            [
+              "Código Activo",
+              "Nombre Activo",
+              "Estado",
+              "Ubicación",
+              "Auditor",
+              "Fecha Auditoría",
+              "Comentarios",
+            ].join(","),
+            ...logsAuditados.map((log) =>
+              [
+                e(log.activos?.codigo_etiqueta ?? log.activo_id ?? "—"),
+                e(log.activos?.nombre ?? "—"),
+                e(log.estados_auditoria?.nombre ?? log.estado_reportado ?? "—"),
+                e(log.ubicacion ?? "—"),
+                e(log.usuarios?.nombre_completo ?? "—"),
+                e(formatFecha(log.fecha_hora)),
+                e(log.comentarios ?? "—"),
+              ].join(","),
+            ),
+          ]
+        : []),
+    ].join("\n");
+
+    descargar(
+      new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" }),
+      `auditoria_${hoy()}.csv`,
+    );
+  };
+
+  const handleExportExcel = () => {
+    const cell = (val: string, styleId: string) =>
+      `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${esc(val)}</Data></Cell>`;
+
+    const nombreUsuario = user
+      ? [user.nombres, user.apellido_paterno].filter(Boolean).join(" ") ||
+        user.email
+      : "Sistema";
+    const generadoEn = formatFecha(new Date().toISOString());
+
+    // Para auditorías programadas completadas, usar scheduledData
+    const exportData =
+      isScheduled && scheduledStatusRaw === "COMPLETADA"
+        ? {
+            titulo: scheduledData.titulo ?? "—",
+            estado: scheduledStatusRaw,
+            auditor: scheduledAuditorName,
+            activo:
+              scheduledData.auditorias?.reduce(
+                (acc: any, a: any) =>
+                  acc + (a.activos?.codigo_etiqueta ? 1 : 0),
+                0,
+              ) ?? "—",
+            ubicacion: getScheduledLocation().level4,
+            fecha: formatFecha(scheduledData.fecha_programada),
+            duracion: "—",
+            comentarios:
+              scheduledData.descripcion ?? scheduledData.notas ?? "—",
+          }
+        : {
+            titulo: data.titulo ?? "—",
+            estado: data.estado_reportado ?? "—",
+            auditor: data.auditor ?? "—",
+            activo: data.activo_codigo ?? "—",
+            ubicacion: data.salon ?? "—",
+            fecha: formatFecha(data.created_at),
+            duracion: data.duracion_minutos
+              ? `${data.duracion_minutos} min`
+              : "—",
+            comentarios: data.comentarios ?? "—",
+          };
+
+    const logsRows =
+      isScheduled &&
+      scheduledStatusRaw === "COMPLETADA" &&
+      logsAuditados.length > 0
+        ? `<Row/>
+      <Row><Cell><Data ss:Type="String">DETALLE DE ACTIVOS AUDITADOS</Data></Cell></Row>
+      <Row>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Código Activo</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Nombre Activo</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Estado</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Ubicación</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Auditor</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Fecha Auditoría</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Comentarios</Data></Cell>
+      </Row>
+      ${logsAuditados
+        .map((log, i) => {
+          const s = i % 2 === 0 ? "Even" : "Odd";
+          const oddStyle =
+            i % 2 === 1
+              ? `<Style ss:ID="Odd"><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>`
+              : "";
+          return `<Row>
+          ${cell(log.activos?.codigo_etiqueta ?? log.activo_id ?? "—", s)}
+          ${cell(log.activos?.nombre ?? "—", s)}
+          ${cell(log.estados_auditoria?.nombre ?? log.estado_reportado ?? "—", s)}
+          ${cell(log.ubicacion ?? "—", s)}
+          ${cell(log.usuarios?.nombre_completo ?? "—", s)}
+          ${cell(formatFecha(log.fecha_hora), s)}
+          ${cell(log.comentarios ?? "—", s)}
+        </Row>`;
+        })
+        .join("\n")}`.replace(/undefined/g, "")
+        : "";
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E3A5F" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="Even"><Interior ss:Color="#EBF2FB" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="Odd"><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
+  </Styles>
+  <Worksheet ss:Name="Auditoría">
+    <Table>
+      <Row>
+        <Cell><Data ss:Type="String">Generado por: ${esc(nombreUsuario)}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">Fecha de generación: ${esc(generadoEn)}</Data></Cell>
+      </Row>
+      <Row/>
+      <Row>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Título</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Estado</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Auditor</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Activo</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Ubicación</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Fecha</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Duración</Data></Cell>
+        <Cell ss:StyleID="Header"><Data ss:Type="String">Comentarios</Data></Cell>
+      </Row>
+      <Row>
+        ${cell(exportData.titulo, "Even")}
+        ${cell(exportData.estado, "Even")}
+        ${cell(exportData.auditor, "Even")}
+        ${cell(exportData.activo, "Even")}
+        ${cell(exportData.ubicacion, "Even")}
+        ${cell(exportData.fecha, "Even")}
+        ${cell(exportData.duracion, "Even")}
+        ${cell(exportData.comentarios, "Even")}
+      </Row>
+      ${logsRows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+    descargar(
+      new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8;" }),
+      `auditoria_${hoy()}.xls`,
+    );
+  };
+
+  const handleExportPDF = () => {
+    const nombreUsuario = user
+      ? [user.nombres, user.apellido_paterno].filter(Boolean).join(" ") ||
+        user.email
+      : "Sistema";
+    const generadoEn = formatFecha(new Date().toISOString());
+
+    // Para auditorías programadas completadas, usar scheduledData
+    const exportData =
+      isScheduled && scheduledStatusRaw === "COMPLETADA"
+        ? {
+            titulo: scheduledData.titulo ?? "—",
+            estado: scheduledStatusRaw,
+            auditor: scheduledAuditorName,
+            activo:
+              scheduledData.auditorias?.reduce(
+                (acc: any, a: any) =>
+                  acc + (a.activos?.codigo_etiqueta ? 1 : 0),
+                0,
+              ) ?? "—",
+            ubicacion: getScheduledLocation().level4,
+            fecha: formatFecha(scheduledData.fecha_programada),
+          }
+        : {
+            titulo: data.titulo ?? "—",
+            estado: data.estado_reportado ?? "—",
+            auditor: data.auditor ?? "—",
+            activo: data.activo_codigo ?? "—",
+            ubicacion: data.salon ?? "—",
+            fecha: formatFecha(data.created_at),
+          };
+
+    const logsTableHTML =
+      isScheduled &&
+      scheduledStatusRaw === "COMPLETADA" &&
+      logsAuditados.length > 0
+        ? `<h2 style="margin-top:32px;margin-bottom:12px">Detalle de Activos Auditados</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Código Activo</th>
+            <th>Nombre Activo</th>
+            <th>Estado</th>
+            <th>Ubicación</th>
+            <th>Auditor</th>
+            <th>Fecha Auditoría</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${logsAuditados
+            .map(
+              (log) => `<tr>
+            <td>${esc(log.activos?.codigo_etiqueta ?? log.activo_id ?? "—")}</td>
+            <td>${esc(log.activos?.nombre ?? "—")}</td>
+            <td>${esc(log.estados_auditoria?.nombre ?? log.estado_reportado ?? "—")}</td>
+            <td>${esc(log.ubicacion ?? "—")}</td>
+            <td>${esc(log.usuarios?.nombre_completo ?? "—")}</td>
+            <td>${esc(formatFecha(log.fecha_hora))}</td>
+          </tr>`,
+            )
+            .join("")}
+        </tbody>
+      </table>`
+        : "";
+
+    const w = window.open("", "_blank", "width=1200,height=800");
+    if (!w) return;
+    w.document
+      .write(`<!doctype html><html><head><meta charset="utf-8"><title>Auditoría</title>
+  <style>
+    body{font-family:Segoe UI,Arial,sans-serif;padding:24px}
+    h1{margin:0 0 6px}
+    h2{margin:0 0 12px;font-size:16px}
+    p{margin:0 0 16px;color:#666}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+    th,td{border:1px solid #ddd;padding:8px;text-align:left}
+    th{background:#1E3A5F;color:#fff}
+  </style></head><body>
+  <h1>Auditoría Completada</h1>
+  <p>Generado por: ${esc(nombreUsuario)} · Fecha: ${esc(generadoEn)}</p>
+  <table><thead><tr><th>Título</th><th>Estado</th><th>Auditor</th><th>Activo</th><th>Ubicación</th><th>Fecha</th></tr></thead>
+  <tbody><tr>
+    <td>${esc(exportData.titulo)}</td>
+    <td>${esc(exportData.estado)}</td>
+    <td>${esc(exportData.auditor)}</td>
+    <td>${esc(exportData.activo)}</td>
+    <td>${esc(exportData.ubicacion)}</td>
+    <td>${esc(exportData.fecha)}</td>
+  </tr></tbody></table>
+  ${logsTableHTML}
+  <script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}<\/script>
+  </body></html>`);
+    w.document.close();
   };
 
   useEffect(() => {
@@ -210,6 +584,12 @@ export function AuditDetail({
       timeStyle: "short",
     });
   };
+
+  // Extract logs for export
+  const logsAuditados: any[] =
+    isScheduled && Array.isArray(scheduledData.logs_auditoria)
+      ? scheduledData.logs_auditoria
+      : [];
 
   const scheduledAuditorName =
     scheduledData.usuarios?.nombre_completo ?? scheduledData.auditor ?? "—";
@@ -418,11 +798,6 @@ export function AuditDetail({
                         ? (scheduledData.titulo ?? "—")
                         : (data.activo_nombre ?? "—")}
                     </h2>
-                    {isScheduled && scheduledData.descripcion && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        {scheduledData.descripcion}
-                      </p>
-                    )}
                     {isScheduled && (
                       <div className="flex flex-wrap gap-2">
                         {scheduledData.oficinas ? (
@@ -855,8 +1230,33 @@ export function AuditDetail({
                 </motion.div>
               )}
 
-              {/* Actions - Only for scheduled */}
-              {isScheduled && (
+              {/* Actions - Only for completed */}
+              {(!isScheduled || scheduledStatusRaw === "COMPLETADA") && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8"
+                >
+                  <h2 className="text-xl font-bold mb-6 dark:text-white">
+                    Acciones
+                  </h2>
+                  <div className="space-y-3">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setExportModal(true)}
+                      className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Exportar Auditoría
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Actions - Only for scheduled (non-completed) */}
+              {isScheduled && scheduledStatusRaw !== "COMPLETADA" && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -1019,6 +1419,122 @@ export function AuditDetail({
           editData={scheduledData}
         />
       )}
+
+      {/* === MODAL: Export Completed Audit === */}
+      <AnimatePresence>
+        {exportModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
+            onClick={() => setExportModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-2xl p-8 w-full max-w-md"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+                  <Download className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h2 className="text-xl font-bold dark:text-white">
+                  Exportar Auditoría
+                </h2>
+              </div>
+
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  Auditoría:
+                </p>
+                <p className="font-semibold text-gray-900 dark:text-white truncate">
+                  {data.titulo ?? "—"}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                  Estado: {data.estado_reportado ?? "—"}
+                </p>
+              </div>
+
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Selecciona el formato para descargar:
+              </p>
+
+              <div className="space-y-2 mb-6">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    handleExportCSV();
+                    setExportModal(false);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+                >
+                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      CSV
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                      Texto separado por comas
+                    </p>
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    handleExportExcel();
+                    setExportModal(false);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+                >
+                  <FileSpreadsheet className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Excel
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                      Hoja de cálculo con estilos
+                    </p>
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    handleExportPDF();
+                    setExportModal(false);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+                >
+                  <FileText className="w-5 h-5 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform" />
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      PDF
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                      Documento listo para imprimir
+                    </p>
+                  </div>
+                </motion.button>
+              </div>
+
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setExportModal(false)}
+                className="w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium"
+              >
+                Cancelar
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

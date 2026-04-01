@@ -1137,7 +1137,7 @@ export function RegistroAuditorias({
                       </div>
                       {log.plan_auditoria && (
                         <p
-                          className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mt-1 truncate max-w-[120px]"
+                          className="text-[14px] text-blue-600 dark:text-blue-400 font-medium mt-1 truncate max-w-[120px]"
                           title={log.plan_auditoria}
                         >
                           Plan: {log.plan_auditoria}
