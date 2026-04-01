@@ -233,7 +233,7 @@ export class AuditoriasService {
           },
         },
       },
-      orderBy: { fecha_hora: 'desc' },
+      orderBy: { fecha_hora: 'asc' },
     });
   }
 

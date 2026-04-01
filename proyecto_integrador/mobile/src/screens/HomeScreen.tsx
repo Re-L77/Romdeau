@@ -151,7 +151,7 @@ export default function HomeScreen() {
             >
               <QrCode size={32} color="#fff" />
               <Text style={styles.actionTitle}>Escanear QR</Text>
-              <Text style={styles.actionSubtitle}>Iniciar auditoría</Text>
+              <Text style={styles.actionSubtitle}>Consultar activo</Text>
             </LinearGradient>
           </TouchableOpacity>
 

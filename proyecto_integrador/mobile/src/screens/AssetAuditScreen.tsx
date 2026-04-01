@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   Modal,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -27,15 +28,18 @@ import {
 } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { ActivoDetalle, activosApi } from "@/api/activos";
 
 interface AssetAuditScreenProps {
   assetId: string;
+  auditoriaProgramadaId?: string;
 }
 
 type AuditStatus = "ENCONTRADO" | "NO_LOCALIZADO" | "DAÑADO";
 
 interface AuditData {
   asset_id: string;
+  auditoria_programada_id?: string;
   auditor_name: string;
   timestamp: string;
   status: AuditStatus;
@@ -46,18 +50,10 @@ interface AuditData {
   foto_evidencia?: string;
 }
 
-interface AssetInfo {
-  id: string;
-  nombre: string;
-  marca: string;
-  modelo: string;
-  numero_serie: string;
-  ubicacion_actual: string;
-  valor: number;
-  categoria: string;
-}
-
-export default function AssetAuditScreen({ assetId }: AssetAuditScreenProps) {
+export default function AssetAuditScreen({
+  assetId,
+  auditoriaProgramadaId,
+}: AssetAuditScreenProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { colors } = useTheme();
@@ -73,27 +69,76 @@ export default function AssetAuditScreen({ assetId }: AssetAuditScreenProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [ubicacionCambiada, setUbicacionCambiada] = useState(false);
+  const [asset, setAsset] = useState<ActivoDetalle | null>(null);
+  const [isAssetLoading, setIsAssetLoading] = useState(true);
+  const [assetError, setAssetError] = useState<string | null>(null);
+  const isReadOnlyMode = !auditoriaProgramadaId;
 
-  // Mock asset info
-  const asset: AssetInfo = {
-    id: assetId,
-    nombre: "Laptop Dell Latitude 5420",
-    marca: "Dell",
-    modelo: "Latitude 5420",
-    numero_serie: assetId,
-    ubicacion_actual: "Oficina 301 - Edificio A",
-    valor: 25000,
-    categoria: "Equipos de Cómputo",
+  const loadAsset = async () => {
+    setIsAssetLoading(true);
+    setAssetError(null);
+
+    try {
+      const assetData = await activosApi.obtenerPorIdentificador(assetId);
+      if (!assetData) {
+        setAsset(null);
+        setAssetError("No se encontró información del activo.");
+      } else {
+        setAsset(assetData);
+      }
+    } catch (error) {
+      setAsset(null);
+      setAssetError("No se pudo cargar la información del activo.");
+    } finally {
+      setIsAssetLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadAsset();
+  }, [assetId]);
+
+  const moneyFormatter = new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 2,
+  });
+
+  const toText = (value?: string | null) => (value ? value : "N/A");
+  const specs = (asset?.especificaciones || {}) as Record<string, unknown>;
+  const marca = typeof specs.marca === "string" ? specs.marca : "N/A";
+  const modelo = typeof specs.modelo === "string" ? specs.modelo : "N/A";
+  const serie =
+    typeof specs.numero_serie === "string"
+      ? specs.numero_serie
+      : toText(asset?.codigo_etiqueta || assetId);
+  const valorAdquisicion =
+    asset?.datos_financieros?.costo_adquisicion != null
+      ? moneyFormatter.format(Number(asset.datos_financieros.costo_adquisicion))
+      : "N/A";
+  const valorLibro =
+    asset?.datos_financieros?.valor_libro_actual != null
+      ? moneyFormatter.format(
+          Number(asset.datos_financieros.valor_libro_actual),
+        )
+      : "N/A";
+  const fechaCompra = asset?.datos_financieros?.fecha_compra
+    ? new Date(asset.datos_financieros.fecha_compra).toLocaleDateString("es-MX")
+    : "N/A";
+  const ubicacionTexto =
+    asset?.oficinas?.nombre || asset?.estantes?.nombre || "N/A";
+  const custodioTexto = asset?.usuarios?.nombre_completo || "Sin asignar";
 
   // RF7: Fecha y hora automática
   useEffect(() => {
+    if (isReadOnlyMode) return;
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isReadOnlyMode]);
 
   // RF17: Captura de geolocalización GPS
   useEffect(() => {
+    if (isReadOnlyMode) return;
     (async () => {
       const { status: permStatus } =
         await Location.requestForegroundPermissionsAsync();
@@ -116,7 +161,7 @@ export default function AssetAuditScreen({ assetId }: AssetAuditScreenProps) {
         }
       }
     })();
-  }, []);
+  }, [isReadOnlyMode]);
 
   const handleTakePhoto = () => {
     // En producción usar expo-image-picker
@@ -147,6 +192,7 @@ export default function AssetAuditScreen({ assetId }: AssetAuditScreenProps) {
   const confirmSave = () => {
     const auditData: AuditData = {
       asset_id: assetId,
+      auditoria_programada_id: auditoriaProgramadaId,
       auditor_name:
         user?.nombre_completo ||
         `${user?.nombres ?? ""} ${user?.apellido_paterno ?? ""}`.trim() ||
@@ -226,65 +272,228 @@ export default function AssetAuditScreen({ assetId }: AssetAuditScreenProps) {
         </TouchableOpacity>
 
         <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Registrar Auditoría
+          {isReadOnlyMode ? "Información del Activo" : "Registrar Auditoría"}
         </Text>
 
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Auditor & Time Info */}
-      <View
-        style={[styles.metaBar, { backgroundColor: colors.surfaceSecondary }]}
-      >
-        <View style={styles.metaItem}>
-          <User size={12} color={colors.textMuted} />
-          <Text style={[styles.metaText, { color: colors.textMuted }]}>
-            {user?.nombre_completo ||
-              `${user?.nombres ?? ""} ${user?.apellido_paterno ?? ""}`.trim()}
-          </Text>
+      {!isReadOnlyMode && (
+        <View
+          style={[styles.metaBar, { backgroundColor: colors.surfaceSecondary }]}
+        >
+          <View style={styles.metaItem}>
+            <User size={12} color={colors.textMuted} />
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>
+              {user?.nombre_completo ||
+                `${user?.nombres ?? ""} ${user?.apellido_paterno ?? ""}`.trim()}
+            </Text>
+          </View>
+          <View style={styles.metaItem}>
+            <Clock size={12} color={colors.textMuted} />
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>
+              {currentTime.toLocaleString("es-MX")}
+            </Text>
+          </View>
         </View>
-        <View style={styles.metaItem}>
-          <Clock size={12} color={colors.textMuted} />
-          <Text style={[styles.metaText, { color: colors.textMuted }]}>
-            {currentTime.toLocaleString("es-MX")}
-          </Text>
-        </View>
-      </View>
+      )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Asset Info Card */}
-        <View
-          style={[
-            styles.assetCard,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
+        {isAssetLoading ? (
           <View
             style={[
-              styles.assetIconBox,
-              { backgroundColor: colors.primary + "20" },
+              styles.assetCard,
+              styles.centeredCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Package size={28} color={colors.primary} />
+            <ActivityIndicator color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+              Cargando información del activo...
+            </Text>
           </View>
-          <View style={styles.assetDetails}>
-            <Text style={[styles.assetName, { color: colors.text }]}>
-              {asset.nombre}
+        ) : assetError ? (
+          <View
+            style={[
+              styles.assetCard,
+              { backgroundColor: colors.surface, borderColor: colors.error },
+            ]}
+          >
+            <Text style={[styles.infoOnlyTitle, { color: colors.error }]}>
+              Información no disponible
             </Text>
-            <Text style={[styles.assetId, { color: colors.textSecondary }]}>
-              {asset.id} • {asset.categoria}
+            <Text
+              style={[styles.infoOnlyText, { color: colors.textSecondary }]}
+            >
+              {assetError}
             </Text>
-            <View style={styles.locationRow}>
-              <MapPin size={12} color={colors.textMuted} />
-              <Text style={[styles.locationText, { color: colors.textMuted }]}>
-                {asset.ubicacion_actual}
-              </Text>
+            <TouchableOpacity
+              style={[styles.retryButton, { backgroundColor: colors.primary }]}
+              onPress={loadAsset}
+            >
+              <Text style={styles.retryButtonText}>Reintentar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {/* Resumen principal */}
+            <View
+              style={[
+                styles.assetCard,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <View
+                style={[
+                  styles.assetIconBox,
+                  { backgroundColor: colors.primary + "20" },
+                ]}
+              >
+                <Package size={28} color={colors.primary} />
+              </View>
+              <View style={styles.assetDetails}>
+                <Text style={[styles.assetName, { color: colors.text }]}>
+                  {toText(asset?.nombre)}
+                </Text>
+                <Text style={[styles.assetId, { color: colors.textSecondary }]}>
+                  {toText(asset?.codigo_etiqueta || assetId)}
+                </Text>
+                <View style={styles.locationRow}>
+                  <MapPin size={12} color={colors.textMuted} />
+                  <Text
+                    style={[styles.locationText, { color: colors.textMuted }]}
+                  >
+                    {ubicacionTexto}
+                  </Text>
+                </View>
+              </View>
             </View>
+
+            {/* Identificación */}
+            <View
+              style={[
+                styles.infoSection,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.infoSectionTitle, { color: colors.text }]}>
+                Identificación
+              </Text>
+              <InfoRow
+                label="ID"
+                value={toText(asset?.id || assetId)}
+                colors={colors}
+              />
+              <InfoRow
+                label="Código Etiqueta"
+                value={toText(asset?.codigo_etiqueta)}
+                colors={colors}
+              />
+              <InfoRow
+                label="Categoría"
+                value={toText(asset?.categorias?.nombre)}
+                colors={colors}
+              />
+              <InfoRow
+                label="Estado"
+                value={toText(asset?.estados_activo?.nombre)}
+                colors={colors}
+              />
+            </View>
+
+            {/* Especificaciones */}
+            <View
+              style={[
+                styles.infoSection,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.infoSectionTitle, { color: colors.text }]}>
+                Especificaciones
+              </Text>
+              <InfoRow label="Marca" value={marca} colors={colors} />
+              <InfoRow label="Modelo" value={modelo} colors={colors} />
+              <InfoRow label="No. Serie" value={serie} colors={colors} />
+            </View>
+
+            {/* Ubicación y custodio */}
+            <View
+              style={[
+                styles.infoSection,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.infoSectionTitle, { color: colors.text }]}>
+                Ubicación y Custodia
+              </Text>
+              <InfoRow
+                label="Oficina"
+                value={toText(asset?.oficinas?.nombre)}
+                colors={colors}
+              />
+              <InfoRow
+                label="Estante"
+                value={toText(asset?.estantes?.nombre)}
+                colors={colors}
+              />
+              <InfoRow label="Custodio" value={custodioTexto} colors={colors} />
+            </View>
+
+            {/* Información financiera */}
+            <View
+              style={[
+                styles.infoSection,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.infoSectionTitle, { color: colors.text }]}>
+                Información Financiera
+              </Text>
+              <InfoRow
+                label="Costo de Adquisición"
+                value={valorAdquisicion}
+                colors={colors}
+              />
+              <InfoRow
+                label="Valor en Libros"
+                value={valorLibro}
+                colors={colors}
+              />
+              <InfoRow
+                label="Fecha de Compra"
+                value={fechaCompra}
+                colors={colors}
+              />
+              <InfoRow
+                label="Proveedor"
+                value={toText(asset?.datos_financieros?.proveedores?.nombre)}
+                colors={colors}
+              />
+            </View>
+          </>
+        )}
+
+        {isReadOnlyMode && (
+          <View
+            style={[
+              styles.infoOnlyCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.infoOnlyTitle, { color: colors.text }]}>
+              Modo consulta
+            </Text>
+            <Text
+              style={[styles.infoOnlyText, { color: colors.textSecondary }]}
+            >
+              Este escaneo no está vinculado a una auditoría en progreso. Solo
+              se muestra la información del activo.
+            </Text>
           </View>
-        </View>
+        )}
 
         {/* GPS Status */}
-        {gpsCoords && (
+        {!isReadOnlyMode && gpsCoords && (
           <View style={[styles.gpsCard, { backgroundColor: "#d1fae5" }]}>
             <MapPin size={16} color="#047857" />
             <Text style={styles.gpsText}>
@@ -293,228 +502,266 @@ export default function AssetAuditScreen({ assetId }: AssetAuditScreenProps) {
           </View>
         )}
 
-        {/* Status Selection */}
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Estado del Activo
-        </Text>
-        <View style={styles.statusOptions}>
-          {statusOptions.map((option) => {
-            const Icon = option.Icon;
-            const isSelected = status === option.value;
+        {!isReadOnlyMode && (
+          <>
+            {/* Status Selection */}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Estado del Activo
+            </Text>
+            <View style={styles.statusOptions}>
+              {statusOptions.map((option) => {
+                const Icon = option.Icon;
+                const isSelected = status === option.value;
 
-            return (
-              <TouchableOpacity
-                key={option.value}
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.statusOption,
+                      {
+                        backgroundColor: isSelected
+                          ? option.bgColor
+                          : colors.surface,
+                        borderColor: isSelected
+                          ? option.borderColor
+                          : colors.border,
+                      },
+                    ]}
+                    onPress={() => setStatus(option.value)}
+                    activeOpacity={0.7}
+                  >
+                    <Icon
+                      size={24}
+                      color={isSelected ? option.textColor : colors.textMuted}
+                    />
+                    <Text
+                      style={[
+                        styles.statusLabel,
+                        {
+                          color: isSelected
+                            ? option.textColor
+                            : colors.textSecondary,
+                        },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Observaciones */}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Observaciones{" "}
+              {status !== "ENCONTRADO" && (
+                <Text style={{ color: colors.error }}>*</Text>
+              )}
+            </Text>
+            <TextInput
+              style={[
+                styles.textArea,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+              ]}
+              value={observaciones}
+              onChangeText={setObservaciones}
+              placeholder="Añade observaciones sobre el activo..."
+              placeholderTextColor={colors.textMuted}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+
+            {/* Location Change Toggle */}
+            <TouchableOpacity
+              style={[
+                styles.toggleRow,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+              onPress={() => setUbicacionCambiada(!ubicacionCambiada)}
+            >
+              <Text style={[styles.toggleLabel, { color: colors.text }]}>
+                ¿Cambió la ubicación del activo?
+              </Text>
+              <View
                 style={[
-                  styles.statusOption,
+                  styles.toggleSwitch,
                   {
-                    backgroundColor: isSelected
-                      ? option.bgColor
-                      : colors.surface,
-                    borderColor: isSelected
-                      ? option.borderColor
+                    backgroundColor: ubicacionCambiada
+                      ? colors.primary
                       : colors.border,
                   },
                 ]}
-                onPress={() => setStatus(option.value)}
-                activeOpacity={0.7}
               >
-                <Icon
-                  size={24}
-                  color={isSelected ? option.textColor : colors.textMuted}
-                />
-                <Text
+                <View
                   style={[
-                    styles.statusLabel,
-                    {
-                      color: isSelected
-                        ? option.textColor
-                        : colors.textSecondary,
-                    },
+                    styles.toggleKnob,
+                    { transform: [{ translateX: ubicacionCambiada ? 20 : 0 }] },
                   ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                />
+              </View>
+            </TouchableOpacity>
 
-        {/* Observaciones */}
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Observaciones{" "}
-          {status !== "ENCONTRADO" && (
-            <Text style={{ color: colors.error }}>*</Text>
-          )}
-        </Text>
-        <TextInput
-          style={[
-            styles.textArea,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              color: colors.text,
-            },
-          ]}
-          value={observaciones}
-          onChangeText={setObservaciones}
-          placeholder="Añade observaciones sobre el activo..."
-          placeholderTextColor={colors.textMuted}
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-        />
+            {ubicacionCambiada && (
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                value={nuevaUbicacion}
+                onChangeText={setNuevaUbicacion}
+                placeholder="Nueva ubicación del activo"
+                placeholderTextColor={colors.textMuted}
+              />
+            )}
 
-        {/* Location Change Toggle */}
-        <TouchableOpacity
-          style={[
-            styles.toggleRow,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-          onPress={() => setUbicacionCambiada(!ubicacionCambiada)}
-        >
-          <Text style={[styles.toggleLabel, { color: colors.text }]}>
-            ¿Cambió la ubicación del activo?
-          </Text>
-          <View
-            style={[
-              styles.toggleSwitch,
-              {
-                backgroundColor: ubicacionCambiada
-                  ? colors.primary
-                  : colors.border,
-              },
-            ]}
-          >
-            <View
+            {/* Photo Evidence */}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Foto de Evidencia{" "}
+              {status === "DAÑADO" && (
+                <Text style={{ color: colors.error }}>*</Text>
+              )}
+            </Text>
+            <TouchableOpacity
               style={[
-                styles.toggleKnob,
-                { transform: [{ translateX: ubicacionCambiada ? 20 : 0 }] },
+                styles.photoButton,
+                {
+                  backgroundColor: fotoEvidencia ? "#d1fae5" : colors.surface,
+                  borderColor: fotoEvidencia ? "#10b981" : colors.border,
+                },
               ]}
-            />
-          </View>
-        </TouchableOpacity>
-
-        {ubicacionCambiada && (
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                color: colors.text,
-              },
-            ]}
-            value={nuevaUbicacion}
-            onChangeText={setNuevaUbicacion}
-            placeholder="Nueva ubicación del activo"
-            placeholderTextColor={colors.textMuted}
-          />
-        )}
-
-        {/* Photo Evidence */}
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Foto de Evidencia{" "}
-          {status === "DAÑADO" && (
-            <Text style={{ color: colors.error }}>*</Text>
-          )}
-        </Text>
-        <TouchableOpacity
-          style={[
-            styles.photoButton,
-            {
-              backgroundColor: fotoEvidencia ? "#d1fae5" : colors.surface,
-              borderColor: fotoEvidencia ? "#10b981" : colors.border,
-            },
-          ]}
-          onPress={handleTakePhoto}
-        >
-          <Camera
-            size={24}
-            color={fotoEvidencia ? "#047857" : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.photoButtonText,
-              { color: fotoEvidencia ? "#047857" : colors.textSecondary },
-            ]}
-          >
-            {fotoEvidencia ? "Foto capturada ✓" : "Tomar foto"}
-          </Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 120 }} />
-      </ScrollView>
-
-      {/* Save Button */}
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={["#10b981", "#059669"]}
-            style={styles.saveButtonGradient}
-          >
-            <Save size={20} color="#fff" />
-            <Text style={styles.saveButtonText}>Guardar Auditoría</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-
-      {/* Confirmation Modal */}
-      <Modal visible={showSaveConfirm} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View
-            style={[styles.modalContent, { backgroundColor: colors.surface }]}
-          >
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              Confirmar Auditoría
-            </Text>
-            <Text style={[styles.modalText, { color: colors.textSecondary }]}>
-              ¿Estás seguro de guardar esta auditoría?
-            </Text>
-
-            <View style={styles.modalInfo}>
-              <Text style={[styles.modalInfoText, { color: colors.text }]}>
-                Activo: {assetId}
-              </Text>
+              onPress={handleTakePhoto}
+            >
+              <Camera
+                size={24}
+                color={fotoEvidencia ? "#047857" : colors.textSecondary}
+              />
               <Text
                 style={[
-                  styles.modalInfoText,
-                  { color: selectedStatusConfig.textColor },
+                  styles.photoButtonText,
+                  { color: fotoEvidencia ? "#047857" : colors.textSecondary },
                 ]}
               >
-                Estado: {selectedStatusConfig.label}
+                {fotoEvidencia ? "Foto capturada ✓" : "Tomar foto"}
               </Text>
-            </View>
+            </TouchableOpacity>
+          </>
+        )}
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  { backgroundColor: colors.surfaceSecondary },
-                ]}
-                onPress={() => setShowSaveConfirm(false)}
+        <View style={{ height: isReadOnlyMode ? 24 : 120 }} />
+      </ScrollView>
+
+      {!isReadOnlyMode && (
+        <>
+          {/* Save Button */}
+          <View style={[styles.footer, { backgroundColor: colors.background }]}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleSave}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={["#10b981", "#059669"]}
+                style={styles.saveButtonGradient}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>
-                  Cancelar
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#10b981" }]}
-                onPress={confirmSave}
-              >
-                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
-                  Confirmar
-                </Text>
-              </TouchableOpacity>
-            </View>
+                <Save size={20} color="#fff" />
+                <Text style={styles.saveButtonText}>Guardar Auditoría</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
+
+          {/* Confirmation Modal */}
+          <Modal visible={showSaveConfirm} transparent animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View
+                style={[
+                  styles.modalContent,
+                  { backgroundColor: colors.surface },
+                ]}
+              >
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  Confirmar Auditoría
+                </Text>
+                <Text
+                  style={[styles.modalText, { color: colors.textSecondary }]}
+                >
+                  ¿Estás seguro de guardar esta auditoría?
+                </Text>
+
+                <View style={styles.modalInfo}>
+                  <Text style={[styles.modalInfoText, { color: colors.text }]}>
+                    Activo: {assetId}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.modalInfoText,
+                      { color: selectedStatusConfig.textColor },
+                    ]}
+                  >
+                    Estado: {selectedStatusConfig.label}
+                  </Text>
+                </View>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton,
+                      { backgroundColor: colors.surfaceSecondary },
+                    ]}
+                    onPress={() => setShowSaveConfirm(false)}
+                  >
+                    <Text
+                      style={[styles.modalButtonText, { color: colors.text }]}
+                    >
+                      Cancelar
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: "#10b981" }]}
+                    onPress={confirmSave}
+                  >
+                    <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                      Confirmar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </>
+      )}
     </SafeAreaView>
+  );
+}
+
+function InfoRow({
+  label,
+  value,
+  colors,
+}: {
+  label: string;
+  value: string;
+  colors: {
+    text: string;
+    textSecondary: string;
+    border: string;
+  };
+}) {
+  return (
+    <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+      <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+        {label}
+      </Text>
+      <Text style={[styles.infoValue, { color: colors.text }]}>{value}</Text>
+    </View>
   );
 }
 
@@ -568,6 +815,15 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 16,
   },
+  centeredCard: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 120,
+  },
+  loadingText: {
+    fontSize: 13,
+    marginTop: 10,
+  },
   assetIconBox: {
     width: 56,
     height: 56,
@@ -595,6 +851,30 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 12,
   },
+  infoSection: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  infoSectionTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  infoRow: {
+    borderBottomWidth: 1,
+    paddingVertical: 8,
+  },
+  infoLabel: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
   gpsCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -608,6 +888,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#047857",
     fontWeight: "500",
+  },
+  infoOnlyCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+  },
+  infoOnlyTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+  infoOnlyText: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  retryButton: {
+    marginTop: 12,
+    alignSelf: "flex-start",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 13,
   },
   sectionTitle: {
     fontSize: 14,

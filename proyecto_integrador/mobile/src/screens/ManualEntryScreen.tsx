@@ -9,12 +9,13 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { X, Search, Keyboard, ArrowRight } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 
 export default function ManualEntryScreen() {
   const router = useRouter();
+  const { auditId } = useLocalSearchParams<{ auditId?: string }>();
   const { colors } = useTheme();
   const [assetId, setAssetId] = useState("");
   const [error, setError] = useState("");
@@ -31,7 +32,8 @@ export default function ManualEntryScreen() {
     }
 
     console.log("⌨️ [LOG] ID ingresado manualmente:", assetId);
-    router.replace(`/audit/${assetId.trim().toUpperCase()}`);
+    const query = auditId ? `?auditId=${encodeURIComponent(auditId)}` : "";
+    router.replace(`/audit/${assetId.trim().toUpperCase()}${query}`);
   };
 
   const recentIds = ["ACT-00045", "ACT-00044", "ACT-00043"];

@@ -12,7 +12,7 @@ import {
   useCameraPermissions,
   BarcodeScanningResult,
 } from "expo-camera";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   X,
   Flashlight,
@@ -26,6 +26,7 @@ import { useTheme } from "../contexts/ThemeContext";
 
 export default function QRScannerScreen() {
   const router = useRouter();
+  const { auditId } = useLocalSearchParams<{ auditId?: string }>();
   const { colors, isDark } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [flashEnabled, setFlashEnabled] = useState(false);
@@ -60,7 +61,8 @@ export default function QRScannerScreen() {
     // Solo aceptar IDs de activo válidos (formato CORP-YY-0000000)
     const validFormat = /^CORP-\d{2}-\d{7}$/.test(codigoEtiqueta);
     if (validFormat) {
-      router.replace(`/audit/${codigoEtiqueta}`);
+      const query = auditId ? `?auditId=${encodeURIComponent(auditId)}` : "";
+      router.replace(`/audit/${codigoEtiqueta}${query}`);
     } else {
       Alert.alert(
         "Código Inválido",
@@ -76,7 +78,8 @@ export default function QRScannerScreen() {
   };
 
   const handleManualEntry = () => {
-    router.push("/manual-entry");
+    const query = auditId ? `?auditId=${encodeURIComponent(auditId)}` : "";
+    router.push(`/manual-entry${query}`);
   };
 
   const handleClose = () => {
