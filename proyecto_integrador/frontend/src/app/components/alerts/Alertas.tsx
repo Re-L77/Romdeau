@@ -11,8 +11,6 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { useFinancialSummary } from "../../hooks/useFinancialSummary";
 import { FinancialModal } from "./FinancialModal";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -39,7 +37,11 @@ export function Alertas() {
       </div>
     );
 
-  const exportDevaluationToPDF = () => {
+  const exportDevaluationToPDF = async () => {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF("landscape");
 
     // Base de diseño: El rojo vino corporativo usado en Excel Exports (Requisiciones) #800020

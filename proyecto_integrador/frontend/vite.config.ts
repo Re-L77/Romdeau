@@ -20,14 +20,34 @@ export default defineConfig({
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ["**/*.svg", "**/*.csv"],
 
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          radix: [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-tooltip",
+          ],
+          charts: ["recharts"],
+          mui: ["@mui/material", "@emotion/react", "@emotion/styled"],
+        },
+      },
+    },
+  },
+
   server: {
     port: 5173,
     strictPort: false, // si 5173 está ocupado, usa el siguiente disponible (pero con proxy siempre funciona)
     // SPA fallback: serve index.html for all unknown paths (e.g. /reset-password)
     historyApiFallback: true,
     proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
+      "/api": {
+        target: "http://localhost:3000",
         changeOrigin: true,
       },
     },

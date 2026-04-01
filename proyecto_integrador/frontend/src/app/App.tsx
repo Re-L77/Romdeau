@@ -1,24 +1,84 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { LoginScreen } from "./components/auth/LoginScreen";
 import { ResetPasswordScreen } from "./components/auth/ResetPasswordScreen";
 import { FloatingSidebar } from "./components/layout/FloatingSidebar";
 import { FloatingHeader } from "./components/layout/FloatingHeader";
-import { Dashboard } from "./components/dashboard/Dashboard";
-import { ModuloInventario } from "./components/inventory/ModuloInventario";
-import { ModuloAuditorias } from "./components/audits/ModuloAuditorias";
-import { RegistroAuditorias } from "./components/audits/RegistroAuditorias";
-import { Alertas as DepreciacionGarantias } from "./components/alerts/Alertas";
-import { DirectorioProveedores } from "./components/providers/DirectorioProveedores";
-import { GestionUsuarios } from "./components/users/GestionUsuarios";
-import { AssetDetail } from "./components/inventory/AssetDetail";
-import { AuditDetail } from "./components/audits/AuditDetail";
-import { CreateEditAsset } from "./components/inventory/CreateEditAsset";
-import { AccountSettings } from "./components/users/AccountSettings";
-import { UserDetail } from "./components/users/UserDetail";
-import { ProveedorDetail } from "./components/providers/ProveedorDetail";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { Toaster } from "./components/ui/sonner";
+
+// Lazy-loaded views — only downloaded when the user navigates to them
+const Dashboard = lazy(() =>
+  import("./components/dashboard/Dashboard").then((m) => ({
+    default: m.Dashboard,
+  })),
+);
+const ModuloInventario = lazy(() =>
+  import("./components/inventory/ModuloInventario").then((m) => ({
+    default: m.ModuloInventario,
+  })),
+);
+const ModuloAuditorias = lazy(() =>
+  import("./components/audits/ModuloAuditorias").then((m) => ({
+    default: m.ModuloAuditorias,
+  })),
+);
+const RegistroAuditorias = lazy(() =>
+  import("./components/audits/RegistroAuditorias").then((m) => ({
+    default: m.RegistroAuditorias,
+  })),
+);
+const DepreciacionGarantias = lazy(() =>
+  import("./components/alerts/Alertas").then((m) => ({ default: m.Alertas })),
+);
+const DirectorioProveedores = lazy(() =>
+  import("./components/providers/DirectorioProveedores").then((m) => ({
+    default: m.DirectorioProveedores,
+  })),
+);
+const GestionUsuarios = lazy(() =>
+  import("./components/users/GestionUsuarios").then((m) => ({
+    default: m.GestionUsuarios,
+  })),
+);
+const AssetDetail = lazy(() =>
+  import("./components/inventory/AssetDetail").then((m) => ({
+    default: m.AssetDetail,
+  })),
+);
+const AuditDetail = lazy(() =>
+  import("./components/audits/AuditDetail").then((m) => ({
+    default: m.AuditDetail,
+  })),
+);
+const CreateEditAsset = lazy(() =>
+  import("./components/inventory/CreateEditAsset").then((m) => ({
+    default: m.CreateEditAsset,
+  })),
+);
+const AccountSettings = lazy(() =>
+  import("./components/users/AccountSettings").then((m) => ({
+    default: m.AccountSettings,
+  })),
+);
+const UserDetail = lazy(() =>
+  import("./components/users/UserDetail").then((m) => ({
+    default: m.UserDetail,
+  })),
+);
+const ProveedorDetail = lazy(() =>
+  import("./components/providers/ProveedorDetail").then((m) => ({
+    default: m.ProveedorDetail,
+  })),
+);
+
+function ViewSpinner() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-500" />
+    </div>
+  );
+}
 
 type ViewType =
   | "login"
@@ -164,7 +224,6 @@ function AppContent() {
     setCurrentView("assetDetail");
   };
 
-
   const handleScheduledAuditClick = (auditId: string) => {
     setSelectedAuditId(auditId);
     setAuditType("scheduled");
@@ -262,88 +321,92 @@ function AppContent() {
           onLogout={handleLogout}
         />
 
-        {/* View 2: Dashboard */}
-        {currentView === "dashboard" && <Dashboard onNavigate={handleNavigate} />}
+        <Suspense fallback={<ViewSpinner />}>
+          {/* View 2: Dashboard */}
+          {currentView === "dashboard" && (
+            <Dashboard onNavigate={handleNavigate} />
+          )}
 
-        {/* View 3: Módulo de Inventario */}
-        {currentView === "inventario" && (
-          <ModuloInventario
-            onAssetClick={handleAssetClick}
-            onCreateAsset={handleCreateAsset}
-          />
-        )}
+          {/* View 3: Módulo de Inventario */}
+          {currentView === "inventario" && (
+            <ModuloInventario
+              onAssetClick={handleAssetClick}
+              onCreateAsset={handleCreateAsset}
+            />
+          )}
 
-        {/* View 4: Módulo de Auditorías */}
-        {currentView === "auditorias" && (
-          <ModuloAuditorias
-            onScheduledAuditClick={handleScheduledAuditClick}
-            onCompletedAuditClick={handleCompletedAuditClick}
-          />
-        )}
+          {/* View 4: Módulo de Auditorías */}
+          {currentView === "auditorias" && (
+            <ModuloAuditorias
+              onScheduledAuditClick={handleScheduledAuditClick}
+              onCompletedAuditClick={handleCompletedAuditClick}
+            />
+          )}
 
-        {/* View 5: Registro de Auditorías */}
-        {currentView === "registro-auditorias" && (
-          <RegistroAuditorias />
-        )}
+          {/* View 5: Registro de Auditorías */}
+          {currentView === "registro-auditorias" && <RegistroAuditorias />}
 
-        {/* View 5.5: Depreciación y Garantías */}
-        {currentView === "depreciacion-garantias" && <DepreciacionGarantias />}
+          {/* View 5.5: Depreciación y Garantías */}
+          {currentView === "depreciacion-garantias" && (
+            <DepreciacionGarantias />
+          )}
 
-        {/* View 6: Directorio de Proveedores */}
-        {currentView === "proveedores" && (
-          <DirectorioProveedores
-            key={proveedoresRefreshKey}
-            onProveedorClick={handleProveedorClick}
-          />
-        )}
+          {/* View 6: Directorio de Proveedores */}
+          {currentView === "proveedores" && (
+            <DirectorioProveedores
+              key={proveedoresRefreshKey}
+              onProveedorClick={handleProveedorClick}
+            />
+          )}
 
-        {/* View 7: Gestión de Usuarios */}
-        {currentView === "usuarios" && (
-          <GestionUsuarios onUserClick={handleUserClick} />
-        )}
+          {/* View 7: Gestión de Usuarios */}
+          {currentView === "usuarios" && (
+            <GestionUsuarios onUserClick={handleUserClick} />
+          )}
 
-        {/* View 8: Asset Detail */}
-        {currentView === "assetDetail" && selectedAssetId && (
-          <AssetDetail
-            assetId={selectedAssetId}
-            onBack={handleBackToInventory}
-            onEdit={handleEditAsset}
-          />
-        )}
+          {/* View 8: Asset Detail */}
+          {currentView === "assetDetail" && selectedAssetId && (
+            <AssetDetail
+              assetId={selectedAssetId}
+              onBack={handleBackToInventory}
+              onEdit={handleEditAsset}
+            />
+          )}
 
-        {/* View 9: Audit Detail */}
-        {currentView === "auditDetail" && selectedAuditId && (
-          <AuditDetail
-            auditId={selectedAuditId}
-            auditType={auditType}
-            onBack={() => handleNavigate("auditorias")}
-          />
-        )}
+          {/* View 9: Audit Detail */}
+          {currentView === "auditDetail" && selectedAuditId && (
+            <AuditDetail
+              auditId={selectedAuditId}
+              auditType={auditType}
+              onBack={() => handleNavigate("auditorias")}
+            />
+          )}
 
-        {/* View 10: Account Settings */}
-        {currentView === "settings" && <AccountSettings />}
+          {/* View 10: Account Settings */}
+          {currentView === "settings" && <AccountSettings />}
 
-        {/* View 11: User Detail */}
-        {currentView === "userDetail" && selectedUserId && (
-          <UserDetail userId={selectedUserId} onBack={handleBackToUsers} />
-        )}
+          {/* View 11: User Detail */}
+          {currentView === "userDetail" && selectedUserId && (
+            <UserDetail userId={selectedUserId} onBack={handleBackToUsers} />
+          )}
 
-        {/* View 12: Proveedor Detail */}
-        {currentView === "proveedorDetail" && selectedProveedorId && (
-          <ProveedorDetail
-            proveedorId={selectedProveedorId}
-            onBack={handleBackToProveedores}
-          />
-        )}
+          {/* View 12: Proveedor Detail */}
+          {currentView === "proveedorDetail" && selectedProveedorId && (
+            <ProveedorDetail
+              proveedorId={selectedProveedorId}
+              onBack={handleBackToProveedores}
+            />
+          )}
 
-        {/* Create/Edit Asset Modal */}
-        {showCreateEditModal && (
-          <CreateEditAsset
-            assetId={editingAssetId || undefined}
-            onClose={handleCloseModal}
-            onSave={handleSaveAsset}
-          />
-        )}
+          {/* Create/Edit Asset Modal */}
+          {showCreateEditModal && (
+            <CreateEditAsset
+              assetId={editingAssetId || undefined}
+              onClose={handleCloseModal}
+              onSave={handleSaveAsset}
+            />
+          )}
+        </Suspense>
       </div>
     </ThemeProvider>
   );
