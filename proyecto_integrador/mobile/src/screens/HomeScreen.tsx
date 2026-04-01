@@ -10,15 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import {
-  QrCode,
-  List,
-  Bell,
-  TrendingUp,
-  Zap,
-  Clock,
-  ChevronRight,
-} from "lucide-react-native";
+import { QrCode, List, Bell, Zap, ChevronRight } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNotificaciones } from "../contexts/NotificacionesContext";
@@ -44,9 +36,14 @@ export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const { noLeidasCount, notificaciones } = useNotificaciones();
   const { auditorias, refresh: refreshAuditorias } = useAuditorias();
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [lastNotificationCount, setLastNotificationCount] = useState(0);
   const notifications = noLeidasCount;
+  const headerGradient = isDark
+    ? (["#0b1430", "#122452", "#1d3b82"] as const)
+    : (["#234fd9", "#2f66ff", "#5f8dff"] as const);
+  const primaryActionGradient = isDark
+    ? (["#2f66ff", "#2450cc"] as const)
+    : (["#3b73ff", "#2f66ff"] as const);
 
   const stats: AuditStats = {
     pending: auditorias.filter(
@@ -88,55 +85,13 @@ export default function HomeScreen() {
   }, [noLeidasCount]);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
     validateSession();
   }, []);
-
-  const recentActivity = [
-    {
-      id: "ACT-00045",
-      status: "ENCONTRADO",
-      time: "14:30",
-      location: "Oficina 301",
-    },
-    {
-      id: "ACT-00044",
-      status: "ENCONTRADO",
-      time: "11:15",
-      location: "Sala Juntas",
-    },
-    {
-      id: "ACT-00043",
-      status: "NO_LOCALIZADO",
-      time: "Ayer",
-      location: "Data Center",
-    },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ENCONTRADO":
-        return "#10b981";
-      case "NO_LOCALIZADO":
-        return "#ef4444";
-      case "DAÑADO":
-        return "#f59e0b";
-      default:
-        return colors.textSecondary;
-    }
-  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <LinearGradient
-        colors={["#334155", "#1e293b", "#0f172a"]}
-        style={styles.header}
-      >
+      <LinearGradient colors={headerGradient} style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.userInfo}>
             {user?.foto_perfil_url ? (
@@ -177,83 +132,6 @@ export default function HomeScreen() {
         </View>
 
         {/* Progress Card */}
-        <View style={styles.progressCard}>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Auditorías Asignadas</Text>
-            <Text style={styles.progressPercent}>
-              {stats.total > 0 ? completionRate : 0}%
-            </Text>
-          </View>
-          <View style={styles.progressBarBg}>
-            <View
-              style={[
-                styles.progressBarFill,
-                { width: `${stats.total > 0 ? completionRate : 0}%` },
-              ]}
-            />
-          </View>
-          <View style={styles.progressInfo}>
-            <View style={styles.progressInfoRow}>
-              <View
-                style={[styles.progressDot, { backgroundColor: "#10b981" }]}
-              />
-              <Text style={styles.progressInfoText}>
-                <Text style={{ color: "#10b981", fontWeight: "700" }}>
-                  {stats.completed}
-                </Text>{" "}
-                Completadas
-              </Text>
-            </View>
-            <View style={styles.progressInfoRow}>
-              <View
-                style={[styles.progressDot, { backgroundColor: "#f59e0b" }]}
-              />
-              <Text style={styles.progressInfoText}>
-                <Text style={{ color: "#f59e0b", fontWeight: "700" }}>
-                  {stats.pending}
-                </Text>{" "}
-                Pendientes
-              </Text>
-            </View>
-            {stats.cancelada > 0 && (
-              <View style={styles.progressInfoRow}>
-                <View
-                  style={[styles.progressDot, { backgroundColor: "#dc2626" }]}
-                />
-                <Text style={styles.progressInfoText}>
-                  <Text style={{ color: "#dc2626", fontWeight: "700" }}>
-                    {stats.cancelada}
-                  </Text>{" "}
-                  Canceladas
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.progressStats}>
-            <View style={styles.progressStat}>
-              <Text style={styles.statValue}>{stats.completed}</Text>
-              <Text style={styles.statLabel}>Completadas</Text>
-            </View>
-            <View style={styles.progressStat}>
-              <Text style={styles.statValue}>{stats.pending}</Text>
-              <Text style={styles.statLabel}>Pendientes</Text>
-            </View>
-            {stats.cancelada > 0 && (
-              <View style={styles.progressStat}>
-                <Text style={[styles.statValue, { color: "#dc2626" }]}>
-                  {stats.cancelada}
-                </Text>
-                <Text style={styles.statLabel}>Canceladas</Text>
-              </View>
-            )}
-            <View style={styles.progressStat}>
-              <Text style={[styles.statValue, { color: "#2563eb" }]}>
-                {stats.total}
-              </Text>
-              <Text style={styles.statLabel}>Total</Text>
-            </View>
-          </View>
-        </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -268,7 +146,7 @@ export default function HomeScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#2563eb", "#1d4ed8"]}
+              colors={primaryActionGradient}
               style={styles.actionGradient}
             >
               <QrCode size={32} color="#fff" />
@@ -405,71 +283,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Recent Activity */}
-        <View style={styles.recentSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Actividad Reciente
-            </Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAll, { color: colors.primary }]}>
-                Ver todo
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {recentActivity.map((item, index) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.activityItem, { backgroundColor: colors.surface }]}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.activityDot,
-                  { backgroundColor: getStatusColor(item.status) },
-                ]}
-              />
-              <View style={styles.activityInfo}>
-                <Text style={[styles.activityId, { color: colors.text }]}>
-                  {item.id}
-                </Text>
-                <Text
-                  style={[
-                    styles.activityLocation,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {item.location}
-                </Text>
-              </View>
-              <Text style={[styles.activityTime, { color: colors.textMuted }]}>
-                {item.time}
-              </Text>
-              <ChevronRight size={20} color={colors.textMuted} />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Time Display */}
-        <View style={[styles.timeCard, { backgroundColor: colors.surface }]}>
-          <Clock size={20} color={colors.textSecondary} />
-          <Text style={[styles.timeText, { color: colors.textSecondary }]}>
-            {currentTime.toLocaleTimeString("es-MX", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
-          <Text style={[styles.dateText, { color: colors.textMuted }]}>
-            {currentTime.toLocaleDateString("es-MX", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </Text>
-        </View>
-
-        <View style={{ height: 100 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
     </View>
   );
@@ -482,15 +296,15 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
     paddingHorizontal: 20,
-    paddingBottom: 24,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 0,
   },
   userInfo: {
     flexDirection: "row",
@@ -500,8 +314,8 @@ const styles = StyleSheet.create({
   avatar: {
     width: 56,
     height: 56,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.24)",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
@@ -510,7 +324,7 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: 56,
     height: 56,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.3)",
   },
@@ -532,7 +346,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(255,255,255,0.25)",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
@@ -557,11 +371,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   progressCard: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 20,
+    backgroundColor: "rgba(8,18,48,0.36)",
+    borderRadius: 22,
     padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
+    borderColor: "rgba(255,255,255,0.22)",
   },
   progressHeader: {
     flexDirection: "row",
@@ -575,13 +389,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   progressPercent: {
-    color: "#10b981",
+    color: "#7df6be",
     fontSize: 18,
     fontWeight: "800",
   },
   progressBarBg: {
     height: 12,
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "rgba(255,255,255,0.18)",
     borderRadius: 6,
     overflow: "hidden",
     marginBottom: 16,
@@ -590,7 +404,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: "#10b981",
+    backgroundColor: "#30d488",
     borderRadius: 6,
     shadowColor: "#10b981",
     shadowOffset: { width: 0, height: 2 },
@@ -638,30 +452,30 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 16,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "800",
     marginBottom: 16,
   },
   quickActions: {
     flexDirection: "row",
-    gap: 12,
+    gap: 14,
     marginBottom: 28,
   },
   actionCard: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 20,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 140,
+    minHeight: 150,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 5,
   },
   scanCard: {
     overflow: "hidden",
@@ -675,18 +489,15 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   actionTitle: {
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 17,
+    fontWeight: "800",
     marginTop: 10,
     color: "#fff",
   },
   actionSubtitle: {
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 4,
     color: "rgba(255,255,255,0.8)",
-  },
-  recentSection: {
-    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -698,50 +509,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
-  activityItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 8,
-    gap: 12,
-  },
-  activityDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  activityInfo: {
-    flex: 1,
-  },
-  activityId: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  activityLocation: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  activityTime: {
-    fontSize: 12,
-    marginRight: 4,
-  },
-  timeCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 16,
-    gap: 12,
-  },
-  timeText: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  dateText: {
-    fontSize: 13,
-    flex: 1,
-    textAlign: "right",
-  },
   auditoriasSection: {
     marginBottom: 24,
   },
@@ -749,10 +516,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     marginBottom: 12,
     gap: 12,
-    elevation: 2,
+    elevation: 4,
+    shadowColor: "#1f3f93",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   auditStateIndicator: {
     width: 5,

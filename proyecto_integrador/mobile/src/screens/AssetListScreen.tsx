@@ -8,6 +8,7 @@ import {
   FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
   Search,
@@ -28,10 +29,13 @@ type FilterType = "ALL" | 1 | 2 | 3 | 4 | 5;
 
 export default function AssetListScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { auditorias } = useAuditorias();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterType>("ALL");
+  const headerGradient = isDark
+    ? (["#101a36", "#142752", "#1f3b79"] as const)
+    : (["#326cff", "#4d7cff", "#7b9dff"] as const);
 
   const filteredAuditorias = auditorias.filter((audit) => {
     const matchesSearch =
@@ -222,30 +226,23 @@ export default function AssetListScreen() {
       edges={["top"]}
     >
       {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-        ]}
-      >
-        <Text style={[styles.title, { color: colors.text }]}>
-          Mis Auditorías
-        </Text>
+      <LinearGradient colors={headerGradient} style={styles.header}>
+        <Text style={styles.title}>Mis Auditorías</Text>
 
         {/* Search */}
         <View
           style={[
             styles.searchContainer,
-            { backgroundColor: colors.background, borderColor: colors.border },
+            { borderColor: "rgba(255,255,255,0.28)" },
           ]}
         >
-          <Search size={20} color={colors.textMuted} />
+          <Search size={20} color="#dbeafe" />
           <TextInput
-            style={[styles.searchInput, { color: colors.text }]}
+            style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Buscar por nombre o ID..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor="rgba(219,234,254,0.75)"
           />
         </View>
 
@@ -262,7 +259,7 @@ export default function AssetListScreen() {
                 styles.filterPill,
                 filterStatus === item.key
                   ? { backgroundColor: item.activeColor }
-                  : { backgroundColor: colors.surfaceSecondary },
+                  : { backgroundColor: "rgba(255,255,255,0.18)" },
               ]}
               onPress={() => setFilterStatus(item.key)}
             >
@@ -270,8 +267,7 @@ export default function AssetListScreen() {
                 style={[
                   styles.filterText,
                   {
-                    color:
-                      filterStatus === item.key ? "#fff" : colors.textSecondary,
+                    color: filterStatus === item.key ? "#fff" : "#dbeafe",
                   },
                 ]}
               >
@@ -280,7 +276,7 @@ export default function AssetListScreen() {
             </TouchableOpacity>
           )}
         />
-      </View>
+      </LinearGradient>
 
       {/* List */}
       <FlatList
@@ -326,15 +322,15 @@ const styles = StyleSheet.create({
   auditCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    padding: 18,
+    borderRadius: 18,
+    marginBottom: 10,
     gap: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    elevation: 5,
+    shadowColor: "#20408e",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
   },
   auditHeader: {
     flex: 1,
@@ -359,9 +355,9 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 10,
     gap: 6,
   },
   statusText: {
@@ -384,15 +380,17 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
+    paddingTop: 18,
+    paddingBottom: 14,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
   },
   title: {
     fontSize: 22,
     fontWeight: "800",
     marginBottom: 16,
     textAlign: "center",
+    color: "#ffffff",
   },
   searchContainer: {
     flexDirection: "row",
@@ -403,10 +401,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 10,
     marginBottom: 12,
+    backgroundColor: "rgba(255,255,255,0.14)",
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
+    color: "#ffffff",
   },
   filtersContainer: {
     gap: 8,
@@ -415,14 +415,15 @@ const styles = StyleSheet.create({
   filterPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 999,
   },
   filterText: {
     fontSize: 13,
     fontWeight: "600",
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 18,
     paddingBottom: 100,
     gap: 12,
   },

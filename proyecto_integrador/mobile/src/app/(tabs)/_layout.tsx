@@ -7,12 +7,12 @@ export default function TabLayout() {
   const isDark = colorScheme === "dark";
 
   const colors = {
-    background: isDark ? "#0f172a" : "#ffffff",
-    border: isDark ? "#1e293b" : "#e2e8f0",
-    inactive: isDark ? "#64748b" : "#94a3b8",
-    active: isDark ? "#ffffff" : "#0f172a",
-    scanBg: "#2563eb",
-    scanBorder: isDark ? "#0f172a" : "#ffffff",
+    background: isDark ? "#060d1f" : "#ffffff",
+    border: isDark ? "#1f2f55" : "#d7e1ff",
+    inactive: isDark ? "#8194bc" : "#8ca0c7",
+    active: isDark ? "#79a3ff" : "#2f66ff",
+    scanBg: "#2f66ff",
+    scanBorder: isDark ? "#0b1733" : "#ffffff",
   };
 
   return (
@@ -23,15 +23,15 @@ export default function TabLayout() {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 85,
-          paddingBottom: 20,
+          height: 88,
+          paddingBottom: 18,
           paddingTop: 10,
         },
         tabBarActiveTintColor: colors.active,
         tabBarInactiveTintColor: colors.inactive,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: "600",
+          fontWeight: "700",
         },
       }}
     >
@@ -93,18 +93,18 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   scanButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#2563eb",
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: "#2f66ff",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 28,
     borderWidth: 4,
-    shadowColor: "#2563eb",
+    shadowColor: "#2f66ff",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
   },
 });
