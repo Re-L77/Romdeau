@@ -73,10 +73,10 @@ export function AuditoriasProvider({ children }: { children: ReactNode }) {
     // Cargar auditorías iniciales
     refresh();
 
-    // Polling cada 30s (auditorías cambian menos frecuentemente)
+    // Polling de respaldo cada 2 min; realtime cubre cambios inmediatos.
     pollingRef.current = setInterval(() => {
       refresh();
-    }, 30000);
+    }, 120000);
 
     // Refrescar al volver de background
     const appStateListener = AppState.addEventListener("change", (state) => {

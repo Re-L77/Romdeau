@@ -46,6 +46,7 @@ export default function SettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [items, setItems] = useState<AuditProgressItem[]>([]);
   const [expandedAuditIds, setExpandedAuditIds] = useState<string[]>([]);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const activeAudits = useMemo(
     () =>
@@ -67,12 +68,17 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     const loadProgress = async () => {
+      const showBlockingLoader = !hasLoadedOnce;
+
       if (!user?.id || activeAudits.length === 0) {
         setItems([]);
+        setHasLoadedOnce(true);
         return;
       }
 
-      setIsLoading(true);
+      if (showBlockingLoader) {
+        setIsLoading(true);
+      }
       try {
         const logs = await auditoriasApi.listarLogsPorAuditor(user.id);
 
@@ -115,16 +121,26 @@ export default function SettingsScreen() {
         );
 
         setItems(list);
+        setHasLoadedOnce(true);
       } catch (error) {
         console.error("Error cargando progreso de activos:", error);
-        setItems([]);
+        if (showBlockingLoader) {
+          setItems([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (showBlockingLoader) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadProgress();
-  }, [activeAudits, user?.id]);
+  }, [activeAudits, user?.id, hasLoadedOnce]);
+
+  useEffect(() => {
+    setHasLoadedOnce(false);
+    setItems([]);
+  }, [user?.id]);
 
   const toggleExpanded = (auditId: string) => {
     setExpandedAuditIds((current) =>
