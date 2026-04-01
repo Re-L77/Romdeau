@@ -54,6 +54,12 @@ interface CountActivosParams {
   estanteId?: string;
 }
 
+interface ListActivosParams {
+  oficinaId?: string;
+  estanteId?: string;
+  limit?: number;
+}
+
 function normalize(value: string) {
   return value.trim().toUpperCase();
 }
@@ -107,5 +113,22 @@ export const activosApi = {
     });
 
     return bySearch.data.data?.[0] ?? null;
+  },
+
+  listarPorUbicacion: async ({
+    oficinaId,
+    estanteId,
+    limit = 40,
+  }: ListActivosParams): Promise<ActivoDetalle[]> => {
+    const response = await apiClient.get<FindActivosResponse>("/api/activos", {
+      params: {
+        page: 1,
+        limit,
+        ...(oficinaId ? { oficinaId } : {}),
+        ...(estanteId ? { estanteId } : {}),
+      },
+    });
+
+    return response.data.data ?? [];
   },
 };

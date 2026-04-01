@@ -23,10 +23,13 @@ import {
   Check,
   AlertCircle,
   Play,
+  Package,
 } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuditorias } from "../contexts/AuditoriasContext";
 import { auditoriasApi } from "@/api/auditorias";
+import { activosApi, ActivoDetalle } from "@/api/activos";
+import { useAuth } from "../contexts/AuthContext";
 import {
   getAuditoriaStatusLabel,
   resolveAuditoriaStatus,
@@ -39,10 +42,15 @@ interface AuditDetailScreenProps {
 export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   const router = useRouter();
   const { colors } = useTheme();
+  const { user } = useAuth();
   const { auditorias, refresh, setSelectedAuditId } = useAuditorias();
   const [audit, setAudit] = useState<any>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [auditAssets, setAuditAssets] = useState<ActivoDetalle[]>([]);
+  const [isAssetsLoading, setIsAssetsLoading] = useState(false);
+  const [assetsTotal, setAssetsTotal] = useState(0);
+  const [auditedAssetIds, setAuditedAssetIds] = useState<string[]>([]);
   const previousEstadoRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -78,6 +86,55 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
 
     previousEstadoRef.current = audit.estado_id;
   }, [audit?.estado_id]);
+
+  useEffect(() => {
+    const loadAuditAssets = async () => {
+      if (!audit?.id) {
+        setAuditAssets([]);
+        setAssetsTotal(0);
+        setAuditedAssetIds([]);
+        return;
+      }
+
+      setIsAssetsLoading(true);
+      try {
+        const [total, assets, logs] = await Promise.all([
+          activosApi.contarPorUbicacion({
+            oficinaId: audit.oficina_id,
+            estanteId: audit.estante_id,
+          }),
+          activosApi.listarPorUbicacion({
+            oficinaId: audit.oficina_id,
+            estanteId: audit.estante_id,
+            limit: 40,
+          }),
+          auditoriasApi.listarLogsPorAuditor(user?.id || audit.auditor_id),
+        ]);
+
+        const auditedSet = new Set(
+          logs
+            .filter((log) => {
+              const logAuditId = log.auditoria || log.auditorias_programadas?.id;
+              return logAuditId === audit.id;
+            })
+            .map((log) => log.activo_id),
+        );
+
+        setAssetsTotal(total);
+        setAuditAssets(assets);
+        setAuditedAssetIds(Array.from(auditedSet));
+      } catch (error) {
+        console.error("Error cargando activos de auditoria:", error);
+        setAssetsTotal(0);
+        setAuditAssets([]);
+        setAuditedAssetIds([]);
+      } finally {
+        setIsAssetsLoading(false);
+      }
+    };
+
+    loadAuditAssets();
+  }, [audit?.id, audit?.oficina_id, audit?.estante_id, audit?.auditor_id, user?.id]);
 
   if (!audit) {
     return (
@@ -152,6 +209,9 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const auditedCount = Math.min(auditedAssetIds.length, assetsTotal);
+  const pendingCount = Math.max(assetsTotal - auditedCount, 0);
+  const assetsProgress = assetsTotal > 0 ? Math.round((auditedCount / assetsTotal) * 100) : 0;
 
   const handleStartAudit = async () => {
     if (audit.estado_id !== 1 && audit.estado_id !== 2) {
@@ -238,6 +298,9 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
               </Text>
               <Text style={[styles.auditTitle, { color: config.textColor }]}>
                 {audit.titulo}
+              </Text>
+              <Text style={[styles.heroMeta, { color: config.textColor }]}> 
+                {assetsProgress}% avance | {pendingCount} activos por auditar
               </Text>
             </View>
           </View>
@@ -418,6 +481,94 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
                 </LinearGradient>
               </TouchableOpacity>
             </>
+          )}
+        </View>
+
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+          <View style={styles.assetsHeaderRow}>
+            <Text style={[styles.cardTitle, { color: colors.text, marginBottom: 0 }]}>
+              Activos de esta auditoría
+            </Text>
+            <View style={styles.assetsCountPill}>
+              <Text style={styles.assetsCountText}>{auditedCount}/{assetsTotal}</Text>
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.assetsProgressBg,
+              { backgroundColor: colors.surfaceSecondary || "rgba(0,0,0,0.08)" },
+            ]}
+          >
+            <View
+              style={[
+                styles.assetsProgressFill,
+                { width: `${assetsProgress}%` },
+              ]}
+            />
+          </View>
+
+          <Text style={[styles.assetsSummary, { color: colors.textSecondary }]}> 
+            {pendingCount} pendientes | {auditedCount} auditados
+          </Text>
+
+          {isAssetsLoading ? (
+            <View style={styles.assetsLoaderWrap}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={[styles.assetsLoaderText, { color: colors.textSecondary }]}>Cargando activos...</Text>
+            </View>
+          ) : auditAssets.length === 0 ? (
+            <Text style={[styles.emptyAssetsText, { color: colors.textSecondary }]}> 
+              No se encontraron activos para el alcance de esta auditoría.
+            </Text>
+          ) : (
+            <View style={styles.assetsListWrap}>
+              {auditAssets.map((asset) => {
+                const isAudited = auditedAssetIds.includes(asset.id);
+                return (
+                  <TouchableOpacity
+                    key={asset.id}
+                    style={[
+                      styles.assetRow,
+                      { backgroundColor: "rgba(59,130,246,0.06)" },
+                    ]}
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      router.push(
+                        `/audit/${encodeURIComponent(asset.codigo_etiqueta || asset.id)}?auditId=${audit.id}`,
+                      )
+                    }
+                  >
+                    <View style={styles.assetLeftIcon}>
+                      <Package size={16} color={isAudited ? "#10b981" : colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.assetTitle, { color: colors.text }]} numberOfLines={1}>
+                        {asset.nombre || "Activo sin nombre"}
+                      </Text>
+                      <Text style={[styles.assetMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {asset.codigo_etiqueta || asset.id}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.assetBadge,
+                        { backgroundColor: isAudited ? "#d1fae5" : "#fef3c7" },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.assetBadgeText,
+                          { color: isAudited ? "#065f46" : "#92400e" },
+                        ]}
+                      >
+                        {isAudited ? "Auditado" : "Pendiente"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           )}
         </View>
 
@@ -695,6 +846,12 @@ const styles = StyleSheet.create({
   auditId: {
     fontSize: 12,
   },
+  heroMeta: {
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 8,
+    opacity: 0.85,
+  },
   card: {
     borderRadius: 16,
     padding: 16,
@@ -908,6 +1065,90 @@ const styles = StyleSheet.create({
   auditoryPhone: {
     fontSize: 13,
     fontWeight: "500",
+  },
+  assetsHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  assetsCountPill: {
+    backgroundColor: "rgba(59,130,246,0.12)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  assetsCountText: {
+    color: "#2563eb",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  assetsProgressBg: {
+    height: 8,
+    borderRadius: 999,
+    overflow: "hidden",
+  },
+  assetsProgressFill: {
+    height: "100%",
+    backgroundColor: "#3b82f6",
+    borderRadius: 999,
+  },
+  assetsSummary: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  assetsLoaderWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 8,
+  },
+  assetsLoaderText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  emptyAssetsText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  assetsListWrap: {
+    gap: 8,
+  },
+  assetRow: {
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  assetLeftIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  assetTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  assetMeta: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  assetBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  assetBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
   },
   timelineItem: {
     flexDirection: "row",
