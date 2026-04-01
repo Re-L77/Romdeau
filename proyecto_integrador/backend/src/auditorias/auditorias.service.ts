@@ -214,19 +214,21 @@ export class AuditoriasService {
     }
   }
   async create(createAuditoriaDto: CreateAuditoriaDto) {
+    const { lat, lng, ...logData } = createAuditoriaDto;
+
     // Validar que todas las referencias existan
     await this.validateReferences(
-      createAuditoriaDto.activo_id,
-      createAuditoriaDto.auditor_id,
-      createAuditoriaDto.estado_reportado_id,
-      createAuditoriaDto.auditoria,
+      logData.activo_id,
+      logData.auditor_id,
+      logData.estado_reportado_id,
+      logData.auditoria,
     );
 
-    if (createAuditoriaDto.auditoria) {
+    if (logData.auditoria) {
       const duplicate = await this.prisma.logs_auditoria.findFirst({
         where: {
-          activo_id: createAuditoriaDto.activo_id,
-          auditoria: createAuditoriaDto.auditoria,
+          activo_id: logData.activo_id,
+          auditoria: logData.auditoria,
         },
         select: { id: true },
       });
@@ -239,7 +241,7 @@ export class AuditoriasService {
     }
 
     const createdLog = await this.prisma.logs_auditoria.create({
-      data: createAuditoriaDto,
+      data: logData,
       include: {
         activos: {
           select: {
@@ -262,8 +264,21 @@ export class AuditoriasService {
       },
     });
 
-    if (createAuditoriaDto.auditoria) {
-      await this.tryAutoCompleteAuditoria(createAuditoriaDto.auditoria);
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      const isValidLat = lat >= -90 && lat <= 90;
+      const isValidLng = lng >= -180 && lng <= 180;
+
+      if (isValidLat && isValidLng) {
+        await this.prisma.$executeRaw`
+          UPDATE logs_auditoria
+          SET coordenadas_gps = ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
+          WHERE id = ${createdLog.id}::uuid
+        `;
+      }
+    }
+
+    if (logData.auditoria) {
+      await this.tryAutoCompleteAuditoria(logData.auditoria);
     }
 
     return createdLog;
