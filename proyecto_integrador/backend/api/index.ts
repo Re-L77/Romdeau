@@ -16,6 +16,7 @@ async function getApp(): Promise<INestApplication> {
         'http://localhost:5176',
         'http://localhost:3000',
         'http://10.0.2.2:3000',
+        'https://romdeau.vercel.app',
         process.env.CORS_ORIGIN,
       ].filter(Boolean),
       credentials: true,
