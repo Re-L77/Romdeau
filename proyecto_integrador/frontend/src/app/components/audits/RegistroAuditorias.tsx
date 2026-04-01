@@ -138,7 +138,6 @@ function exportarCSV(
     "Código Activo",
     "Nombre Activo",
     "Ubicación",
-    "Método",
     "Auditor",
     "Plan / Auditoría",
     "Fecha y Hora",
@@ -150,7 +149,6 @@ function exportarCSV(
       e(l.activo?.codigo_etiqueta),
       e(l.activo?.nombre),
       e(l.ubicacion),
-      e(l.metodo_auditoria),
       e(l.auditor),
       e(l.plan_auditoria),
       e(formatFecha(l.fecha_hora)),
@@ -181,7 +179,6 @@ function exportarExcel(
       ${cell(l.activo?.codigo_etiqueta ?? "—", s)}
       ${cell(l.activo?.nombre ?? "—", s)}
       ${cell(l.ubicacion ?? "—", s)}
-      ${cell(l.metodo_auditoria ?? "—", s)}
       ${cell(l.auditor ?? "—", s)}
       ${cell(l.plan_auditoria ?? "—", s)}
       ${cell(formatFecha(l.fecha_hora), s)}
@@ -233,8 +230,8 @@ function exportarExcel(
   <Worksheet ss:Name="Logs Auditoría">
     <Table ss:DefaultColumnWidth="120">
       <Column ss:Width="110"/><Column ss:Width="160"/><Column ss:Width="150"/>
-      <Column ss:Width="120"/><Column ss:Width="160"/><Column ss:Width="160"/>
-      <Column ss:Width="140"/><Column ss:Width="110"/><Column ss:Width="200"/>
+      <Column ss:Width="160"/><Column ss:Width="160"/><Column ss:Width="140"/>
+      <Column ss:Width="110"/><Column ss:Width="200"/>
       <Row ss:Height="24">
         <Cell ss:StyleID="Title"><Data ss:Type="String">LOGS DE AUDITORÍA</Data></Cell>
       </Row>
@@ -249,7 +246,6 @@ function exportarExcel(
         <Cell ss:StyleID="Header"><Data ss:Type="String">Código Activo</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Nombre Activo</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Ubicación</Data></Cell>
-        <Cell ss:StyleID="Header"><Data ss:Type="String">Método</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Auditor</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Plan / Auditoría</Data></Cell>
         <Cell ss:StyleID="Header"><Data ss:Type="String">Fecha y Hora</Data></Cell>
@@ -298,15 +294,6 @@ function exportarPDF(
     return `<span style="background:${bg};color:${color};border:1px solid ${border};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap">${esc(estado ?? "—")}</span>`;
   };
 
-  const metodoBadge = (metodo: string | null) => {
-    const m = metodo ?? "MANUAL";
-    const isQR = m.toUpperCase() === "QR";
-    const bg = isQR ? "#EDE9FE" : "#DBEAFE";
-    const color = isQR ? "#5B21B6" : "#1D4ED8";
-    const border = isQR ? "#C4B5FD" : "#93C5FD";
-    return `<span style="background:${bg};color:${color};border:1px solid ${border};padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:.5px">${esc(m)}</span>`;
-  };
-
   const filas = logs
     .map(
       (l, i) => `
@@ -314,7 +301,6 @@ function exportarPDF(
       <td><code style="font-size:10px;background:#F1F5F9;padding:1px 5px;border-radius:3px;color:#334155">${esc(l.activo?.codigo_etiqueta ?? "—")}</code></td>
       <td style="font-weight:600">${esc(l.activo?.nombre ?? "—")}</td>
       <td style="color:#4B5563">${esc(l.ubicacion ?? "—")}</td>
-      <td>${metodoBadge(l.metodo_auditoria)}</td>
       <td>${esc(l.auditor ?? "—")}</td>
       <td style="color:#2563EB;font-size:10px">${esc(l.plan_auditoria ?? "—")}</td>
       <td style="color:#6B7280;white-space:nowrap">${esc(formatFecha(l.fecha_hora))}</td>
@@ -403,7 +389,7 @@ function exportarPDF(
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>Código</th><th>Activo</th><th>Ubicación</th><th>Método</th>
+        <th>Código</th><th>Activo</th><th>Ubicación</th>
         <th>Auditor</th><th>Plan / Auditoría</th><th>Fecha y Hora</th><th>Estado</th>
       </tr></thead>
       <tbody>${filas}</tbody>
@@ -880,23 +866,31 @@ export function RegistroAuditorias({
   );
 
   const stats = useMemo(() => {
-    const n = (v: string | null) => (v ?? "").toLowerCase();
+    const normalize = (v: string | null) =>
+      (v ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+
+    const isBueno = (estado: string) =>
+      estado.includes("bueno") || estado.includes("nuevo");
+    const isDanado = (estado: string) =>
+      estado.includes("danado") || estado.includes("malo");
+    const isNoEncontrado = (estado: string) =>
+      estado.includes("no_encontrado") ||
+      estado.includes("no encontrado") ||
+      estado.includes("baja");
+
     return {
       total: filteredLogs.length,
-      bueno: filteredLogs.filter(
-        (l) =>
-          n(l.estado_reportado).includes("bueno") ||
-          n(l.estado_reportado).includes("nuevo"),
+      bueno: filteredLogs.filter((l) => isBueno(normalize(l.estado_reportado)))
+        .length,
+      danado: filteredLogs.filter((l) =>
+        isDanado(normalize(l.estado_reportado)),
       ).length,
-      danado: filteredLogs.filter(
-        (l) =>
-          n(l.estado_reportado).includes("da") ||
-          n(l.estado_reportado).includes("malo"),
-      ).length,
-      noEncontrado: filteredLogs.filter(
-        (l) =>
-          n(l.estado_reportado).includes("no") ||
-          n(l.estado_reportado).includes("baja"),
+      noEncontrado: filteredLogs.filter((l) =>
+        isNoEncontrado(normalize(l.estado_reportado)),
       ).length,
     };
   }, [filteredLogs]);
@@ -1097,7 +1091,7 @@ export function RegistroAuditorias({
                   }}
                   className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.6)] transition-all cursor-pointer"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Activo */}
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
@@ -1128,22 +1122,6 @@ export function RegistroAuditorias({
                           —
                         </p>
                       )}
-                    </div>
-
-                    {/* Método */}
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
-                        Método
-                      </p>
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                          log.metodo_auditoria === "QR"
-                            ? "bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-700/30"
-                            : "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/30"
-                        }`}
-                      >
-                        {log.metodo_auditoria ?? "MANUAL"}
-                      </span>
                     </div>
 
                     {/* Auditor + Plan */}

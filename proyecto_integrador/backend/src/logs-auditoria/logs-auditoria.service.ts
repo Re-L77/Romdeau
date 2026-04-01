@@ -11,9 +11,15 @@ type FindLogsParams = {
 
 @Injectable()
 export class LogsAuditoriaService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-  async findAll({ page, limit, auditorId, activoId, estadoId }: FindLogsParams) {
+  async findAll({
+    page,
+    limit,
+    auditorId,
+    activoId,
+    estadoId,
+  }: FindLogsParams) {
     const take = Math.min(limit, 100);
     const skip = (page - 1) * take;
 
@@ -70,11 +76,10 @@ export class LogsAuditoriaService {
     const data = logs.map((log) => {
       const oficinaNombre = log.activos?.oficinas?.nombre ?? null;
       const estanteNombre = log.activos?.estantes?.nombre ?? null;
-      const ubicacion = oficinaNombre
-        ? estanteNombre
+      const ubicacion =
+        oficinaNombre && estanteNombre
           ? `${oficinaNombre} – ${estanteNombre}`
-          : oficinaNombre
-        : null;
+          : (oficinaNombre ?? estanteNombre ?? null);
 
       return {
         id: log.id,

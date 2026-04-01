@@ -215,6 +215,10 @@ export function AuditDetail({
     scheduledData.usuarios?.nombre_completo ?? scheduledData.auditor ?? "—";
   const scheduledAuditorEmail =
     scheduledData.usuarios?.email ?? scheduledData.auditor_email ?? "—";
+  const scheduledAuditorPhoto =
+    scheduledData.usuarios?.foto_perfil_url ?? scheduledData.foto_perfil_url;
+  const completedAuditorPhoto =
+    scheduledData?.usuarios?.foto_perfil_url ?? data?.foto_perfil_url;
   const scheduledDateLabel = scheduledData.fecha_programada
     ? formatDateTime(scheduledData.fecha_programada)
     : `${scheduledData.fecha ?? "—"} a las ${scheduledData.hora ?? "—"}`;
@@ -533,15 +537,33 @@ export function AuditDetail({
 
                 {/* Auditor Info */}
                 <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-lg font-semibold shadow-lg">
-                    {(isScheduled
-                      ? scheduledAuditorName
-                      : (data.auditor ?? "—")
+                  {(() => {
+                    const auditorPhoto = isScheduled
+                      ? scheduledAuditorPhoto
+                      : completedAuditorPhoto;
+                    const auditorInitials = (
+                      isScheduled ? scheduledAuditorName : (data.auditor ?? "—")
                     )
                       .split(" ")
                       .map((n: string) => n[0])
-                      .join("")}
-                  </div>
+                      .join("");
+
+                    if (auditorPhoto) {
+                      return (
+                        <img
+                          src={auditorPhoto}
+                          alt="Foto del auditor"
+                          className="w-14 h-14 rounded-full object-cover shadow-lg"
+                        />
+                      );
+                    }
+
+                    return (
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-lg font-semibold shadow-lg">
+                        {auditorInitials}
+                      </div>
+                    );
+                  })()}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -564,10 +586,29 @@ export function AuditDetail({
                   )
                     ? scheduledData.logs_auditoria
                     : [];
-                  const usingLogs = logsAuditados.length > 0;
-                  const displayAssets = usingLogs
-                    ? logsAuditados
-                    : scheduledAssets;
+                  const auditedByAssetId = new Map(
+                    logsAuditados
+                      .map((log) => [log.activo_id ?? log.activos?.id, log])
+                      .filter(([id]) => Boolean(id)),
+                  );
+                  const auditedAssetIds = new Set(
+                    logsAuditados
+                      .map((log) => log.activo_id ?? log.activos?.id)
+                      .filter(Boolean),
+                  );
+                  const auditedCount = auditedAssetIds.size;
+                  const totalAssets = scheduledAssets.length;
+                  const pendingCount = Math.max(totalAssets - auditedCount, 0);
+                  const displayAssets =
+                    totalAssets > 0
+                      ? scheduledAssets
+                      : logsAuditados.map((log) => ({
+                          id: log.activo_id ?? log.activos?.id,
+                          codigo_etiqueta:
+                            log.activos?.codigo_etiqueta ?? log.activo_id,
+                          nombre: log.activos?.nombre ?? "Sin nombre",
+                          categorias: log.activos?.categorias,
+                        }));
                   const count = displayAssets.length;
 
                   return (
@@ -578,22 +619,12 @@ export function AuditDetail({
                       className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8"
                     >
                       <h3 className="text-lg font-bold mb-1 dark:text-white">
-                        {usingLogs
-                          ? "Activos Auditados"
-                          : "Activos en Ubicación"}{" "}
-                        ({count})
+                        Activos de la auditoría ({count})
                       </h3>
-                      {usingLogs && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">
-                          Registros reales de la auditoría
-                        </p>
-                      )}
-                      {!usingLogs && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">
-                          Activos actualmente en la ubicación asignada
-                        </p>
-                      )}
-                      {isLoadingScheduledAssets && !usingLogs ? (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">
+                        Auditados: {auditedCount} · Pendientes: {pendingCount}
+                      </p>
+                      {isLoadingScheduledAssets && totalAssets === 0 ? (
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           Cargando activos...
                         </p>
@@ -601,27 +632,34 @@ export function AuditDetail({
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           No hay activos registrados para esta auditoría.
                         </p>
-                      ) : usingLogs ? (
+                      ) : (
                         <div className="space-y-3">
-                          {logsAuditados.map((log, index) => {
+                          {displayAssets.map((activo, index) => {
+                            const assetId = activo.id;
+                            const log = auditedByAssetId.get(assetId);
+                            const isAudited = Boolean(log);
                             const estadoNombre: string =
-                              log.estados_auditoria?.nombre ?? "—";
+                              log?.estados_auditoria?.nombre ?? "PENDIENTE";
                             const estadoColorMap: Record<string, string> = {
                               BUENO: "text-emerald-600 dark:text-emerald-400",
                               DAÑADO: "text-amber-600 dark:text-amber-400",
                               NO_ENCONTRADO: "text-red-600 dark:text-red-400",
+                              PENDIENTE: "text-gray-500 dark:text-gray-400",
                             };
                             const estadoColor =
                               estadoColorMap[estadoNombre.toUpperCase()] ??
                               "text-gray-500 dark:text-gray-400";
                             return (
                               <motion.div
-                                key={log.id}
+                                key={
+                                  assetId ??
+                                  `${activo.codigo_etiqueta}-${index}`
+                                }
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.2 + index * 0.05 }}
                                 onClick={() => {
-                                  const id = log.activos?.id ?? log.activo_id;
+                                  const id = assetId;
                                   if (id && onAssetClick) onAssetClick(id);
                                 }}
                                 className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
@@ -629,17 +667,16 @@ export function AuditDetail({
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex-1 min-w-0">
                                     <p className="font-semibold text-gray-900 dark:text-white truncate">
-                                      {log.activos?.codigo_etiqueta ??
-                                        log.activo_id}
+                                      {activo.codigo_etiqueta ?? activo.id}
                                     </p>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                                      {log.activos?.nombre ?? "Sin nombre"}
+                                      {activo.nombre ?? "Sin nombre"}
                                     </p>
                                     <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
-                                      {log.activos?.categorias?.nombre ??
+                                      {activo.categorias?.nombre ??
                                         "Sin categoría"}
                                     </p>
-                                    {log.comentarios && (
+                                    {log?.comentarios && (
                                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
                                         "{log.comentarios}"
                                       </p>
@@ -649,9 +686,9 @@ export function AuditDetail({
                                     <span
                                       className={`text-xs font-semibold ${estadoColor}`}
                                     >
-                                      {estadoNombre}
+                                      {isAudited ? estadoNombre : "PENDIENTE"}
                                     </span>
-                                    {log.fecha_hora && (
+                                    {log?.fecha_hora && (
                                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                         {formatDateTime(log.fecha_hora)}
                                       </p>
@@ -661,37 +698,6 @@ export function AuditDetail({
                               </motion.div>
                             );
                           })}
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {scheduledAssets.map((activo, index) => (
-                            <motion.div
-                              key={activo.id}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.2 + index * 0.05 }}
-                              onClick={() => onAssetClick?.(activo.id)}
-                              className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="font-semibold text-gray-900 dark:text-white">
-                                    {activo.codigo_etiqueta ?? activo.id}
-                                  </p>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {activo.nombre ?? "Sin nombre"}
-                                  </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                    {activo.categorias?.nombre ??
-                                      "Sin categoría"}
-                                  </p>
-                                </div>
-                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                  <CheckCircle2 className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                                </div>
-                              </div>
-                            </motion.div>
-                          ))}
                         </div>
                       )}
                     </motion.div>
@@ -901,15 +907,15 @@ export function AuditDetail({
                 <div className="flex items-center gap-2 mb-6">
                   <FileText className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <h3 className="text-lg font-bold dark:text-white">
-                    {isScheduled
-                      ? "Notas de Programación"
-                      : "Comentarios del Auditor"}
+                    {isScheduled ? "Descripción" : "Comentarios del Auditor"}
                   </h3>
                 </div>
                 <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl min-h-[120px]">
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                     {isScheduled
-                      ? (scheduledData.notas ?? "Sin notas de programación.")
+                      ? (scheduledData.descripcion ??
+                        scheduledData.notas ??
+                        "Sin descripción registrada.")
                       : data.comentarios || "Sin comentarios adicionales."}
                   </p>
                 </div>
