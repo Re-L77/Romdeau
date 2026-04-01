@@ -1,4 +1,13 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ActivosService } from './activos.service';
 
 interface FindActivosQuery {
@@ -21,7 +30,7 @@ interface FindActivosQuery {
 
 @Controller('api/activos')
 export class ActivosController {
-  constructor(private readonly activosService: ActivosService) { }
+  constructor(private readonly activosService: ActivosService) {}
 
   private parsePositiveInt(value: string | undefined, fieldName: string) {
     if (value === undefined) {
@@ -51,6 +60,11 @@ export class ActivosController {
     }
 
     throw new BadRequestException(`${fieldName} debe ser true o false`);
+  }
+
+  @Get(':id/trazabilidad')
+  getTrazabilidad(@Param('id') id: string) {
+    return this.activosService.getTrazabilidad(id);
   }
 
   @Get()

@@ -130,6 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      let activeToken = savedAccessToken;
+
       // Verificar si el token está expirado
       if (isTokenExpired(savedAccessToken, 0)) {
         // Token expirado, intentar refrescar
@@ -138,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsValidating(false);
           return;
         }
+        activeToken = newToken;
       } else {
         // Token válido, restaurar sesión
         setAccessToken(savedAccessToken);
@@ -147,13 +150,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Verificar que el token sea válido llamando al API
-      await authApi.verifyToken(savedAccessToken);
+      await authApi.verifyToken(activeToken);
 
       try {
         // Refrescar datos de la bd
         const restoredUser = JSON.parse(savedUser);
         if (restoredUser?.id) {
-          const userDetails = await apiClient.get(`/api/usuarios/${restoredUser.id}`);
+          const userDetails = await apiClient.get(
+            `/api/usuarios/${restoredUser.id}`,
+          );
           if (userDetails) {
             const updatedUser = { ...restoredUser, ...userDetails };
             setUser(updatedUser);
@@ -195,17 +200,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response: LoginResponse = await authApi.login(email, password);
 
       let userInfo = response.user;
-      
+
       localStorage.setItem("accessToken", response.access_token);
       localStorage.setItem("refreshToken", response.refresh_token);
 
       try {
-        const userDetails = await apiClient.get(`/api/usuarios/${response.user.id}`);
+        const userDetails = await apiClient.get(
+          `/api/usuarios/${response.user.id}`,
+        );
         if (userDetails) {
           userInfo = { ...userInfo, ...userDetails };
         }
       } catch (err) {
-        console.warn("No se pudo obtener información extendida del usuario", err);
+        console.warn(
+          "No se pudo obtener información extendida del usuario",
+          err,
+        );
       }
 
       setAccessToken(response.access_token);

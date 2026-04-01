@@ -15,7 +15,7 @@ export interface LoginResponse {
   };
 }
 
-export interface ApiError extends ExtendedApiError { }
+export interface ApiError extends ExtendedApiError {}
 
 /**
  * Almacena funciones de callback para interceptar y refrescar tokens
@@ -229,11 +229,15 @@ export const activosApi = {
   },
 
   create: async (data: any): Promise<any> => {
-    return apiClient.post<any>('/api/activos', data);
+    return apiClient.post<any>("/api/activos", data);
   },
 
   update: async (id: string, data: any): Promise<any> => {
     return apiClient.patch<any>(`/api/activos/${id}`, data);
+  },
+
+  getTrazabilidad: async (id: string): Promise<any> => {
+    return apiClient.get<any>(`/api/activos/${id}/trazabilidad`);
   },
 };
 
@@ -275,7 +279,7 @@ export const logsAuditoriaApi = {
     const searchParams = new URLSearchParams();
     if (params) {
       for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && value !== "") {
           searchParams.set(key, String(value));
         }
       }
@@ -283,7 +287,7 @@ export const logsAuditoriaApi = {
     const queryString = searchParams.toString();
     const path = queryString
       ? `/api/logs-auditoria?${queryString}`
-      : '/api/logs-auditoria';
+      : "/api/logs-auditoria";
     return apiClient.get<{ data: LogAuditoria[]; pagination: any }>(path);
   },
 };
@@ -300,13 +304,13 @@ export const auditoriasApi = {
 
 export const ubicacionesApi = {
   getOficinas: async (): Promise<any[]> => {
-    return apiClient.get<any[]>('/api/ubicaciones/oficinas');
+    return apiClient.get<any[]>("/api/ubicaciones/oficinas");
   },
 
   getEstantes: async (sedeId?: string): Promise<any[]> => {
     const path = sedeId
       ? `/api/ubicaciones/estantes?sedeId=${sedeId}`
-      : '/api/ubicaciones/estantes';
+      : "/api/ubicaciones/estantes";
     return apiClient.get<any[]>(path);
   },
 };
@@ -314,30 +318,30 @@ export const ubicacionesApi = {
 export interface Categoria {
   id: string;
   nombre: string;
-  tipo_rastreo: 'MOVIL' | 'FIJO';
+  tipo_rastreo: "MOVIL" | "FIJO";
 }
 
 export const categoriasApi = {
   getAll: async (): Promise<Categoria[]> => {
-    return apiClient.get<Categoria[]>('/api/activos/categorias/list');
+    return apiClient.get<Categoria[]>("/api/activos/categorias/list");
   },
 };
 
 export const usuariosApi = {
   getAll: async (): Promise<any[]> => {
-    return apiClient.get<any[]>('/api/usuarios');
+    return apiClient.get<any[]>("/api/usuarios");
   },
 };
 
 export const estadosApi = {
   getAll: async (): Promise<any[]> => {
-    return apiClient.get<any[]>('/api/activos/estados/list');
+    return apiClient.get<any[]>("/api/activos/estados/list");
   },
 };
 
 export const departamentosApi = {
   getAll: async (): Promise<any[]> => {
-    return apiClient.get<any[]>('/api/departamentos');
+    return apiClient.get<any[]>("/api/departamentos");
   },
 };
 
@@ -443,7 +447,7 @@ export const auditoriasProgramadasApi = {
 
 export const depreciacionApi = {
   getSummary: async (): Promise<any> => {
-    return apiClient.get<any>('/api/depreciacion/summary');
+    return apiClient.get<any>("/api/depreciacion/summary");
   },
   getDetalleKpi: async (tipo: string): Promise<any> => {
     return apiClient.get<any>(`/api/depreciacion/detalle/${tipo}`);
