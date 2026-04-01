@@ -33,7 +33,7 @@ export default function LoginScreen() {
   const router = useRouter();
 
   const [email, setEmail] = useState("124051537@upq.edu.mx");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("xK9$mP2@vL5*qR8");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -322,53 +322,6 @@ export default function LoginScreen() {
               ¿Olvidaste tu contraseña?
             </Text>
           </TouchableOpacity>
-
-          {/* Demo Login Button */}
-          <TouchableOpacity
-            style={[
-              styles.demoButton,
-              (isLoading || !isConnected) && styles.demoButtonDisabled,
-            ]}
-            onPress={handleDemoLogin}
-            disabled={isLoading || !isConnected}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.demoButtonText, { color: colors.primary }]}>
-              Usar Credenciales de Demo (ADMIN)
-            </Text>
-          </TouchableOpacity>
-
-          {/* Info Box */}
-          <View
-            style={[
-              styles.infoBox,
-              {
-                backgroundColor: colors.surfaceSecondary,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.infoTitle, { color: colors.text }]}>
-              Cuentas de Prueba Disponibles:
-            </Text>
-            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              • Admin (Rol ADMIN): admin@romdeau.com
-            </Text>
-            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              • Auditor (Rol AUDITOR): auditor@romdeau.com
-            </Text>
-            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              • Empleado (Rol EMPLEADO): empleado@romdeau.com
-            </Text>
-            <Text
-              style={[
-                styles.infoText,
-                { color: colors.textSecondary, marginTop: 8 },
-              ]}
-            >
-              Contraseña: AdminPassword123!@
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
