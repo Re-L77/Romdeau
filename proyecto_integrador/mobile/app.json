@@ -4,7 +4,7 @@
     "slug": "romdeau-audit",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-apk.png",
     "userInterfaceStyle": "automatic",
     "scheme": "romdeau-audit",
     "splash": {
@@ -25,8 +25,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1e293b"
+        "foregroundImage": "./assets/adaptive-icon-apk.png",
+        "backgroundColor": "#ffffff",
+        "monochromeImage": "./assets/adaptive-icon-apk.png"
       },
       "package": "com.romdeau.audit",
       "permissions": [

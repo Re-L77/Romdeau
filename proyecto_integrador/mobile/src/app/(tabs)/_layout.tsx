@@ -1,18 +1,25 @@
 import { Tabs } from "expo-router";
-import { useColorScheme, View, StyleSheet } from "react-native";
-import { Home, CheckSquare, QrCode, ChartNoAxesColumn, User } from "lucide-react-native";
+import { View, StyleSheet } from "react-native";
+import {
+  Home,
+  CheckSquare,
+  QrCode,
+  ChartNoAxesColumn,
+  User,
+} from "lucide-react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { isDark } = useTheme();
 
   const colors = {
-    background: isDark ? "#060d1f" : "#ffffff",
-    border: isDark ? "#1f2f55" : "#d7e1ff",
-    inactive: isDark ? "#8194bc" : "#8ca0c7",
-    active: isDark ? "#79a3ff" : "#2f66ff",
+    tabBackground: isDark ? "#0d1a32" : "#ffffff",
+    tabBorder: isDark ? "#1f3a6b" : "#dbe5ff",
+    inactive: isDark ? "#5a7095" : "#64748b",
+    active: isDark ? "#4da8ff" : "#2f66ff",
+    activeBg: isDark ? "#1e3a6f" : "#e9efff",
     scanBg: "#2f66ff",
-    scanBorder: isDark ? "#0b1733" : "#ffffff",
+    scanBorder: isDark ? "#0d1f40" : "#ffffff",
   };
 
   return (
@@ -20,18 +27,33 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
+          position: "absolute",
+          left: 14,
+          right: 14,
+          bottom: 14,
+          backgroundColor: colors.tabBackground,
+          borderColor: colors.tabBorder,
           borderTopWidth: 1,
-          height: 88,
-          paddingBottom: 18,
-          paddingTop: 10,
+          borderWidth: 1,
+          height: 78,
+          paddingBottom: 10,
+          paddingTop: 8,
+          borderRadius: 24,
+          elevation: 10,
+          shadowColor: isDark ? "#000" : "#24407a",
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: isDark ? 0.45 : 0.2,
+          shadowRadius: 16,
         },
         tabBarActiveTintColor: colors.active,
         tabBarInactiveTintColor: colors.inactive,
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: "700",
+          marginTop: 2,
+        },
+        tabBarItemStyle: {
+          paddingTop: 1,
         },
       }}
     >
@@ -39,15 +61,37 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Inicio",
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <View
+              style={[
+                styles.iconFrame,
+                focused && {
+                  backgroundColor: colors.activeBg,
+                  borderColor: colors.tabBorder,
+                },
+              ]}
+            >
+              <Home size={size} color={color} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="assets"
         options={{
           title: "Auditorías",
-          tabBarIcon: ({ color, size }) => (
-            <CheckSquare size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <View
+              style={[
+                styles.iconFrame,
+                focused && {
+                  backgroundColor: colors.activeBg,
+                  borderColor: colors.tabBorder,
+                },
+              ]}
+            >
+              <CheckSquare size={size} color={color} />
+            </View>
           ),
         }}
       />
@@ -75,8 +119,18 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: "Progreso",
-          tabBarIcon: ({ color, size }) => (
-            <ChartNoAxesColumn size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <View
+              style={[
+                styles.iconFrame,
+                focused && {
+                  backgroundColor: colors.activeBg,
+                  borderColor: colors.tabBorder,
+                },
+              ]}
+            >
+              <ChartNoAxesColumn size={size} color={color} />
+            </View>
           ),
         }}
       />
@@ -84,7 +138,19 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <View
+              style={[
+                styles.iconFrame,
+                focused && {
+                  backgroundColor: colors.activeBg,
+                  borderColor: colors.tabBorder,
+                },
+              ]}
+            >
+              <User size={size} color={color} />
+            </View>
+          ),
         }}
       />
     </Tabs>
@@ -92,19 +158,28 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  iconFrame: {
+    width: 40,
+    height: 32,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   scanButton: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: "#2f66ff",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 28,
-    borderWidth: 4,
+    marginBottom: 18,
+    borderWidth: 3,
     shadowColor: "#2f66ff",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 12,
   },
 });

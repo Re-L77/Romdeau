@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -17,7 +18,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Wifi,
   WifiOff,
   AlertCircle,
 } from "lucide-react-native";
@@ -121,207 +121,202 @@ export default function LoginScreen() {
           { backgroundColor: colors.background },
         ]}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Offline Banner */}
-        {isConnected === false && (
-          <View style={styles.offlineBanner}>
-            <WifiOff size={20} color="#fff" />
-            <Text style={styles.offlineText}>
-              Sin Conexión - Conecta a internet
-            </Text>
-          </View>
-        )}
-
-        {/* Logo Section */}
-        <View style={styles.logoSection}>
-          <LinearGradient
-            colors={["#334155", "#0f172a"]}
-            style={styles.logoContainer}
-          >
-            <Text style={styles.logoEmoji}>RA</Text>
-          </LinearGradient>
-
-          <Text style={[styles.title, { color: colors.text }]}>
-            Romdeau Audit
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Sistema de Auditoría Móvil
-          </Text>
-
-          <View
-            style={[
-              styles.versionBadge,
-              { backgroundColor: colors.surfaceSecondary },
-            ]}
-          >
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: isConnected ? "#10b981" : "#ef4444" },
-              ]}
-            />
-            <Text style={[styles.versionText, { color: colors.textSecondary }]}>
-              {isConnected ? "Conectado" : "Sin conexión"} • v1.0.0
-            </Text>
-          </View>
-        </View>
-
-        {/* Form */}
-        <View style={styles.form}>
-          {/* Error General */}
-          {generalError && (
-            <View
-              style={[
-                styles.errorBanner,
-                {
-                  backgroundColor: colors.error + "15",
-                  borderColor: colors.error,
-                },
-              ]}
-            >
-              <AlertCircle size={20} color={colors.error} />
-              <Text style={[styles.errorBannerText, { color: colors.error }]}>
-                {generalError}
+        <View style={styles.content}>
+          {/* Offline Banner */}
+          {isConnected === false && (
+            <View style={styles.offlineBanner}>
+              <WifiOff size={20} color="#fff" />
+              <Text style={styles.offlineText}>
+                Sin Conexión - Conecta a internet
               </Text>
             </View>
           )}
 
-          {/* Email Input */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>
-              Correo Electrónico
-            </Text>
-            <View
-              style={[
-                styles.inputContainer,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: errors.email ? colors.error : colors.border,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.iconBox,
-                  { backgroundColor: colors.surfaceSecondary },
-                ]}
-              >
-                <Mail size={20} color={colors.textSecondary} />
-              </View>
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (errors.email) setErrors({ ...errors, email: "" });
-                }}
-                placeholder="tu.email@empresa.com"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
-            {errors.email ? (
-              <Text style={[styles.errorText, { color: colors.error }]}>
-                {errors.email}
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Password Input */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>
-              Contraseña
-            </Text>
-            <View
-              style={[
-                styles.inputContainer,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: errors.password ? colors.error : colors.border,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.iconBox,
-                  { backgroundColor: colors.surfaceSecondary },
-                ]}
-              >
-                <Lock size={20} color={colors.textSecondary} />
-              </View>
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (errors.password) setErrors({ ...errors, password: "" });
-                }}
-                placeholder="••••••••"
-                placeholderTextColor={colors.textMuted}
-                secureTextEntry={!showPassword}
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <EyeOff size={20} color={colors.textSecondary} />
-                ) : (
-                  <Eye size={20} color={colors.textSecondary} />
-                )}
-              </TouchableOpacity>
-            </View>
-            {errors.password ? (
-              <Text style={[styles.errorText, { color: colors.error }]}>
-                {errors.password}
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Login Button */}
-          <TouchableOpacity
-            style={[
-              styles.loginButton,
-              (isLoading || !isConnected) && styles.loginButtonDisabled,
-            ]}
-            onPress={handleLogin}
-            disabled={isLoading || !isConnected}
-            activeOpacity={0.8}
-          >
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
             <LinearGradient
-              colors={["#334155", "#0f172a"]}
-              style={styles.loginButtonGradient}
+              colors={isDark ? ["#1f2f52", "#0b142b"] : ["#dbe6ff", "#c3d4ff"]}
+              style={styles.logoContainer}
             >
-              {isLoading ? (
-                <>
-                  <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
-                  <Text style={styles.loginButtonText}>
-                    Iniciando sesión...
-                  </Text>
-                </>
-              ) : (
-                <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
-              )}
+              <Image
+                source={require("../../assets/icon.png")}
+                style={[
+                  styles.logoImage,
+                  { tintColor: isDark ? "#ffffff" : "#000000" },
+                ]}
+                resizeMode="contain"
+              />
             </LinearGradient>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.forgotPasswordButton}
-            onPress={() => router.push("/forgot-password" as any)}
-            disabled={isLoading}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[styles.forgotPasswordText, { color: colors.primary }]}
-            >
-              ¿Olvidaste tu contraseña?
+            <Text style={[styles.title, { color: colors.text }]}>
+              Romdeau Audit
             </Text>
-          </TouchableOpacity>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Sistema de Auditoría Móvil
+            </Text>
+          </View>
+          {/* Form */}
+          <View style={styles.form}>
+            {/* Error General */}
+            {generalError && (
+              <View
+                style={[
+                  styles.errorBanner,
+                  {
+                    backgroundColor: colors.error + "15",
+                    borderColor: colors.error,
+                  },
+                ]}
+              >
+                <AlertCircle size={20} color={colors.error} />
+                <Text style={[styles.errorBannerText, { color: colors.error }]}>
+                  {generalError}
+                </Text>
+              </View>
+            )}
+
+            {/* Email Input */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>
+                Correo Electrónico
+              </Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: errors.email ? colors.error : colors.border,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.iconBox,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  <Mail size={20} color={colors.textSecondary} />
+                </View>
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (errors.email) setErrors({ ...errors, email: "" });
+                  }}
+                  placeholder="tu.email@empresa.com"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!isLoading}
+                />
+              </View>
+              {errors.email ? (
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {errors.email}
+                </Text>
+              ) : null}
+            </View>
+
+            {/* Password Input */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>
+                Contraseña
+              </Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: errors.password ? colors.error : colors.border,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.iconBox,
+                    { backgroundColor: colors.surfaceSecondary },
+                  ]}
+                >
+                  <Lock size={20} color={colors.textSecondary} />
+                </View>
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (errors.password) setErrors({ ...errors, password: "" });
+                  }}
+                  placeholder="••••••••"
+                  placeholderTextColor={colors.textMuted}
+                  secureTextEntry={!showPassword}
+                  editable={!isLoading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color={colors.textSecondary} />
+                  ) : (
+                    <Eye size={20} color={colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+              </View>
+              {errors.password ? (
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {errors.password}
+                </Text>
+              ) : null}
+            </View>
+
+            {/* Login Button */}
+            <TouchableOpacity
+              style={[
+                styles.loginButton,
+                (isLoading || !isConnected) && styles.loginButtonDisabled,
+              ]}
+              onPress={handleLogin}
+              disabled={isLoading || !isConnected}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={["#334155", "#0f172a"]}
+                style={styles.loginButtonGradient}
+              >
+                {isLoading ? (
+                  <>
+                    <ActivityIndicator
+                      color="#fff"
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text style={styles.loginButtonText}>
+                      Iniciando sesión...
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.forgotPasswordButton}
+              onPress={() => router.push("/forgot-password" as any)}
+              disabled={isLoading}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[styles.forgotPasswordText, { color: colors.primary }]}
+              >
+                ¿Olvidaste tu contraseña?
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -332,8 +327,13 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingVertical: 32,
+    justifyContent: "center",
+  },
+  content: {
+    width: "100%",
+    maxWidth: 460,
+    alignSelf: "center",
   },
   offlineBanner: {
     flexDirection: "row",
@@ -367,8 +367,9 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 10,
   },
-  logoEmoji: {
-    fontSize: 48,
+  logoImage: {
+    width: 58,
+    height: 58,
   },
   title: {
     fontSize: 32,

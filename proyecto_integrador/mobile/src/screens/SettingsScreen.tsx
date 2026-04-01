@@ -41,7 +41,7 @@ type AuditProgressItem = {
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const { auditorias } = useAuditorias();
   const [isLoading, setIsLoading] = useState(false);
@@ -99,7 +99,8 @@ export default function SettingsScreen() {
             const auditadosSet = new Set(
               logs
                 .filter((log) => {
-                  const auditId = log.auditoria || log.auditorias_programadas?.id;
+                  const auditId =
+                    log.auditoria || log.auditorias_programadas?.id;
                   return auditId === audit.id;
                 })
                 .map((log) => log.activo_id),
@@ -107,7 +108,8 @@ export default function SettingsScreen() {
 
             const auditados = Math.min(auditadosSet.size, total);
             const pendientes = Math.max(total - auditados, 0);
-            const porcentaje = total > 0 ? Math.round((auditados / total) * 100) : 0;
+            const porcentaje =
+              total > 0 ? Math.round((auditados / total) * 100) : 0;
 
             return {
               id: audit.id,
@@ -150,9 +152,7 @@ export default function SettingsScreen() {
     const channelName = `logs-auditoria-settings:auditor_id=${user.id}`;
     supabase
       .getChannels()
-      .filter((existingChannel) =>
-        existingChannel.topic.includes(channelName),
-      )
+      .filter((existingChannel) => existingChannel.topic.includes(channelName))
       .forEach((existingChannel) => {
         supabase.removeChannel(existingChannel);
       });
@@ -191,7 +191,14 @@ export default function SettingsScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <LinearGradient colors={["#0b1430", "#122452", "#1d3b82"]} style={styles.header}>
+      <LinearGradient
+        colors={[
+          isDark ? "#09162d" : "#1d3b82",
+          isDark ? "#0f1f3a" : "#2844a1",
+          isDark ? "#14274a" : "#3451b8",
+        ]}
+        style={styles.header}
+      >
         <Text style={styles.headerTitle}>Activos por Auditar</Text>
         <Text style={styles.headerSubtitle}>
           Progreso real de activos asignados a tus auditorias activas
@@ -199,9 +206,11 @@ export default function SettingsScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}> 
+        <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
           <View style={styles.summaryTopRow}>
-            <Text style={[styles.summaryTitle, { color: colors.text }]}>Progreso Global</Text>
+            <Text style={[styles.summaryTitle, { color: colors.text }]}>
+              Progreso Global
+            </Text>
             <Text style={[styles.summaryPercent, { color: colors.primary }]}>
               {globalStats.porcentaje}%
             </Text>
@@ -224,33 +233,56 @@ export default function SettingsScreen() {
           <View style={styles.kpisRow}>
             <View style={styles.kpiItem}>
               <CheckCircle2 size={16} color="#10b981" />
-              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>Auditados</Text>
-              <Text style={[styles.kpiValue, { color: colors.text }]}>{globalStats.auditados}</Text>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
+                Auditados
+              </Text>
+              <Text style={[styles.kpiValue, { color: colors.text }]}>
+                {globalStats.auditados}
+              </Text>
             </View>
             <View style={styles.kpiItem}>
               <Clock3 size={16} color="#f59e0b" />
-              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>Pendientes</Text>
-              <Text style={[styles.kpiValue, { color: colors.text }]}>{globalStats.pendientes}</Text>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
+                Pendientes
+              </Text>
+              <Text style={[styles.kpiValue, { color: colors.text }]}>
+                {globalStats.pendientes}
+              </Text>
             </View>
             <View style={styles.kpiItem}>
               <ClipboardList size={16} color="#3b82f6" />
-              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>Total</Text>
-              <Text style={[styles.kpiValue, { color: colors.text }]}>{globalStats.total}</Text>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
+                Total
+              </Text>
+              <Text style={[styles.kpiValue, { color: colors.text }]}>
+                {globalStats.total}
+              </Text>
             </View>
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Por auditoria activa</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Por auditoria activa
+        </Text>
 
         {isLoading ? (
           <View style={styles.loaderWrap}>
             <ActivityIndicator color={colors.primary} size="large" />
-            <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Cargando progreso...</Text>
+            <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
+              Cargando progreso...
+            </Text>
           </View>
         ) : items.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}> 
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin auditorias activas</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Cuando tengas auditorias programadas o en progreso, veras su avance aqui.</Text>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              Sin auditorias activas
+            </Text>
+            <Text
+              style={[styles.emptySubtitle, { color: colors.textSecondary }]}
+            >
+              Cuando tengas auditorias programadas o en progreso, veras su
+              avance aqui.
+            </Text>
           </View>
         ) : (
           items.map((item) => (
@@ -263,7 +295,10 @@ export default function SettingsScreen() {
                 onPress={() => toggleExpanded(item.id)}
               >
                 <View style={styles.auditCardHeader}>
-                  <Text style={[styles.auditTitle, { color: colors.text }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.auditTitle, { color: colors.text }]}
+                    numberOfLines={1}
+                  >
                     {item.titulo}
                   </Text>
                   {expandedAuditIds.includes(item.id) ? (
@@ -280,12 +315,18 @@ export default function SettingsScreen() {
                   ]}
                 >
                   <View
-                    style={[styles.progressBarFill, { width: `${item.porcentaje}%` }]}
+                    style={[
+                      styles.progressBarFill,
+                      { width: `${item.porcentaje}%` },
+                    ]}
                   />
                 </View>
 
-                <Text style={[styles.auditMeta, { color: colors.textSecondary }]}> 
-                  {item.auditados} auditados de {item.total} | {item.pendientes} por auditar
+                <Text
+                  style={[styles.auditMeta, { color: colors.textSecondary }]}
+                >
+                  {item.auditados} auditados de {item.total} | {item.pendientes}{" "}
+                  por auditar
                 </Text>
               </TouchableOpacity>
 
@@ -294,7 +335,12 @@ export default function SettingsScreen() {
                 activeOpacity={0.85}
                 onPress={() => router.push(`/audit/${item.id}`)}
               >
-                <Text style={[styles.auditDetailButtonText, { color: colors.primary }]}> 
+                <Text
+                  style={[
+                    styles.auditDetailButtonText,
+                    { color: colors.primary },
+                  ]}
+                >
                   Ver detalle de auditoria
                 </Text>
                 <ArrowRight size={14} color={colors.primary} />
@@ -303,18 +349,30 @@ export default function SettingsScreen() {
               {expandedAuditIds.includes(item.id) && (
                 <View style={styles.assetsAccordionWrap}>
                   {item.activos.length === 0 ? (
-                    <Text style={[styles.emptyAssetsText, { color: colors.textSecondary }]}> 
+                    <Text
+                      style={[
+                        styles.emptyAssetsText,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
                       No hay activos cargados para este alcance.
                     </Text>
                   ) : (
                     item.activos.map((asset) => {
-                      const isAudited = item.activosAuditadosIds.includes(asset.id);
-                      const assetIdentifier = (asset.codigo_etiqueta || "").trim();
+                      const isAudited = item.activosAuditadosIds.includes(
+                        asset.id,
+                      );
+                      const assetIdentifier = (
+                        asset.codigo_etiqueta || ""
+                      ).trim();
 
                       return (
                         <TouchableOpacity
                           key={asset.id}
-                          style={[styles.assetRow, { backgroundColor: "rgba(59,130,246,0.06)" }]}
+                          style={[
+                            styles.assetRow,
+                            { backgroundColor: "rgba(59,130,246,0.06)" },
+                          ]}
                           activeOpacity={0.85}
                           onPress={() => {
                             if (!assetIdentifier) {
@@ -337,10 +395,22 @@ export default function SettingsScreen() {
                             />
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Text style={[styles.assetTitle, { color: colors.text }]} numberOfLines={1}>
+                            <Text
+                              style={[
+                                styles.assetTitle,
+                                { color: colors.text },
+                              ]}
+                              numberOfLines={1}
+                            >
                               {asset.nombre || "Activo sin nombre"}
                             </Text>
-                            <Text style={[styles.assetMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+                            <Text
+                              style={[
+                                styles.assetMeta,
+                                { color: colors.textSecondary },
+                              ]}
+                              numberOfLines={1}
+                            >
                               {asset.codigo_etiqueta || "Sin codigo"}
                             </Text>
                           </View>
@@ -348,14 +418,28 @@ export default function SettingsScreen() {
                             style={[
                               styles.assetBadge,
                               {
-                                backgroundColor: isAudited ? "#d1fae5" : "#fef3c7",
+                                backgroundColor: isAudited
+                                  ? isDark
+                                    ? "#10432f"
+                                    : "#d1fae5"
+                                  : isDark
+                                    ? "#3d2a0f"
+                                    : "#fef3c7",
                               },
                             ]}
                           >
                             <Text
                               style={[
                                 styles.assetBadgeText,
-                                { color: isAudited ? "#065f46" : "#92400e" },
+                                {
+                                  color: isAudited
+                                    ? isDark
+                                      ? "#86efac"
+                                      : "#065f46"
+                                    : isDark
+                                      ? "#fbbf24"
+                                      : "#92400e",
+                                },
                               ]}
                             >
                               {isAudited ? "Auditado" : "Pendiente"}
