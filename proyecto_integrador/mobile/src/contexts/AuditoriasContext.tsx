@@ -17,6 +17,8 @@ interface AuditoriasContextType {
   auditorias: AuditoriaProgramada[];
   isLoading: boolean;
   refresh: () => Promise<void>;
+  selectedAuditId: string | null;
+  setSelectedAuditId: (auditId: string | null) => void;
 }
 
 const AuditoriasContext = createContext<AuditoriasContextType | undefined>(
@@ -27,8 +29,18 @@ export function AuditoriasProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [auditorias, setAuditorias] = useState<AuditoriaProgramada[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!selectedAuditId) return;
+
+    const exists = auditorias.some((audit) => audit.id === selectedAuditId);
+    if (!exists) {
+      setSelectedAuditId(null);
+    }
+  }, [auditorias, selectedAuditId]);
 
   const refresh = useCallback(async () => {
     if (!isAuthenticated || !user) return;
@@ -102,7 +114,15 @@ export function AuditoriasProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, user?.id, refresh]);
 
   return (
-    <AuditoriasContext.Provider value={{ auditorias, isLoading, refresh }}>
+    <AuditoriasContext.Provider
+      value={{
+        auditorias,
+        isLoading,
+        refresh,
+        selectedAuditId,
+        setSelectedAuditId,
+      }}
+    >
       {children}
     </AuditoriasContext.Provider>
   );

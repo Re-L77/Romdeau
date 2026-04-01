@@ -39,7 +39,7 @@ interface AuditDetailScreenProps {
 export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   const router = useRouter();
   const { colors } = useTheme();
-  const { auditorias, refresh } = useAuditorias();
+  const { auditorias, refresh, setSelectedAuditId } = useAuditorias();
   const [audit, setAudit] = useState<any>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -49,6 +49,10 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
     const foundAudit = auditorias.find((a) => a.id === auditId);
     setAudit(foundAudit);
   }, [auditId, auditorias]);
+
+  useEffect(() => {
+    setSelectedAuditId(auditId);
+  }, [auditId, setSelectedAuditId]);
 
   useEffect(() => {
     refresh();

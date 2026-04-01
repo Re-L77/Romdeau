@@ -44,6 +44,14 @@ export interface ActivoDetalle {
 
 interface FindActivosResponse {
   data: ActivoDetalle[];
+  pagination?: {
+    total?: number;
+  };
+}
+
+interface CountActivosParams {
+  oficinaId?: string;
+  estanteId?: string;
 }
 
 function normalize(value: string) {
@@ -51,6 +59,22 @@ function normalize(value: string) {
 }
 
 export const activosApi = {
+  contarPorUbicacion: async ({
+    oficinaId,
+    estanteId,
+  }: CountActivosParams): Promise<number> => {
+    const response = await apiClient.get<FindActivosResponse>("/api/activos", {
+      params: {
+        page: 1,
+        limit: 1,
+        ...(oficinaId ? { oficinaId } : {}),
+        ...(estanteId ? { estanteId } : {}),
+      },
+    });
+
+    return response.data.pagination?.total ?? 0;
+  },
+
   obtenerPorIdentificador: async (
     identifier: string,
   ): Promise<ActivoDetalle | null> => {

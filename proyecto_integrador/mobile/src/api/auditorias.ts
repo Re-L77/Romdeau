@@ -58,6 +58,16 @@ export interface AuditoriaProgramada {
   };
 }
 
+export interface AuditoriaLog {
+  id: string;
+  activo_id: string;
+  auditoria?: string | null;
+  fecha_hora?: string | null;
+  auditorias_programadas?: {
+    id: string;
+  } | null;
+}
+
 export const auditoriasApi = {
   listarMias: async (): Promise<AuditoriaProgramada[]> => {
     const response = await apiClient.get<AuditoriaProgramada[]>(
@@ -76,6 +86,13 @@ export const auditoriasApi = {
   cambiarEstado: async (id: string, estadoId: number) => {
     const response = await apiClient.patch(
       `/api/auditorias-programadas/${id}/estado/${estadoId}`,
+    );
+    return response.data;
+  },
+
+  listarLogsPorAuditor: async (auditorId: string): Promise<AuditoriaLog[]> => {
+    const response = await apiClient.get<AuditoriaLog[]>(
+      `/api/auditorias/auditor/${auditorId}`,
     );
     return response.data;
   },

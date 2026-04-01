@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -27,6 +27,8 @@ import {
   getAuditoriaStatusLabel,
   resolveAuditoriaStatus,
 } from "../data/auditoriaStatus";
+import { activosApi } from "@/api/activos";
+import { auditoriasApi } from "@/api/auditorias";
 
 interface AuditStats {
   pending: number;
@@ -44,7 +46,9 @@ export default function HomeScreen() {
   const { noLeidasCount, notificaciones } = useNotificaciones();
   const { auditorias, refresh: refreshAuditorias } = useAuditorias();
   const [lastNotificationCount, setLastNotificationCount] = useState(0);
-  const [now, setNow] = useState(() => Date.now());
+  const [userAssetsPending, setUserAssetsPending] = useState<number>(0);
+  const [userAssetsAudited, setUserAssetsAudited] = useState<number>(0);
+  const [userAssetsTotal, setUserAssetsTotal] = useState<number>(0);
   const notifications = noLeidasCount;
   const headerGradient = isDark
     ? (["#0b1430", "#122452", "#1d3b82"] as const)
@@ -72,56 +76,19 @@ export default function HomeScreen() {
   const inProgressAudits = auditorias.filter(
     (a) => resolveAuditoriaStatus(a) === "en_progreso",
   );
-  const getAuditActivityTimestamp = (audit: {
-    updated_at?: string;
-    fecha_inicio?: string;
-    fecha_fin?: string;
-  }) => {
-    const rawDate = audit.updated_at || audit.fecha_inicio || audit.fecha_fin;
-    return rawDate ? new Date(rawDate).getTime() : 0;
-  };
+  const activeAuditsForUser = useMemo(
+    () =>
+      auditorias.filter((audit) => {
+        const status = resolveAuditoriaStatus(audit);
+        return status === "programada" || status === "en_progreso";
+      }),
+    [auditorias],
+  );
 
-  const activeAudit = [...inProgressAudits].sort(
-    (a, b) => getAuditActivityTimestamp(b) - getAuditActivityTimestamp(a),
-  )[0];
-
-  const dueDate = activeAudit?.fecha_fin ? new Date(activeAudit.fecha_fin) : null;
-  const startDate = activeAudit?.fecha_inicio
-    ? new Date(activeAudit.fecha_inicio)
-    : null;
-
-  const isDueDateValid = !!dueDate && !Number.isNaN(dueDate.getTime());
-  const isStartDateValid = !!startDate && !Number.isNaN(startDate.getTime());
-  const msRemaining = isDueDateValid ? dueDate.getTime() - now : null;
-
-  const formatRemaining = (value: number | null) => {
-    if (value === null) return "Sin fecha límite";
-
-    const absValue = Math.abs(value);
-    const totalMinutes = Math.floor(absValue / (1000 * 60));
-    const days = Math.floor(totalMinutes / (60 * 24));
-    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-    const minutes = totalMinutes % 60;
-
-    const parts: string[] = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0) parts.push(`${hours}h`);
-    if (days === 0) parts.push(`${minutes}m`);
-
-    const timeText = parts.join(" ");
-    return value >= 0 ? `Faltan ${timeText}` : `Vencida hace ${timeText}`;
-  };
-
-  const progressPercent = (() => {
-    if (!activeAudit) return 0;
-    if (!isDueDateValid || !isStartDateValid) return 35;
-
-    const totalWindow = dueDate.getTime() - startDate.getTime();
-    if (totalWindow <= 0) return msRemaining !== null && msRemaining <= 0 ? 100 : 35;
-
-    const elapsed = now - startDate.getTime();
-    return Math.max(0, Math.min(100, Math.round((elapsed / totalWindow) * 100)));
-  })();
+  const progressPercent =
+    userAssetsTotal > 0
+      ? Math.round((userAssetsAudited / userAssetsTotal) * 100)
+      : 0;
 
   // Solo contar auditorías activas (sin canceladas/vencidas) para el progreso
   const activeAuditorias = auditorias.filter((a) => {
@@ -151,9 +118,71 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(timer);
-  }, []);
+    const loadUserProgress = async () => {
+      if (!user?.id || activeAuditsForUser.length === 0) {
+        setUserAssetsTotal(0);
+        setUserAssetsAudited(0);
+        setUserAssetsPending(0);
+        return;
+      }
+
+      try {
+        const scopeMap = new Map<
+          string,
+          {
+            oficinaId?: string;
+            estanteId?: string;
+          }
+        >();
+
+        for (const audit of activeAuditsForUser) {
+          const key = `${audit.oficina_id || "none"}|${audit.estante_id || "none"}`;
+          if (!scopeMap.has(key)) {
+            scopeMap.set(key, {
+              oficinaId: audit.oficina_id,
+              estanteId: audit.estante_id,
+            });
+          }
+        }
+
+        const totalByScope = await Promise.all(
+          Array.from(scopeMap.values()).map((scope) =>
+            activosApi.contarPorUbicacion({
+              oficinaId: scope.oficinaId,
+              estanteId: scope.estanteId,
+            }),
+          ),
+        );
+
+        const totalObjetivo = totalByScope.reduce((sum, n) => sum + n, 0);
+        const activeAuditIds = new Set(activeAuditsForUser.map((audit) => audit.id));
+
+        const logs = await auditoriasApi.listarLogsPorAuditor(user.id);
+        const activosAuditados = new Set(
+          logs
+            .filter((log) => {
+              const auditId = log.auditoria || log.auditorias_programadas?.id;
+              return !!auditId && activeAuditIds.has(auditId);
+            })
+            .map((log) => log.activo_id),
+        );
+
+        const auditedCount = Math.min(activosAuditados.size, totalObjetivo);
+        const pendingCount = Math.max(totalObjetivo - auditedCount, 0);
+
+        setUserAssetsTotal(totalObjetivo);
+        setUserAssetsAudited(auditedCount);
+        setUserAssetsPending(pendingCount);
+      } catch (error) {
+        console.error("Error cargando progreso global de activos:", error);
+        setUserAssetsTotal(0);
+        setUserAssetsAudited(0);
+        setUserAssetsPending(0);
+      }
+    };
+
+    loadUserProgress();
+  }, [activeAuditsForUser, user?.id]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -239,11 +268,11 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {activeAudit && (
+        {activeAuditsForUser.length > 0 && (
           <TouchableOpacity
             style={[styles.progressWidget, { backgroundColor: colors.surface }]}
             activeOpacity={0.85}
-            onPress={() => router.push(`/audit/${activeAudit.id}`)}
+            onPress={() => router.push("/(tabs)/assets")}
           >
             <View style={styles.progressWidgetHeader}>
               <View style={styles.progressWidgetTitleWrap}>
@@ -251,14 +280,14 @@ export default function HomeScreen() {
                 <Text
                   style={[styles.progressWidgetTitle, { color: colors.text }]}
                 >
-                  Progreso de auditoría
+                  Progreso de activos
                 </Text>
               </View>
               <Text
                 style={[styles.progressWidgetCount, { color: colors.primary }]}
               >
-                {inProgressAudits.length} activa
-                {inProgressAudits.length > 1 ? "s" : ""}
+                {activeAuditsForUser.length} auditoría
+                {activeAuditsForUser.length > 1 ? "s" : ""}
               </Text>
             </View>
 
@@ -285,7 +314,7 @@ export default function HomeScreen() {
                   ]}
                   numberOfLines={1}
                 >
-                  {activeAudit.titulo}
+                  Auditados: {userAssetsAudited} de {userAssetsTotal}
                 </Text>
                 <Text
                   style={[
@@ -293,27 +322,15 @@ export default function HomeScreen() {
                     { color: colors.textSecondary },
                   ]}
                 >
-                  Fecha límite: {isDueDateValid
-                    ? dueDate.toLocaleString("es-MX", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "No disponible"}
+                  Activos por auditar: {userAssetsPending}
                 </Text>
                 <Text
                   style={[
                     styles.progressWidgetAuditMeta,
-                    {
-                      color:
-                        msRemaining !== null && msRemaining < 0
-                          ? "#dc2626"
-                          : colors.textSecondary,
-                    },
+                    { color: colors.textSecondary },
                   ]}
                 >
-                  {formatRemaining(msRemaining)}
+                  {progressPercent}% completado
                 </Text>
               </View>
               <View style={styles.progressWidgetAction}>
