@@ -11,8 +11,8 @@ export type AuditoriaStatusKey =
 const statusById: Record<number, AuditoriaStatusKey> = {
   1: "programada",
   2: "en_progreso",
-  3: "cancelada",
-  4: "completada",
+  3: "completada",
+  4: "cancelada",
   5: "vencida",
 };
 

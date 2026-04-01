@@ -31,7 +31,7 @@ function getEstadoStyle(estadoId: number): {
   text: string;
   Icon: React.ElementType;
 } {
-  // estadoId 1 = Programada, 2 = En Progreso, 3 = Cancelada, 4 = Completada, 5 = Vencida
+  // estadoId 1 = Programada, 2 = En Progreso, 3 = Completada, 4 = Cancelada, 5 = Vencida
   switch (estadoId) {
     case 2:
       return {
@@ -43,19 +43,19 @@ function getEstadoStyle(estadoId: number): {
       };
     case 3:
       return {
-        dot: "bg-red-500",
-        badge:
-          "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-700 dark:text-red-300",
-        text: "text-red-600 dark:text-red-400",
-        Icon: XCircle,
-      };
-    case 4:
-      return {
         dot: "bg-emerald-500",
         badge:
           "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300",
         text: "text-emerald-600 dark:text-emerald-400",
         Icon: CheckCircle,
+      };
+    case 4:
+      return {
+        dot: "bg-red-500",
+        badge:
+          "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-700 dark:text-red-300",
+        text: "text-red-600 dark:text-red-400",
+        Icon: XCircle,
       };
     case 5:
       return {
@@ -170,7 +170,6 @@ function ScheduledAuditsDrawer({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      {/* Backdrop */}
       <motion.div
         key="drawer-backdrop"
         initial={{ opacity: 0 }}

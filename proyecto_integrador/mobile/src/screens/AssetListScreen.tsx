@@ -48,8 +48,8 @@ export default function AssetListScreen() {
     > = {
       1: "programada",
       2: "en_progreso",
-      3: "cancelada",
-      4: "completada",
+      3: "completada",
+      4: "cancelada",
       5: "vencida",
     };
 
@@ -149,13 +149,13 @@ export default function AssetListScreen() {
       activeColor: "#f59e0b",
     },
     {
-      key: 4,
+      key: 3,
       label: "Completadas",
       count: stats.completada,
       activeColor: "#10b981",
     },
     {
-      key: 3,
+      key: 4,
       label: "Canceladas",
       count: stats.cancelada,
       activeColor: "#ef4444",

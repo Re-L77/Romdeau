@@ -10,7 +10,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { QrCode, List, Bell, Zap, ChevronRight } from "lucide-react-native";
+import {
+  QrCode,
+  List,
+  Bell,
+  Zap,
+  ChevronRight,
+  Play,
+} from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNotificaciones } from "../contexts/NotificacionesContext";
@@ -37,6 +44,7 @@ export default function HomeScreen() {
   const { noLeidasCount, notificaciones } = useNotificaciones();
   const { auditorias, refresh: refreshAuditorias } = useAuditorias();
   const [lastNotificationCount, setLastNotificationCount] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const notifications = noLeidasCount;
   const headerGradient = isDark
     ? (["#0b1430", "#122452", "#1d3b82"] as const)
@@ -60,6 +68,60 @@ export default function HomeScreen() {
     notFound: 0,
     total: auditorias.length,
   };
+
+  const inProgressAudits = auditorias.filter(
+    (a) => resolveAuditoriaStatus(a) === "en_progreso",
+  );
+  const getAuditActivityTimestamp = (audit: {
+    updated_at?: string;
+    fecha_inicio?: string;
+    fecha_fin?: string;
+  }) => {
+    const rawDate = audit.updated_at || audit.fecha_inicio || audit.fecha_fin;
+    return rawDate ? new Date(rawDate).getTime() : 0;
+  };
+
+  const activeAudit = [...inProgressAudits].sort(
+    (a, b) => getAuditActivityTimestamp(b) - getAuditActivityTimestamp(a),
+  )[0];
+
+  const dueDate = activeAudit?.fecha_fin ? new Date(activeAudit.fecha_fin) : null;
+  const startDate = activeAudit?.fecha_inicio
+    ? new Date(activeAudit.fecha_inicio)
+    : null;
+
+  const isDueDateValid = !!dueDate && !Number.isNaN(dueDate.getTime());
+  const isStartDateValid = !!startDate && !Number.isNaN(startDate.getTime());
+  const msRemaining = isDueDateValid ? dueDate.getTime() - now : null;
+
+  const formatRemaining = (value: number | null) => {
+    if (value === null) return "Sin fecha límite";
+
+    const absValue = Math.abs(value);
+    const totalMinutes = Math.floor(absValue / (1000 * 60));
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (days === 0) parts.push(`${minutes}m`);
+
+    const timeText = parts.join(" ");
+    return value >= 0 ? `Faltan ${timeText}` : `Vencida hace ${timeText}`;
+  };
+
+  const progressPercent = (() => {
+    if (!activeAudit) return 0;
+    if (!isDueDateValid || !isStartDateValid) return 35;
+
+    const totalWindow = dueDate.getTime() - startDate.getTime();
+    if (totalWindow <= 0) return msRemaining !== null && msRemaining <= 0 ? 100 : 35;
+
+    const elapsed = now - startDate.getTime();
+    return Math.max(0, Math.min(100, Math.round((elapsed / totalWindow) * 100)));
+  })();
 
   // Solo contar auditorías activas (sin canceladas/vencidas) para el progreso
   const activeAuditorias = auditorias.filter((a) => {
@@ -86,6 +148,11 @@ export default function HomeScreen() {
 
   useEffect(() => {
     validateSession();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
   }, []);
 
   return (
@@ -171,6 +238,90 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {activeAudit && (
+          <TouchableOpacity
+            style={[styles.progressWidget, { backgroundColor: colors.surface }]}
+            activeOpacity={0.85}
+            onPress={() => router.push(`/audit/${activeAudit.id}`)}
+          >
+            <View style={styles.progressWidgetHeader}>
+              <View style={styles.progressWidgetTitleWrap}>
+                <View style={styles.progressPulseDot} />
+                <Text
+                  style={[styles.progressWidgetTitle, { color: colors.text }]}
+                >
+                  Progreso de auditoría
+                </Text>
+              </View>
+              <Text
+                style={[styles.progressWidgetCount, { color: colors.primary }]}
+              >
+                {inProgressAudits.length} activa
+                {inProgressAudits.length > 1 ? "s" : ""}
+              </Text>
+            </View>
+
+            <View
+              style={[
+                styles.progressWidgetBarBg,
+                { backgroundColor: colors.surfaceSecondary },
+              ]}
+            >
+              <View
+                style={[
+                  styles.progressWidgetBarFill,
+                  { width: `${progressPercent}%` },
+                ]}
+              />
+            </View>
+
+            <View style={styles.progressWidgetFooter}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[
+                    styles.progressWidgetAuditTitle,
+                    { color: colors.text },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {activeAudit.titulo}
+                </Text>
+                <Text
+                  style={[
+                    styles.progressWidgetAuditMeta,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Fecha límite: {isDueDateValid
+                    ? dueDate.toLocaleString("es-MX", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "No disponible"}
+                </Text>
+                <Text
+                  style={[
+                    styles.progressWidgetAuditMeta,
+                    {
+                      color:
+                        msRemaining !== null && msRemaining < 0
+                          ? "#dc2626"
+                          : colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {formatRemaining(msRemaining)}
+                </Text>
+              </View>
+              <View style={styles.progressWidgetAction}>
+                <Play size={14} color="#fff" />
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Auditorías Asignadas */}
         {auditorias.length > 0 && (
@@ -459,6 +610,77 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 14,
     marginBottom: 28,
+  },
+  progressWidget: {
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(59,130,246,0.22)",
+    shadowColor: "#1f3f93",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  progressWidgetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  progressWidgetTitleWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  progressPulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#f59e0b",
+  },
+  progressWidgetTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  progressWidgetCount: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  progressWidgetBarBg: {
+    height: 8,
+    borderRadius: 999,
+    overflow: "hidden",
+    marginBottom: 12,
+  },
+  progressWidgetBarFill: {
+    width: "66%",
+    height: "100%",
+    backgroundColor: "#f59e0b",
+    borderRadius: 999,
+  },
+  progressWidgetFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  progressWidgetAuditTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  progressWidgetAuditMeta: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  progressWidgetAction: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: "#f59e0b",
+    alignItems: "center",
+    justifyContent: "center",
   },
   actionCard: {
     flex: 1,

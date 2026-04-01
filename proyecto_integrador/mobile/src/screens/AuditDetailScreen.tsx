@@ -187,7 +187,7 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
           onPress: async () => {
             setIsCancelling(true);
             try {
-              await auditoriasApi.cambiarEstado(audit.id, 3);
+              await auditoriasApi.cambiarEstado(audit.id, 4);
               await refresh();
             } catch (error) {
               console.error("Error cancelando auditoría:", error);
