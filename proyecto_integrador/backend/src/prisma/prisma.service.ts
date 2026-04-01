@@ -1,29 +1,32 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
+import pg from 'pg';
 
 @Injectable()
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  private pool: Pool;
+  private pool: pg.Pool;
 
   constructor() {
-    const databaseUrl = process.env.DATABASE_URL;
+    const databaseUrl: string = process.env.DATABASE_URL ?? '';
 
-    if (!databaseUrl || databaseUrl.trim().length === 0) {
+    if (databaseUrl.trim().length === 0) {
       throw new Error('DATABASE_URL no esta definida o esta vacia.');
     }
 
-    const pool = new Pool({ connectionString: databaseUrl });
-    const adapter = new PrismaPg({ pool });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    const pool = new pg.Pool({ connectionString: databaseUrl });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const adapter = new PrismaPg(pool);
 
     super({
       adapter,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.pool = pool;
   }
 
@@ -33,6 +36,7 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await this.pool.end();
   }
 }
