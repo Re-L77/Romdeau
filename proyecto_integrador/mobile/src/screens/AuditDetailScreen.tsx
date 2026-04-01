@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -42,11 +42,38 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   const { auditorias, refresh } = useAuditorias();
   const [audit, setAudit] = useState<any>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const previousEstadoRef = useRef<number | null>(null);
 
   useEffect(() => {
     const foundAudit = auditorias.find((a) => a.id === auditId);
     setAudit(foundAudit);
   }, [auditId, auditorias]);
+
+  useEffect(() => {
+    refresh();
+    const pollId = setInterval(() => {
+      refresh();
+    }, 10000);
+
+    return () => clearInterval(pollId);
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!audit?.estado_id) return;
+
+    if (
+      previousEstadoRef.current !== null &&
+      previousEstadoRef.current !== audit.estado_id
+    ) {
+      Alert.alert(
+        "Estado actualizado",
+        `La auditoría cambió a ${getAuditoriaStatusLabel(resolveAuditoriaStatus(audit))}.`,
+      );
+    }
+
+    previousEstadoRef.current = audit.estado_id;
+  }, [audit?.estado_id]);
 
   if (!audit) {
     return (
@@ -123,30 +150,55 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
   });
 
   const handleStartAudit = async () => {
-    if (audit.estado_id === 2) {
-      // Auditoría en progreso - navegar al scanner
-      setIsStarting(true);
-      try {
-        // Refrescar datos antes de ir al scanner
-        await refresh();
-        router.push(`/scanner?auditId=${audit.id}`);
-      } catch (error) {
-        console.error("Error actualizando auditoría:", error);
-        Alert.alert("Error", "No se pudo actualizar la auditoría");
-      } finally {
-        setIsStarting(false);
-      }
-    } else if (audit.estado_id === 1) {
-      Alert.alert(
-        "Auditoría aún no iniciada",
-        "Esta auditoría está programada. Aguarda a que el supervisor la inicie.",
-      );
-    } else {
+    if (audit.estado_id !== 1 && audit.estado_id !== 2) {
       Alert.alert(
         "No disponible",
         "Solo puedes auditar si la auditoría está en progreso",
       );
+      return;
     }
+
+    setIsStarting(true);
+    try {
+      if (audit.estado_id === 1) {
+        // Programada -> En Progreso
+        await auditoriasApi.cambiarEstado(audit.id, 2);
+      }
+
+      await refresh();
+      router.push(`/scanner?auditId=${audit.id}`);
+    } catch (error) {
+      console.error("Error iniciando auditoría:", error);
+      Alert.alert("Error", "No se pudo iniciar la auditoría");
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  const handleCancelAudit = () => {
+    Alert.alert(
+      "Cancelar Auditoría",
+      "¿Seguro que deseas cancelar esta auditoría? Esta acción no se puede deshacer.",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Sí, cancelar",
+          style: "destructive",
+          onPress: async () => {
+            setIsCancelling(true);
+            try {
+              await auditoriasApi.cambiarEstado(audit.id, 3);
+              await refresh();
+            } catch (error) {
+              console.error("Error cancelando auditoría:", error);
+              Alert.alert("Error", "No se pudo cancelar la auditoría");
+            } finally {
+              setIsCancelling(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -296,50 +348,67 @@ export default function AuditDetailScreen({ auditId }: AuditDetailScreenProps) {
               <TouchableOpacity
                 style={[
                   styles.cardActionButton,
-                  {
-                    backgroundColor:
-                      audit.estado_id === 2 ? colors.primary : "#cbd5e1",
-                  },
+                  { borderColor: `${colors.primary}66` },
                 ]}
                 onPress={handleStartAudit}
-                activeOpacity={audit.estado_id === 2 ? 0.8 : 1}
+                activeOpacity={0.8}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 disabled={isStarting}
               >
                 <LinearGradient
-                  colors={
-                    audit.estado_id === 2
-                      ? [colors.primary, colors.primary]
-                      : ["#cbd5e1", "#cbd5e1"]
-                  }
+                  colors={[
+                    colors.primary,
+                    colors.primaryDark || colors.primary,
+                  ]}
                   style={styles.cardButtonGradient}
                 >
-                  {isStarting ? (
-                    <ActivityIndicator
-                      size="small"
-                      color={audit.estado_id === 2 ? "#fff" : "#64748b"}
-                    />
-                  ) : (
-                    <Play
-                      size={22}
-                      color={audit.estado_id === 2 ? "#fff" : "#64748b"}
-                      strokeWidth={2.5}
-                    />
-                  )}
+                  <View style={styles.cardButtonIconWrap}>
+                    {isStarting ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Play size={20} color="#fff" strokeWidth={2.5} />
+                    )}
+                  </View>
                   <View style={{ flex: 1 }}>
-                    <Text
-                      style={[
-                        styles.cardButtonText,
-                        {
-                          color: audit.estado_id === 2 ? "#fff" : "#64748b",
-                        },
-                      ]}
-                    >
+                    <Text style={[styles.cardButtonText, { color: "#fff" }]}>
                       {isStarting
                         ? "Actualizando..."
                         : audit.estado_id === 2
                           ? "Continuar Auditoría"
-                          : "Auditoría Programada"}
+                          : "Seleccionar Auditoría"}
+                    </Text>
+                    <Text style={styles.cardButtonSubtext}>
+                      {audit.estado_id === 2
+                        ? "Escanea activos vinculados"
+                        : "Iniciar y abrir escáner"}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.cancelActionButton}
+                onPress={handleCancelAudit}
+                activeOpacity={0.85}
+                disabled={isCancelling}
+              >
+                <LinearGradient
+                  colors={["#dc2626", "#991b1b"]}
+                  style={styles.cancelButtonGradient}
+                >
+                  <View style={styles.cancelButtonIconWrap}>
+                    {isCancelling ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <AlertCircle size={16} color="#fff" />
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cancelButtonText}>
+                      {isCancelling ? "Cancelando..." : "Cancelar Auditoría"}
+                    </Text>
+                    <Text style={styles.cancelButtonSubtext}>
+                      Cambiar estado a cancelada
                     </Text>
                   </View>
                 </LinearGradient>
@@ -728,28 +797,78 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   cardActionButton: {
-    borderRadius: 12,
+    borderRadius: 16,
     marginTop: 8,
     overflow: "hidden",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    minHeight: 56,
+    borderWidth: 1,
+    elevation: 4,
+    shadowColor: "#1d4ed8",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    minHeight: 64,
   },
   cardButtonGradient: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     gap: 12,
-    minHeight: 56,
+    minHeight: 64,
     justifyContent: "flex-start",
   },
+  cardButtonIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   cardButtonText: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  cardButtonSubtext: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  cancelActionButton: {
+    borderRadius: 16,
+    marginTop: 10,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#7f1d1d",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  cancelButtonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  cancelButtonIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelButtonText: {
+    color: "#fff",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
+  },
+  cancelButtonSubtext: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 11,
+    marginTop: 1,
   },
   auditoreRow: {
     flexDirection: "row",
