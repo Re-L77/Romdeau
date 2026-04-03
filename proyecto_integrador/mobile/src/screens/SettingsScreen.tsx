@@ -7,8 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
@@ -42,6 +46,7 @@ type AuditProgressItem = {
 export default function SettingsScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { auditorias } = useAuditorias();
   const [isLoading, setIsLoading] = useState(false);
@@ -189,7 +194,7 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top"]}
+      edges={["left", "right"]}
     >
       <LinearGradient
         colors={[
@@ -197,7 +202,10 @@ export default function SettingsScreen() {
           isDark ? "#0f1f3a" : "#2844a1",
           isDark ? "#14274a" : "#3451b8",
         ]}
-        style={styles.header}
+        style={[
+          styles.header,
+          { paddingTop: (Platform.OS === "ios" ? insets.top : 0) + 16 },
+        ]}
       >
         <Text style={styles.headerTitle}>Activos por Auditar</Text>
         <Text style={styles.headerSubtitle}>

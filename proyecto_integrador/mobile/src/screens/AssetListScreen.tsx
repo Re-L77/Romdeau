@@ -6,8 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
@@ -31,6 +35,7 @@ export default function AssetListScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { auditorias } = useAuditorias();
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterType>("ALL");
   const headerGradient = isDark
@@ -223,10 +228,16 @@ export default function AssetListScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top"]}
+      edges={["left", "right"]}
     >
       {/* Header */}
-      <LinearGradient colors={headerGradient} style={styles.header}>
+      <LinearGradient
+        colors={headerGradient}
+        style={[
+          styles.header,
+          { paddingTop: (Platform.OS === "ios" ? insets.top : 0) + 18 },
+        ]}
+      >
         <Text style={styles.title}>Mis Auditorías</Text>
 
         {/* Search */}
