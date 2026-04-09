@@ -1,4 +1,6 @@
 packages: []
+ignoredBuiltDependencies:
+  - '@swc/core'
 onlyBuiltDependencies:
   - '@nestjs/core'
   - '@prisma/engines'

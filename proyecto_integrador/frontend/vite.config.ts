@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
@@ -15,6 +16,12 @@ export default defineConfig({
       // Alias @ to the src directory
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+
+  test: {
+    globals: true,
+    environment: "jsdom",
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
