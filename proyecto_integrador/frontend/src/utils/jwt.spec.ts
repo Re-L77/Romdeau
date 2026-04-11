@@ -24,8 +24,10 @@ describe('decodeJWT', () => {
   });
 
   it('retorna null para un payload no-JSON', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     const token = `header.${btoa('esto no es json')}.signature`;
     expect(decodeJWT(token)).toBeNull();
+    vi.restoreAllMocks();
   });
 });
 
