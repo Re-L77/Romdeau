@@ -1,8 +1,20 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(
+    helmet({
+      permittedCrossDomainPolicies: true,
+      crossOriginEmbedderPolicy: false, // requiere configuración adicional en recursos externos
+    }),
+  );
+  app.use((_req, res, next) => {
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
 
   // Enable CORS para desarrollo (web + mobile)
   app.enableCors({
