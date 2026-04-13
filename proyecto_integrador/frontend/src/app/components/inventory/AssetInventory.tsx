@@ -52,6 +52,7 @@ export function AssetInventory({
   const [activosEnriquecidos, setActivosEnriquecidos] = useState<any[]>([]);
   const [allActivos, setAllActivos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -61,6 +62,7 @@ export function AssetInventory({
   const [estanteFilter, setEstanteFilter] = useState<string>("all");
   const [tipoRastreoFilter, setTipoRastreoFilter] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
+  const [debouncedSearchText, setDebouncedSearchText] = useState("");
   const [sinCustodio, setSinCustodio] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -146,14 +148,16 @@ export function AssetInventory({
     try {
       if (append) {
         setLoadingMore(true);
-      } else {
+      } else if (activosEnriquecidos.length === 0 && page === 1) {
         setLoading(true);
+      } else {
+        setIsFiltering(true);
       }
 
       const result = await activosApi.getList({
         page,
         limit: 20,
-        q: searchText.trim() || undefined,
+        q: debouncedSearchText.trim() || undefined,
         categoriaNombre: categoryFilter !== "all" ? categoryFilter : undefined,
         estadoOperativoId: statusFilter !== "all" ? statusFilter : undefined,
         oficinaId: oficinaFilter !== "all" ? oficinaFilter : undefined,
@@ -175,6 +179,7 @@ export function AssetInventory({
       }
     } finally {
       setLoading(false);
+      setIsFiltering(false);
       setLoadingMore(false);
     }
   };
@@ -185,13 +190,21 @@ export function AssetInventory({
   }, []);
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchText(searchText);
+    }, 350);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchText]);
+
+  useEffect(() => {
     loadActivos(1);
   }, [
     categoryFilter,
     statusFilter,
     oficinaFilter,
     estanteFilter,
-    searchText,
+    debouncedSearchText,
     sinCustodio,
     tipoRastreoFilter,
   ]);
@@ -459,6 +472,11 @@ export function AssetInventory({
                 <h2 className="text-xl font-bold dark:text-white">
                   Filtros Jerárquicos
                 </h2>
+                {isFiltering && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400 animate-pulse">
+                    Actualizando...
+                  </span>
+                )}
               </div>
               <motion.button
                 whileHover={{ scale: 1.05 }}

@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, AlertCircle } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -22,6 +23,25 @@ export function ConfirmationModal({
   cancelText = 'Cancelar',
   icon,
 }: ConfirmationModalProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEsc);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -31,7 +51,7 @@ export function ConfirmationModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onMouseDown={onClose}
             className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[100]"
           />
 
@@ -42,6 +62,7 @@ export function ConfirmationModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
+              onMouseDown={(event) => event.stopPropagation()}
               className="bg-white dark:bg-[#1a1a1a] rounded-3xl shadow-[0_20px_60px_rgb(0,0,0,0.15)] dark:shadow-[0_20px_60px_rgb(0,0,0,0.8)] max-w-md w-full overflow-hidden pointer-events-auto"
             >
               {/* Header */}
@@ -84,8 +105,11 @@ export function ConfirmationModal({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
-                    onConfirm();
+                    // Close first to avoid two overlapped modals fighting for focus/layer.
                     onClose();
+                    window.setTimeout(() => {
+                      onConfirm();
+                    }, 0);
                   }}
                   className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
                 >

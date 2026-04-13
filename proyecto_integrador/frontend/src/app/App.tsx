@@ -110,6 +110,7 @@ function AppContent() {
   );
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
+  const [inventoryRefreshKey, setInventoryRefreshKey] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedProveedorId, setSelectedProveedorId] = useState<string | null>(
     null,
@@ -254,6 +255,7 @@ function AppContent() {
   const handleSaveAsset = () => {
     setShowCreateEditModal(false);
     setEditingAssetId(null);
+    setInventoryRefreshKey((k) => k + 1);
     alert("Activo guardado exitosamente");
   };
 
@@ -330,6 +332,7 @@ function AppContent() {
           {/* View 3: Módulo de Inventario */}
           {currentView === "inventario" && (
             <ModuloInventario
+              key={inventoryRefreshKey}
               onAssetClick={handleAssetClick}
               onCreateAsset={handleCreateAsset}
             />

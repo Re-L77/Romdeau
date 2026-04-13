@@ -124,8 +124,13 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
       }
       try {
         setLoadingUsuarios(true);
-        const data = await usuariosApi.getAll("asc", Number(selectedDepartamentoId), true);
-        const filtered = data.filter((u) => u.id !== asset?.custodio_actual_id);
+        const data = await usuariosApi.getAll();
+        const filtered = data.filter(
+          (u) =>
+            u.activo !== false &&
+            String(u.id) !== String(asset?.custodio_actual_id) &&
+            String(u.departamento_id) === String(selectedDepartamentoId),
+        );
         setUsuarios(filtered);
       } catch (err) {
         console.error("Error al cargar usuarios filtrados:", err);
@@ -145,20 +150,6 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
     if (confirmModal.action === "delete") {
       alert("Activo eliminado exitosamente");
       onBack();
-      return;
-    }
-
-    if (confirmModal.action === "transfer") {
-      setIsTransferModalOpen(true);
-      setConfirmModal({ isOpen: false, action: null });
-      return;
-    }
-
-    if (confirmModal.action === "changeCustodian") {
-      setIsChangingCustodian(true);
-      setSelectedDepartamentoId("");
-      setSelectedCustodioId("");
-      setConfirmModal({ isOpen: false, action: null });
       return;
     }
   };
@@ -368,10 +359,8 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    setConfirmModal({ isOpen: true, action: "transfer" })
-                  }
-                  className="px-6 py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+                  onClick={() => setIsTransferModalOpen(true)}
+                  className="px-6 py-4 bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-full font-medium hover:bg-amber-500/20 dark:hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2"
                 >
                   <Package className="w-4 h-4" />
                   Transferir
@@ -443,7 +432,7 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
               </h3>
 
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xl font-semibold shadow-lg">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white text-xl font-semibold shadow-lg">
                   {custodioIniciales || "--"}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -558,10 +547,12 @@ export function AssetDetail({ assetId, onBack, onEdit }: AssetDetailProps) {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    setConfirmModal({ isOpen: true, action: "changeCustodian" })
-                  }
-                  className="w-full mt-6 px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+                  onClick={() => {
+                    setIsChangingCustodian(true);
+                    setSelectedDepartamentoId("");
+                    setSelectedCustodioId("");
+                  }}
+                  className="w-full mt-6 px-6 py-3 bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-full font-medium hover:bg-amber-500/20 dark:hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2"
                 >
                   <User className="w-4 h-4" />
                   Cambiar Custodio

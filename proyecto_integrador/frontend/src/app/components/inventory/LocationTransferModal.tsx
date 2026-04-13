@@ -32,6 +32,7 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       loadOficinas();
+      loadEstantes();
       // Reset state
       setTargetType("oficina");
       setSelectedOficinaId("");
@@ -39,6 +40,25 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
       setError(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleEsc);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, [isOpen, onClose]);
 
   const loadOficinas = async () => {
     try {
@@ -52,14 +72,33 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
     }
   };
 
-  const loadEstantes = async (oficinaId: string) => {
-    if (!oficinaId) return;
+  const loadEstantes = async (oficinaId?: string) => {
     try {
       setLoading(true);
-      const oficina = oficinas.find((o) => o.id === oficinaId);
-      const sedeId = oficina?.pisos?.edificios?.sede_id;
+      const oficina = oficinaId
+        ? oficinas.find((o) => String(o.id) === String(oficinaId))
+        : null;
+      const sedeId = oficina
+        ? oficina?.pisos?.edificios?.sede_id ??
+          oficina?.pisos?.edificios?.sedes?.id
+        : undefined;
       const data = await ubicacionesApi.getEstantes(sedeId);
-      setEstantes(data);
+
+      if (!oficinaId) {
+        setEstantes(data);
+        return;
+      }
+
+      const filtered = data.filter((estante) => {
+        const estanteOficinaId =
+          estante?.oficina_id ??
+          estante?.oficinas?.id ??
+          estante?.pasillos?.almacenes?.oficina_id ??
+          estante?.pasillos?.almacenes?.oficinas?.id;
+        return String(estanteOficinaId) === String(oficinaId);
+      });
+
+      setEstantes(filtered.length > 0 ? filtered : data);
     } catch (err) {
       setError("Error al cargar estantes");
     } finally {
@@ -70,10 +109,6 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
   const handleOficinaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setSelectedOficinaId(id);
-    setSelectedEstanteId("");
-    if (targetType === "estante") {
-      loadEstantes(id);
-    }
   };
 
   const handleTransfer = async () => {
@@ -82,8 +117,8 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
       setError("Debe seleccionar una oficina");
       return;
     }
-    if (targetType === "estante" && (!selectedOficinaId || !selectedEstanteId)) {
-      setError("Debe seleccionar una oficina y un estante");
+    if (targetType === "estante" && !selectedEstanteId) {
+      setError("Debe seleccionar un estante");
       return;
     }
 
@@ -100,9 +135,24 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
     try {
       setSubmitting(true);
       setError(null);
+
+      const selectedEstante = estantes.find(
+        (estante) => String(estante.id) === String(selectedEstanteId),
+      );
+      const estanteOficinaId =
+        selectedEstante?.oficina_id ??
+        selectedEstante?.oficinas?.id ??
+        selectedEstante?.pasillos?.almacenes?.oficina_id ??
+        selectedEstante?.pasillos?.almacenes?.oficinas?.id;
+
+      if (targetType === "estante" && !estanteOficinaId) {
+        setError("No se pudo determinar la oficina del estante seleccionado");
+        setSubmitting(false);
+        return;
+      }
       
       const updateData: any = {
-        oficina_id: selectedOficinaId,
+        oficina_id: targetType === "oficina" ? selectedOficinaId : estanteOficinaId,
       };
       
       if (targetType === "estante") {
@@ -124,17 +174,21 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onMouseDown={onClose}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 dark:border-gray-800"
+        onMouseDown={(event) => event.stopPropagation()}
+        className="w-full max-w-lg bg-white dark:bg-[#171717] rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-200 dark:border-[#2a2a2a]"
       >
         {/* Header */}
-        <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800/20 dark:to-gray-900/10">
+        <div className="p-8 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between bg-gradient-to-r from-gray-50 to-amber-50/60 dark:from-[#1f1f1f] dark:to-[#222017]">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
               <div className="p-2 bg-amber-100 dark:bg-amber-500/20 rounded-xl text-amber-600 dark:text-amber-400">
                 <ArrowRight className="w-6 h-6" />
               </div>
@@ -146,7 +200,7 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white dark:hover:bg-gray-800 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-[#242424] rounded-full transition-colors"
           >
             <X className="w-6 h-6 text-gray-400" />
           </button>
@@ -177,8 +231,8 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
                 }}
                 className={`p-4 rounded-3xl border-2 transition-all flex flex-col items-center gap-3 ${
                   targetType === "oficina"
-                    ? "border-black dark:border-white bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/5"
-                    : "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 hover:border-black/30 dark:hover:border-white/30"
+                    ? "border-amber-500 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 shadow-sm"
+                    : "border-gray-200 dark:border-[#2c2c2c] bg-gray-50 dark:bg-[#202020] text-gray-500 dark:text-gray-400 hover:border-amber-500/60"
                 }`}
               >
                 <Building2 className="w-8 h-8" />
@@ -188,8 +242,8 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
                 onClick={() => setTargetType("estante")}
                 className={`p-4 rounded-3xl border-2 transition-all flex flex-col items-center gap-3 ${
                   targetType === "estante"
-                    ? "border-black dark:border-white bg-white dark:bg-[#1a1a1a] text-black dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/5"
-                    : "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 hover:border-black/30 dark:hover:border-white/30"
+                    ? "border-amber-500 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 shadow-sm"
+                    : "border-gray-200 dark:border-[#2c2c2c] bg-gray-50 dark:bg-[#202020] text-gray-500 dark:text-gray-400 hover:border-amber-500/60"
                 }`}
               >
                 <Layout className="w-8 h-8" />
@@ -200,58 +254,56 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
 
           {/* Paso 2: Selección Dinámica */}
           <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">
-                2. Seleccione Oficina
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedOficinaId}
-                  onChange={handleOficinaChange}
-                  disabled={loading}
-                  className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-black dark:focus:border-white rounded-2xl text-gray-900 dark:text-white outline-none transition-all appearance-none disabled:opacity-50"
-                >
-                  <option value="">Seleccione una oficina...</option>
-                  {oficinas.map((of) => (
-                    <option key={of.id} value={of.id}>
-                      {of.nombre} ({of.pisos?.edificios?.sedes?.nombre})
-                    </option>
-                  ))}
-                </select>
-                {loading && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    <Loader2 className="w-5 h-5 animate-spin text-gray-900 dark:text-white" />
-                  </div>
-                )}
+            {targetType === "oficina" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">
+                  2. Seleccione Oficina
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedOficinaId}
+                    onChange={handleOficinaChange}
+                    disabled={loading}
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-[#222222] border-2 border-transparent focus:border-amber-500 rounded-2xl text-gray-900 dark:text-gray-100 outline-none transition-all appearance-none disabled:opacity-50"
+                  >
+                    <option value="">Seleccione una oficina...</option>
+                    {oficinas.map((of) => (
+                      <option key={of.id} value={of.id}>
+                        {of.nombre} ({of.pisos?.edificios?.sedes?.nombre})
+                      </option>
+                    ))}
+                  </select>
+                  {loading && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-900 dark:text-white" />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-
-            {targetType === "estante" && (
+            ) : (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 className="space-y-2"
               >
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">
-                  3. Seleccione Estante
+                  2. Seleccione Estante
                 </label>
                 <div className="relative">
                   <select
                     value={selectedEstanteId}
                     onChange={(e) => setSelectedEstanteId(e.target.value)}
-                    disabled={loading || !selectedOficinaId}
-                    className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-black dark:focus:border-white rounded-2xl text-gray-900 dark:text-white outline-none transition-all appearance-none disabled:opacity-50"
+                    disabled={loading}
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-[#222222] border-2 border-transparent focus:border-amber-500 rounded-2xl text-gray-900 dark:text-gray-100 outline-none transition-all appearance-none disabled:opacity-50"
                   >
-                    <option value="">
-                      {selectedOficinaId ? "Seleccione un estante..." : "Primero seleccione oficina"}
-                    </option>
+                    <option value="">Seleccione un estante...</option>
                     {estantes.map((es) => (
                       <option key={es.id} value={es.id}>
-                        {es.nombre} ({es.pasillos?.almacenes?.nombre})
+                        {es.nombre} ({es.pasillos?.almacenes?.nombre || "Sin almacén"})
                       </option>
                     ))}
                   </select>
-                  {loading && selectedOficinaId && (
+                  {loading && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
                       <Loader2 className="w-5 h-5 animate-spin text-gray-900 dark:text-white" />
                     </div>
@@ -263,17 +315,17 @@ export const LocationTransferModal: React.FC<LocationTransferModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-8 bg-gray-50 dark:bg-gray-800/50 flex gap-4">
+        <div className="p-8 bg-gray-50 dark:bg-[#1f1f1f] flex gap-4 border-t border-gray-200 dark:border-[#2a2a2a]">
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+            className="flex-1 px-6 py-4 bg-white dark:bg-[#252525] text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-100 dark:hover:bg-[#2d2d2d] transition-colors border border-gray-200 dark:border-[#343434]"
           >
             Cancelar
           </button>
           <button
             onClick={handleTransfer}
             disabled={submitting || (targetType === "oficina" ? !selectedOficinaId : !selectedEstanteId)}
-            className="flex-1 px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold hover:bg-gray-900 dark:hover:bg-gray-100 transition-all flex items-center justify-center gap-3 shadow-lg shadow-black/5 dark:shadow-white/5 disabled:opacity-50 disabled:shadow-none"
+            className="flex-1 px-6 py-4 bg-amber-600 text-white rounded-2xl font-bold hover:bg-amber-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-amber-600/20 disabled:opacity-50 disabled:shadow-none"
           >
             {submitting ? (
               <Loader2 className="w-5 h-5 animate-spin" />
