@@ -33,7 +33,7 @@ export default function LoginScreen() {
   const router = useRouter();
 
   const [email, setEmail] = useState("proxyone.knives@gmail.com");
-  const [password, setPassword] = useState("xK9$mP2@vL5*qR8qq1");
+  const [password, setPassword] = useState("xK9$mP2@vL5*qR8");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [generalError, setGeneralError] = useState<string | null>(null);
