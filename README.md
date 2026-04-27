@@ -50,7 +50,7 @@ Romdeau unifica operación, control y analítica en un solo ecosistema. El objet
 | Vista | Modo Claro | Modo Oscuro |
 |---|---|---|
 | Dashboard web | ![Dashboard web - placeholder](proyecto_integrador/docs/images/web-dashboard-placeholder.png) | ![Dashboard web dark - placeholder](proyecto_integrador/docs/images/web-dashboard-placeholder-dark.png) |
-| App móvil | <img src="proyecto_integrador/docs/images/mobile-home-placeholder.png" alt="App móvil - placeholder" width="300" /> | <img src="proyecto_integrador/docs/images/mobile-home-placeholder-dark.png" alt="App móvil dark - placeholder" width="300" /> |
+| App móvil | <img src="proyecto_integrador/docs/images/mobile-home-placeholder.png" alt="App móvil - placeholder" width="180" style="max-width:180px;border-radius:12px;object-fit:cover;" /> | <img src="proyecto_integrador/docs/images/mobile-home-placeholder-dark.png" alt="App móvil dark - placeholder" width="180" style="max-width:180px;border-radius:12px;object-fit:cover;" /> |
 | Activos | ![Activos - placeholder](proyecto_integrador/docs/images/activos-placeholder.png) | ![Activos dark - placeholder](proyecto_integrador/docs/images/activos-placeholder-dark.png) |
 | Auditorías | ![Auditorías - placeholder](proyecto_integrador/docs/images/auditorias-placeholder.png) | ![Auditorías dark - placeholder](proyecto_integrador/docs/images/auditorias-placeholder-dark.png) |
 ## Tabla de contenido
