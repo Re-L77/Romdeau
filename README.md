@@ -50,7 +50,7 @@ Romdeau unifica operación, control y analítica en un solo ecosistema. El objet
 | Vista | Modo Claro | Modo Oscuro |
 |---|---|---|
 | Dashboard web | ![Dashboard web - placeholder](proyecto_integrador/docs/images/web-dashboard-placeholder.png) | ![Dashboard web dark - placeholder](proyecto_integrador/docs/images/web-dashboard-placeholder-dark.png) |
-| App móvil | ![App móvil - placeholder](proyecto_integrador/docs/images/mobile-home-placeholder.png) | ![App móvil dark - placeholder](proyecto_integrador/docs/images/mobile-home-placeholder-dark.png) |
+| App móvil | <img src="proyecto_integrador/docs/images/mobile-home-placeholder.png" alt="App móvil - placeholder" width="300" /> | <img src="proyecto_integrador/docs/images/mobile-home-placeholder-dark.png" alt="App móvil dark - placeholder" width="300" /> |
 | Activos | ![Activos - placeholder](proyecto_integrador/docs/images/activos-placeholder.png) | ![Activos dark - placeholder](proyecto_integrador/docs/images/activos-placeholder-dark.png) |
 | Auditorías | ![Auditorías - placeholder](proyecto_integrador/docs/images/auditorias-placeholder.png) | ![Auditorías dark - placeholder](proyecto_integrador/docs/images/auditorias-placeholder-dark.png) |
 ## Tabla de contenido
@@ -68,9 +68,6 @@ Romdeau unifica operación, control y analítica en un solo ecosistema. El objet
 - [Scripts útiles](#scripts-útiles)
 - [Pruebas](#pruebas)
 - [Documentación](#documentación)
-- [Hoja de ruta](#hoja-de-ruta)
-- [Colaboración](#colaboración)
-- [Plantillas de imagen](#plantillas-de-imagen)
 
 ## Arquitectura rápida
 
@@ -239,43 +236,3 @@ pnpm run test
   - `proyecto_integrador/docs/guia-arquitectura-endpoints.md`
 - Flujo de auditorías web/móvil:
   - `proyecto_integrador/docs/flujo-auditorias-web-movil.md`
-
-## Hoja de ruta
-
-- Incrementar cobertura de pruebas en módulos críticos.
-- Documentar despliegue por entorno.
-- Reemplazar placeholders por screenshots reales.
-
-## Próximas capturas recomendadas
-
-- Hero del dashboard con KPIs principales.
-- Flujo completo de auditoría en móvil (inicio a cierre).
-- Vista de detalle de activo con historial.
-- Pantalla de alertas o hallazgos críticos.
-
-## Colaboración
-
-1. Crea rama de trabajo (`feature/nombre-corto`).
-2. Haz commits pequeños y claros.
-3. Ejecuta pruebas del módulo afectado.
-4. Abre Pull Request con contexto técnico y funcional.
-
-## Plantillas de imagen
-
-Puedes duplicar este bloque para agregar evidencia visual:
-
-```md
-### Título de la captura
-
-Breve descripción de lo que se ve.
-
-![Descripción corta](proyecto_integrador/docs/images/mi-captura.png)
-```
-
-También puedes usar un bloque comparativo:
-
-```md
-| Antes | Después |
-|---|---|
-| ![Antes](proyecto_integrador/docs/images/antes.png) | ![Después](proyecto_integrador/docs/images/despues.png) |
-```
