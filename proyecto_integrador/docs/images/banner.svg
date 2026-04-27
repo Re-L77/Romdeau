@@ -1,0 +1,87 @@
+<svg width="1600" height="420" viewBox="0 0 1600 420" fill="none" xmlns="http://www.w3.org/2000/svg"
+    role="img" aria-labelledby="title desc">
+    <title id="title">Romdeau Banner</title>
+    <desc id="desc">Banner oscuro y minimalista para Romdeau con titulo y tarjeta resumen.</desc>
+
+    <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="420" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#050816" />
+            <stop offset="1" stop-color="#0B1220" />
+        </linearGradient>
+        <linearGradient id="ink" x1="120" y1="74" x2="820" y2="330" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#F8FAFC" />
+            <stop offset="1" stop-color="#D9E2F2" />
+        </linearGradient>
+        <linearGradient id="line" x1="930" y1="120" x2="1440" y2="300"
+            gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#2F7D6D" />
+            <stop offset="0.5" stop-color="#1F516F" />
+            <stop offset="1" stop-color="#D69B2D" />
+        </linearGradient>
+        <filter id="softShadow" x="0" y="0" width="1600" height="420" filterUnits="userSpaceOnUse"
+            color-interpolation-filters="sRGB">
+            <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000"
+                flood-opacity="0.30" />
+        </filter>
+    </defs>
+
+    <rect width="1600" height="420" rx="32" fill="url(#bg)" />
+    <rect x="24" y="24" width="1552" height="372" rx="28" fill="none"
+        stroke="rgba(255,255,255,0.06)" />
+
+    <g opacity="0.24">
+        <path d="M112 296H668" stroke="url(#line)" stroke-width="3" stroke-linecap="round" />
+        <circle cx="112" cy="296" r="4" fill="#2F7D6D" />
+        <circle cx="392" cy="296" r="4" fill="#1F516F" />
+        <circle cx="668" cy="296" r="4" fill="#D69B2D" />
+    </g>
+
+    <g filter="url(#softShadow)">
+        <circle cx="102" cy="308" r="9" fill="#2F7D6D" />
+        <circle cx="394" cy="276" r="9" fill="#1F516F" />
+        <circle cx="676" cy="266" r="9" fill="#D69B2D" />
+    </g>
+
+    <g font-family="Inter, Segoe UI, Arial, sans-serif">
+        <text x="112" y="252" font-size="92" font-weight="800" fill="url(#ink)">Romdeau</text>
+    </g>
+
+    <g transform="translate(1048 92)" filter="url(#softShadow)">
+        <rect x="0" y="0" width="440" height="236" rx="28" fill="rgba(255,255,255,0.04)"
+            stroke="rgba(255,255,255,0.10)" />
+        <rect x="28" y="28" width="92" height="10" rx="5" fill="#2F7D6D" />
+        <rect x="28" y="68" width="220" height="18" rx="9" fill="rgba(255,255,255,0.90)" />
+        <rect x="28" y="98" width="284" height="10" rx="5" fill="rgba(255,255,255,0.18)" />
+        <rect x="28" y="118" width="246" height="10" rx="5" fill="rgba(255,255,255,0.14)" />
+        <rect x="28" y="154" width="64" height="30" rx="15" fill="rgba(47,125,109,0.16)"
+            stroke="rgba(47,125,109,0.22)" />
+        <rect x="100" y="154" width="64" height="30" rx="15" fill="rgba(31,81,111,0.16)"
+            stroke="rgba(31,81,111,0.22)" />
+        <rect x="172" y="154" width="64" height="30" rx="15" fill="rgba(214,155,45,0.16)"
+            stroke="rgba(214,155,45,0.22)" />
+        <g transform="translate(322 54)">
+            <rect x="0" y="0" width="92" height="92" rx="16" fill="#0B1220"
+                stroke="rgba(255,255,255,0.10)" />
+            <rect x="10" y="10" width="28" height="28" rx="4" fill="none" stroke="#F8FAFC"
+                stroke-width="6" />
+            <rect x="54" y="10" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="66" y="10" width="8" height="8" rx="1.5" fill="#2F7D6D" />
+            <rect x="54" y="22" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="10" y="54" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="22" y="54" width="8" height="8" rx="1.5" fill="#2F7D6D" />
+            <rect x="34" y="54" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="46" y="54" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="58" y="54" width="8" height="8" rx="1.5" fill="#D69B2D" />
+            <rect x="70" y="54" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="22" y="66" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="34" y="66" width="8" height="8" rx="1.5" fill="#2F7D6D" />
+            <rect x="58" y="66" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="70" y="66" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="46" y="78" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <rect x="58" y="78" width="8" height="8" rx="1.5" fill="#2F7D6D" />
+            <rect x="70" y="78" width="8" height="8" rx="1.5" fill="#F8FAFC" />
+            <circle cx="46" cy="34" r="3.5" fill="#F8FAFC" />
+            <circle cx="82" cy="34" r="3.5" fill="#D69B2D" />
+        </g>
+    </g>
+</svg>

@@ -1,7 +1,7 @@
 # Romdeau
 
 <p align="center">
-  <img src="proyecto_integrador/docs/images/banner-placeholder.png" alt="Romdeau Banner" width="100%" />
+  <img src="proyecto_integrador/docs/images/banner.svg" alt="Romdeau Banner" width="100%" />
 </p>
 
 <p align="center">
