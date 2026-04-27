@@ -47,12 +47,12 @@ Romdeau unifica operación, control y analítica en un solo ecosistema. El objet
 
 > Reemplaza estas rutas por capturas reales del proyecto.
 
-| Vista | Imagen |
-|---|---|
-| Dashboard web | ![Dashboard web - placeholder](proyecto_integrador/docs/images/web-dashboard-placeholder.png) |
-| App móvil | ![App móvil - placeholder](proyecto_integrador/docs/images/mobile-home-placeholder.png) |
-| Flujo auditoría | ![Flujo auditoría - placeholder](proyecto_integrador/docs/images/flujo-auditoria-placeholder.gif) |
-
+| Vista | Modo Claro | Modo Oscuro |
+|---|---|---|
+| Dashboard web | ![Dashboard web - placeholder](proyecto_integrador/docs/images/web-dashboard-placeholder.png) | ![Dashboard web dark - placeholder](proyecto_integrador/docs/images/web-dashboard-placeholder-dark.png) |
+| App móvil | ![App móvil - placeholder](proyecto_integrador/docs/images/mobile-home-placeholder.png) | ![App móvil dark - placeholder](proyecto_integrador/docs/images/mobile-home-placeholder-dark.png) |
+| Activos | ![Activos - placeholder](proyecto_integrador/docs/images/activos-placeholder.png) | ![Activos dark - placeholder](proyecto_integrador/docs/images/activos-placeholder-dark.png) |
+| Auditorías | ![Auditorías - placeholder](proyecto_integrador/docs/images/auditorias-placeholder.png) | ![Auditorías dark - placeholder](proyecto_integrador/docs/images/auditorias-placeholder-dark.png) |
 ## Tabla de contenido
 
 - [La idea](#la-idea)

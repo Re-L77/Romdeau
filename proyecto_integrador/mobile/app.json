@@ -59,7 +59,8 @@
         {
           "locationWhenInUsePermission": "Permitir acceso a la ubicación para registrar auditorías"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

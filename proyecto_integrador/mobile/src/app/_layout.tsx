@@ -27,64 +27,58 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {isAuthenticated ? (
-        // Flujo Autenticado
-        <>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="scanner"
-            options={{
-              presentation: "fullScreenModal",
-              animation: "slide_from_bottom",
-            }}
-          />
-          <Stack.Screen
-            name="audit/[assetId]"
-            options={{
-              presentation: "card",
-              animation: "slide_from_right",
-            }}
-          />
-          <Stack.Screen
-            name="manual-entry"
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-            }}
-          />
-          <Stack.Screen
-            name="notificaciones"
-            options={{
-              presentation: "card",
-              animation: "slide_from_right",
-            }}
-          />
-        </>
-      ) : (
-        // Flujo NO Autenticado
-        <>
-          <Stack.Screen
-            name="index"
-            options={{
-              animation: "none",
-            }}
-          />
-          <Stack.Screen
-            name="forgot-password"
-            options={{
-              presentation: "card",
-              animation: "slide_from_right",
-            }}
-          />
-          <Stack.Screen
-            name="reset-password"
-            options={{
-              presentation: "card",
-              animation: "slide_from_right",
-            }}
-          />
-        </>
-      )}
+      <Stack.Screen
+        name="index"
+        options={{
+          animation: "none",
+        }}
+      />
+      <Stack.Screen
+        name="(tabs)"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="scanner"
+        options={{
+          presentation: "fullScreenModal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="audit/[assetId]"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="manual-entry"
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="notificaciones"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="forgot-password"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen
+        name="reset-password"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+        }}
+      />
     </Stack>
   );
 }
